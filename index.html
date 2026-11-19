@@ -620,7 +620,7 @@ async function addTx(dir,docs){
   if(!db){docs.forEach((d,i)=>{d.id='l'+Date.now()+'-'+i;S.tx[dir].push(d)});recomputeInv();localSave();return true}
   try{setStatus('تۆمارکرن...');for(const d of docs)await db.collection(dir==='in'?'invin':'invout').add(d);setStatus('✓ هاتە تۆمارکرن');return true}
   catch(e){setStatus(e&&e.code==='invalid_argument'?'⚠️ تو دەستووری ڤی کاری نینە':'⚠️ تۆمار نەبوو: '+(e&&e.code||e),true);return false}}
-const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن']];
+const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_paint','🎨 مەخزەنا سبغێ'],['inv_tape','🧻 مەخزەنا لسقێ'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن']];
 (()=>{try{S.session=JSON.parse(localStorage.getItem('bandorder-session')||sessionStorage.getItem('bandorder-session')||'null')}catch(e){S.session=null}})();
 function curApp(){if(!S.session||!S.session.id)return null;return S.appUsers.find(u=>u.id===S.session.id)||null}
 function myUid(){const u=curApp();return u?'a:'+u.id:(me.id||null)}
@@ -683,7 +683,9 @@ async function doLogin(){const un=norm($('#lgUser').value),pw=$('#lgPass').value
   setSession(u.id,$('#lgRem').checked);recalcAdmin();if(db)db.collection('logins').add({at:new Date().toISOString(),a:u.id,c:me.id||null}).catch(()=>{});else{S.logins=[{at:new Date().toISOString(),a:u.id},...(S.logins||[])];localSave()}
   showMe();applyRole();render()}
 function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('inv_count')}
-const TAB_PERM={home:()=>true,period:()=>can('periods'),invPaint:canInv,invTape:canInv,history:()=>can('history'),profiles:()=>can('master'),paints:()=>can('master'),tapes:()=>can('master'),settings:()=>can('master'),users:()=>isAdmin};
+/* کیژ مەخزەن: ئەگەر چ ژ هەردووکان نەهاتبیتە نیشانکرن = هەردوو */
+function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;if(!p.inv_paint&&!p.inv_tape)return true;return !!p['inv_'+k]}
+const TAB_PERM={home:()=>true,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master'),paints:()=>can('master'),tapes:()=>can('master'),settings:()=>can('master'),users:()=>isAdmin};
 function firstTab(){return ['home','period','invPaint','invTape','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
 Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'stock'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='inventory'}
@@ -926,14 +928,15 @@ function viewHome(){
   const days=['یەکشەمب','دووشەمب','سێشەمب','چارشەمب','پێنجشەمب','ئەینی','شەمبی'];
   const vis=SECTIONS.filter(s=>{const f=TAB_PERM[s.tab];return f&&f()});
   const qa=[];
-  if(can('inv_in'))qa.push(`<button data-go="invPaint" data-gsub="in">${I('down','sm')} داخلکرنا سبغێ</button>`,`<button data-go="invTape" data-gsub="in">${I('down','sm')} داخلکرنا لسقێ</button>`);
-  if(can('inv_out'))qa.push(`<button data-go="invPaint" data-gsub="out">${I('up','sm')} دەرئێخستنا سبغێ</button>`,`<button data-go="invTape" data-gsub="out">${I('up','sm')} دەرئێخستنا لسقێ</button>`);
+  const kP=canKind('paint'),kT=canKind('tape');
+  if(can('inv_in')){if(kP)qa.push(`<button data-go="invPaint" data-gsub="in">${I('down','sm')} داخلکرنا سبغێ</button>`);if(kT)qa.push(`<button data-go="invTape" data-gsub="in">${I('down','sm')} داخلکرنا لسقێ</button>`)}
+  if(can('inv_out')){if(kP)qa.push(`<button data-go="invPaint" data-gsub="out">${I('up','sm')} دەرئێخستنا سبغێ</button>`);if(kT)qa.push(`<button data-go="invTape" data-gsub="out">${I('up','sm')} دەرئێخستنا لسقێ</button>`)}
   if(can('periods'))qa.push(`<button data-go="period">${I('plus','sm')} ماوە و ئۆردەر</button>`);
   const groups=[['stock','مەخزەن'],['work','کار'],['data','زانیاری'],['admin','بەرپرس']];
   const short=(()=>{if(!can('periods'))return '';const l=sortedPeriods()[0];if(!l)return '';const r=compute(l);const n=r.paintShortN+r.tapeShortN;return n?`<div class="note" style="cursor:pointer" data-go="period">⚠️ د ماوەیا «${esc(l.name)}» دا ${r.paintShortN?r.paintShortN+' جۆرێن سبغێ':''}${r.paintShortN&&r.tapeShortN?' و ':''}${r.tapeShortN?r.tapeShortN+' جۆرێن لسقێ':''} بەس نینن — بۆ دیتنێ کلیک بکە.</div>`:''})();
   return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div></div>
   ${short}
-  ${(()=>{if(!can('inv_in'))return '';const op=openPos().filter(o=>!o.done);if(!op.length)return '';const np=op.filter(o=>isPaintKind(o.kind)).length,nt=op.length-np;
+  ${(()=>{if(!can('inv_in'))return '';const op=openPos().filter(o=>!o.done&&canKind(isPaintKind(o.kind)?'paint':'tape'));if(!op.length)return '';const np=op.filter(o=>isPaintKind(o.kind)).length,nt=op.length-np;
     return `<div class="info" style="cursor:pointer" data-go="${np?'invPaint':'invTape'}" data-gsub="in">📦 ${op.length} داخوازی ل ڕێنە${np&&nt?` (${np} سبغ · ${nt} لسق)`:''} — دەمێ دگەهن، بۆ داخلکرنێ کلیک بکە.</div>`})()}
   ${qa.length?`<div class="qa">${qa.join('')}</div>`:''}
   ${groups.map(([g,gt])=>{const its=vis.filter(s=>s.g===g);if(!its.length)return '';
@@ -1461,6 +1464,7 @@ function viewUsers(){
    <label>پەیڤا نهێنی<br><input id="nuPass" class="ltr" style="text-align:left" placeholder="کێمتر نە ژ ٤ پیتان"></label>
    <button class="btn pri" data-act="addAppUser">${I('plus','sm')} دروستکرن</button>
   </div>
+  <div class="muted" style="margin:6px 0">🎨/🧻: ئەگەر تەنێ «مەخزەنا سبغێ» نیشان بکەی، ئەو بکارهێنەر تەنێ سبغێ دبینیت (و یا لسقێ ب هەمان ڕەنگ). ئەگەر چ ژ هەردووکان نیشان نەکەی = هەردوو. پاشی کارێ وی هەلبژێرە، بۆ نموونە تەنێ «دەرئێخستن (OUT)».</div>
   <h3>${I('users','sm')} بکارهێنەر (${aus.length})</h3>
   <div class="tbl-scroll"><table><thead><tr><th>ناڤ</th><th>ناڤێ بکارهێنەری</th><th>ڕەوش و دەستوور</th><th>دوماهیک Login</th><th></th></tr></thead><tbody>
   ${aus.map((u,i)=>{const st=u.status||'active';return `<tr><td style="vertical-align:top"><b>${esc(u.name||'')}</b></td><td class="ltr" style="vertical-align:top;text-align:right">${esc(u.username)}</td>
@@ -1938,7 +1942,7 @@ $('#main').addEventListener('click',async e=>{
     if(bad.length){toast(`⚠️ ڕیز ${bad.join('، ')}: ${isP?'ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە':'کۆمپانیەکێ هەلبژێرە'}`);return}
     if(!docs.length){toast('⚠️ ژمارا کارتۆنان بنڤیسە');return}
     if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`);render()}}
-  else if(act==='txAdd'){const dir=t.dataset.dir;if(!can(dir==='in'?'inv_in':'inv_out')){toast('⚠️ ئەڤ کار بۆ تە نەهاتیە ڤەکرن');return}const f=txF(dir);const q0=toNum(f.qty);let qty=q0,kg=null;
+  else if(act==='txAdd'){const dir=t.dataset.dir;if(!can(dir==='in'?'inv_in':'inv_out')||!canKind(S.invKind)){toast('⚠️ ئەڤ کار بۆ تە نەهاتیە ڤەکرن');return}const f=txF(dir);const q0=toNum(f.qty);let qty=q0,kg=null;
     if(!(q0>0)){toast('⚠️ '+(f.kind==='paint'?'چەندیێ':'ژمارا کارتۆنان')+' بنڤیسە');return}
     let sec,key;if(f.kind==='paint'){const k=norm(f.paint);if(!paintDef(k)){toast('⚠️ ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە');return}sec='cart';key=k;
       const kgc=kgcOf({stock:S.inv},k);if(f.unit==='ctn'){kg=q0*kgc}else{kg=f.unit==='t'?q0*1000:q0;qty=+(kg/kgc).toFixed(4)}}
