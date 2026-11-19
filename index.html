@@ -620,7 +620,7 @@ async function addTx(dir,docs){
   if(!db){docs.forEach((d,i)=>{d.id='l'+Date.now()+'-'+i;S.tx[dir].push(d)});recomputeInv();localSave();return true}
   try{setStatus('تۆمارکرن...');for(const d of docs)await db.collection(dir==='in'?'invin':'invout').add(d);setStatus('✓ هاتە تۆمارکرن');return true}
   catch(e){setStatus(e&&e.code==='invalid_argument'?'⚠️ تو دەستووری ڤی کاری نینە':'⚠️ تۆمار نەبوو: '+(e&&e.code||e),true);return false}}
-const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_paint','🎨 مەخزەنا سبغێ'],['inv_tape','🧻 مەخزەنا لسقێ'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن']];
+const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_paint','🎨 مەخزەنا سبغێ'],['inv_tape','🧻 مەخزەنا لسقێ'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن (هەمی)'],['m_profiles','پڕۆفایل'],['m_paints','جۆرێن سبغێ'],['m_tapes','جۆرێن لسقێ'],['m_settings','ڕێکخستن']];
 (()=>{try{S.session=JSON.parse(localStorage.getItem('bandorder-session')||sessionStorage.getItem('bandorder-session')||'null')}catch(e){S.session=null}})();
 function curApp(){if(!S.session||!S.session.id)return null;return S.appUsers.find(u=>u.id===S.session.id)||null}
 function myUid(){const u=curApp();return u?'a:'+u.id:(me.id||null)}
@@ -685,7 +685,7 @@ async function doLogin(){const un=norm($('#lgUser').value),pw=$('#lgPass').value
 function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('inv_count')}
 /* کیژ مەخزەن: ئەگەر چ ژ هەردووکان نەهاتبیتە نیشانکرن = هەردوو */
 function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;if(!p.inv_paint&&!p.inv_tape)return true;return !!p['inv_'+k]}
-const TAB_PERM={home:()=>true,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master'),paints:()=>can('master'),tapes:()=>can('master'),settings:()=>can('master'),users:()=>isAdmin};
+const TAB_PERM={home:()=>true,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
 function firstTab(){return ['home','period','invPaint','invTape','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
 Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'stock'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='inventory'}
