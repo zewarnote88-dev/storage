@@ -422,8 +422,19 @@ let sb=null;
 function loadSbLib(){if(window.supabase&&window.supabase.createClient)return Promise.resolve();
   return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s.onload=()=>res();s.onerror=()=>rej(new Error('supabase-js'));document.head.appendChild(s)})}
 function fileDownloads(){return {save:async({filename,data})=>{const u=URL.createObjectURL(new Blob([data]));const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}}}
-function sbDb(client){
-  const rows=new Map(),docL=new Map(),colL=[];
+/* ---- Login token (instead of company e-mail) ---- */
+const TOKK='bandorder-sbtoken';
+function getTok(){try{return localStorage.getItem(TOKK)||sessionStorage.getItem(TOKK)||''}catch(e){return ''}}
+function setTok(t,rem){try{localStorage.removeItem(TOKK);sessionStorage.removeItem(TOKK);if(t)(rem?localStorage:sessionStorage).setItem(TOKK,t)}catch(e){}}
+function sbErr(e){const m=(e&&e.message)||String(e);const x=new Error(m);
+  x.code=(e&&e.code==='28000')||m==='auth'?'auth':(e&&e.code==='42501')||/permission|forbidden/i.test(m)?'invalid_argument':/fetch|network|timeout|Failed/i.test(m)?'unavailable':((e&&e.code)||'unknown');return x}
+async function rpc(n,args){const {data,error}=await sb.rpc(n,args||{});if(error)throw sbErr(error);return data}
+const netMsg=x=>x&&x.code==='unavailable'?'ئینتەرنێت نینە — دووبارە هەول بدە.':'کێشە: '+((x&&x.message)||x);
+let sbExpired=false;
+function sessionExpired(){if(sbExpired)return;sbExpired=true;setTok('');try{localStorage.removeItem('bandorder-session');sessionStorage.removeItem('bandorder-session')}catch(e){}
+  toast('⚠️ دەمێ چوونا ژوور ب دوماهی هات — دیسا بچە ژوور.');setTimeout(()=>location.reload(),1500)}
+function sbDb(token){
+  const rows=new Map(),docL=new Map(),colL=[];let since=null;
   const clone=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
   const meta={fromCache:false,hasPendingWrites:false};
   const deep=(a,b)=>{if(!a||typeof a!=='object'||Array.isArray(a)||!b||typeof b!=='object'||Array.isArray(b))return b;const r={...a};Object.keys(b).forEach(k=>r[k]=deep(a[k],b[k]));return r};
@@ -433,57 +444,68 @@ function sbDb(client){
     if(L.order){const f=L.order,s=L.dir==='desc'?-1:1;ds.sort((a,b)=>{const x=a.d[f]??'',y=b.d[f]??'';return x<y?-s:x>y?s:0})}
     if(L.lim)ds=ds.slice(0,L.lim);return {docs:ds.map(x=>({id:x.id,data:()=>clone(x.d)})),metadata:meta}};
   const emit=p=>{(docL.get(p)||[]).forEach(fn=>{try{fn(snapDoc(p))}catch(e){console.error(e)}});colL.forEach(L=>{if(L.col===colOf(p)){try{L.fn(snapCol(L))}catch(e){console.error(e)}}})};
-  const err=e=>{const m=(e&&e.message)||String(e);const x=new Error(m);
-    x.code=(e&&(e.code==='42501'||e.code==='PGRST301'||e.status===401||e.status===403))||/permission|row-level|JWT/i.test(m)?'invalid_argument':/fetch|network|timeout/i.test(m)?'unavailable':((e&&e.code)||'unknown');return x};
-  async function loadAll(){const all=[];
-    for(let from=0;;from+=1000){const {data,error}=await client.from('docs').select('path,data').order('path').range(from,from+999);if(error)throw err(error);all.push(...data);if(data.length<1000)break}
-    const seen=new Set(),changed=[];
-    all.forEach(r=>{seen.add(r.path);if(JSON.stringify(rows.get(r.path))!==JSON.stringify(r.data)){rows.set(r.path,r.data);changed.push(r.path)}});
-    [...rows.keys()].forEach(p=>{if(!seen.has(p)){rows.delete(p);changed.push(p)}});return changed}
+  const call=async(n,a)=>{try{return await rpc(n,{p_token:token,...(a||{})})}catch(e){if(e.code==='auth')sessionExpired();throw e}};
+  const put=(p,d)=>{if(JSON.stringify(rows.get(p))!==JSON.stringify(d)){rows.set(p,d);emit(p)}};
+  async function loadAll(){const r=await call('docs_all');since=r.now;const seen=new Set();
+    (r.rows||[]).forEach(x=>{seen.add(x.path);put(x.path,x.data)});[...rows.keys()].forEach(p=>{if(!seen.has(p)&&rows.delete(p))emit(p)})}
+  async function poll(){if(!since)return;const from=new Date(new Date(since).getTime()-15000).toISOString();const r=await call('docs_since',{p_since:from});since=r.now;
+    (r.rows||[]).forEach(x=>{if(x.deleted){if(rows.delete(x.path))emit(x.path)}else put(x.path,x.data)})}
   const docApi=p=>({
     async get(){return snapDoc(p)},
-    async set(data){const d=clone(data);const {error}=await client.from('docs').upsert({path:p,col:colOf(p),id:idOf(p),data:d,updated_at:new Date().toISOString()});if(error)throw err(error);rows.set(p,d);emit(p)},
-    async update(patch){const {data,error}=await client.rpc('merge_doc',{p_path:p,p_patch:clone(patch)});if(error)throw err(error);
-      if(!data){const e=new Error('not found');e.code='invalid_argument';throw e}rows.set(p,deep(rows.get(p)||{},clone(patch)));emit(p)},
-    async delete(){const {error}=await client.from('docs').delete().eq('path',p);if(error)throw err(error);if(rows.delete(p))emit(p)},
+    async set(data){const d=clone(data);await call('doc_set',{p_path:p,p_data:d});rows.set(p,d);emit(p)},
+    async update(patch){const ok=await call('doc_merge',{p_path:p,p_patch:clone(patch)});if(!ok){const e=new Error('not found');e.code='invalid_argument';throw e}rows.set(p,deep(rows.get(p)||{},clone(patch)));emit(p)},
+    async delete(){await call('doc_del',{p_path:p});if(rows.delete(p))emit(p)},
     onSnapshot(fn){if(!docL.has(p))docL.set(p,new Set());docL.get(p).add(fn);setTimeout(()=>fn(snapDoc(p)),0);return()=>docL.get(p).delete(fn)}});
   const colApi=(col,order,dir,lim)=>({
     orderBy(f,d){return colApi(col,f,d||'asc',lim)},limit(n){return colApi(col,order,dir,n)},
     async add(data){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,8);await docApi(col+'/'+id).set(data);return {id}},
     onSnapshot(fn){const L={col,order,dir,lim,fn};colL.push(L);setTimeout(()=>fn(snapCol(L)),0);return()=>{const i=colL.indexOf(L);if(i>=0)colL.splice(i,1)}}});
-  let busy=false;const resync=async()=>{if(busy)return;busy=true;try{(await loadAll()).forEach(emit)}catch(e){}finally{busy=false}};
-  const api={doc:docApi,collection:c=>colApi(c),resync};
-  return loadAll().then(()=>{
-    try{client.channel('docs-live').on('postgres_changes',{event:'*',schema:'public',table:'docs'},pl=>{
-      if(pl.eventType==='DELETE'){const p=pl.old&&pl.old.path;if(p&&rows.delete(p))emit(p);return}
-      const r=pl.new;if(r&&r.path&&r.data!==undefined&&JSON.stringify(rows.get(r.path))!==JSON.stringify(r.data)){rows.set(r.path,r.data);emit(r.path)}
-    }).subscribe(st=>{if(st==='SUBSCRIBED')resync()})}catch(e){}
-    window.addEventListener('focus',resync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resync()});setInterval(resync,120000);
-    return api})}
-function sbLoginForm(){return new Promise(res=>{
-  $('#main').innerHTML=`<div class="card" style="max-width:420px;margin:50px auto">
-   <div style="display:flex;justify-content:center;margin-bottom:12px"><div class="logo" style="width:60px;height:60px"><svg class="ico" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M2 20h20V9l-6 4V9l-6 4V5H4z"/><path d="M6 16h2M11 16h2M16 16h2"/></svg></div></div>
-   <h2 style="justify-content:center">ناسینا ڤی ئامیری</h2>
-   <p class="muted" style="text-align:center">تەنێ جارەکێ ل سەر هەر کۆمپیوتەر یان مۆبایلەکێ. ئیمێل و پەیڤا نهێنی یا کارگەهێ (Supabase) ژ بەرپرسی وەربگرە.</p>
-   <form id="sbForm" style="display:flex;flex-direction:column;gap:10px">
-    <label>ئیمێل<br><input id="sbEmail" type="email" class="ltr" autocomplete="username" style="width:100%;text-align:left" required></label>
-    <label>پەیڤا نهێنی<br><input id="sbPass" type="password" class="ltr" autocomplete="current-password" style="width:100%;text-align:left" required></label>
-    <div id="sbErr" class="short" style="min-height:1.2em"></div>
-    <button class="btn pri" type="submit" style="justify-content:center">${I('check','sm')} گرێدان</button></form></div>`;
-  $('#sbForm').onsubmit=async e=>{e.preventDefault();const er=$('#sbErr');er.textContent='';
-    const {error}=await sb.auth.signInWithPassword({email:$('#sbEmail').value.trim(),password:$('#sbPass').value});
-    if(error){er.textContent=/fetch|network/i.test(error.message||'')?'ئینتەرنێت نینە.':'ئیمێل یان پەیڤا نهێنی خەلەتە.';return}res()}})}
+  let busy=false;const resync=async(full)=>{if(busy||sbExpired)return;busy=true;try{full?await loadAll():await poll()}catch(e){}finally{busy=false}};
+  const loop=()=>{setTimeout(async()=>{await resync(false);loop()},document.hidden?30000:4000)};
+  return loadAll().then(()=>{loop();window.addEventListener('focus',()=>resync(false));document.addEventListener('visibilitychange',()=>{if(!document.hidden)resync(false)});
+    return {doc:docApi,collection:c=>colApi(c),resync:()=>resync(true)}})}
+function gateLogo(){return `<div style="display:flex;justify-content:center;margin-bottom:12px"><div class="logo" style="width:60px;height:60px"><svg class="ico" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M2 20h20V9l-6 4V9l-6 4V5H4z"/><path d="M6 16h2M11 16h2M16 16h2"/></svg></div></div>`}
+function sbLogin(){return new Promise(res=>{
+  const draw=()=>{$('#main').innerHTML=loginView();
+    $('#loginForm').onsubmit=async e=>{e.preventDefault();const err=$('#lgErr');err.textContent='';const btn=e.submitter||$('#loginForm button');if(btn)btn.disabled=true;
+      const un=$('#lgUser').value.trim(),pw=$('#lgPass').value,rem=$('#lgRem').checked;
+      try{const salt=await rpc('app_salt',{p_username:un});const h=await hashPw(pw,salt);const r=await rpc('app_login',{p_username:un,p_hash:h,p_remember:rem});
+        if(r.error){err.textContent=r.error==='blocked'?'ئەڤ هەژمارە هاتیە گرتن. پەیوەندیێ ب بەرپرسی بکە.':'ناڤێ بکارهێنەری یان پەیڤا نهێنی خەلەتە.';if(btn)btn.disabled=false;return}
+        res({token:r.token,uid:r.uid,remember:rem})}catch(x){err.textContent=netMsg(x);if(btn)btn.disabled=false}};
+    $('#recLink').onclick=e=>{e.preventDefault();S.showRec=!S.showRec;draw()};
+    const rf=$('#recForm');if(rf)rf.onsubmit=async e=>{e.preventDefault();const er=$('#rcErr');er.textContent='';const code=$('#rcCode').value.trim().toUpperCase(),pw=$('#rcPass').value;
+      if(!pw||pw.length<4){er.textContent='پەیڤا نهێنی دڤێت ٤ پیت یان پتر بیت.';return}
+      try{const rs=await rpc('app_salt',{p_username:'#recovery'});const ch=await hashPw(code,rs);const ns=rndHex(16);const nh=await hashPw(pw,ns);
+        const r=await rpc('app_recover',{p_code_hash:ch,p_new_salt:ns,p_new_hash:nh});if(r.error){er.textContent=r.error==='bad'?'کۆد خەلەتە.':'چ بەرپرس نەهاتنە دیتن.';return}
+        S.showRec=false;draw();toast(`✓ پەیڤا نهێنی یا «${esc(r.username)}» هاتە گوهۆڕین — نوکە بچە ژوور.`)}catch(x){er.textContent=netMsg(x)}}};
+  draw()})}
+function sbSetup(){return new Promise(res=>{
+  $('#main').innerHTML=setupView();
+  $('#setupForm').onsubmit=async e=>{e.preventDefault();const err=$('#suErr');err.textContent='';const name=$('#suName').value.trim(),un=$('#suUser').value.trim(),pw=$('#suPass').value,pw2=$('#suPass2').value;
+    if(!un||!pw){err.textContent='هەمی خانەیان پڕ بکە.';return}if(pw.length<4){err.textContent='پەیڤا نهێنی دڤێت ٤ پیت یان پتر بیت.';return}if(pw!==pw2){err.textContent='هەردوو پەیڤێن نهێنی نە وەکی ئێکن.';return}
+    try{const salt=rndHex(16);const hash=await hashPw(pw,salt);const all={};PERMS.forEach(([k])=>all[k]=true);
+      const u={id:rndHex(6),name:name||un,username:un,salt,hash,status:'active',perms:all,created:new Date().toISOString()};
+      const code=rndHex(4).toUpperCase()+'-'+rndHex(4).toUpperCase();const rs=rndHex(16);const rec={salt:rs,hash:await hashPw(code,rs)};
+      const r=await rpc('app_bootstrap',{p_user:u,p_recovery:rec});if(r.error){location.reload();return}
+      $('#main').innerHTML=`<div class="card" style="max-width:440px;margin:40px auto;text-align:center">${gateLogo()}<h2 style="justify-content:center">کۆدێ ڤەگەڕاندنێ</h2>
+        <p>ئەگەر جارەکێ پەیڤا نهێنی ژبیرا تە چوو، ب ڤی کۆدی دشێی یا نوو دانی. <b>بنڤیسە و ل جهەکێ پاراستی بپارێزە</b> — جارەکا دی نائێتە نیشاندان:</p>
+        <p class="ltr" style="font-size:1.6rem;font-weight:700;letter-spacing:2px">${code}</p><button class="btn pri" id="recOk">من نڤیسی ←</button></div>`;
+      $('#recOk').onclick=()=>res({token:r.token,uid:r.uid,remember:false})}catch(x){err.textContent=netMsg(x)}}})}
 async function sbConnect(){
-  try{await loadSbLib()}catch(e){$('#main').innerHTML=`<div class="card note" style="max-width:520px;margin:40px auto">⚠️ نەشیا پەیوەندیێ ب Supabase بکەت (ئینتەرنێت؟). <button class="btn" onclick="location.reload()">دووبارە</button></div>`;setStatus('⚠️ Supabase بار نەبوو',true);return null}
-  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-  let {data:{session}}=await sb.auth.getSession();
-  if(!session){setStatus('ناسینا ئامیری...');await sbLoginForm();session=(await sb.auth.getSession()).data.session}
-  me={id:'sb:'+session.user.id,name:''};
-  setStatus('ل خواندنا داتایێ...');
-  try{return await sbDb(sb)}catch(e){$('#main').innerHTML=`<div class="card note" style="max-width:520px;margin:40px auto">⚠️ داتابەیس نەهاتە خواندن: <span class="ltr">${esc(e.message||e)}</span><br>ئەرێ SQL یا دەستپێکێ ل Supabase هاتیە لێدان؟ <button class="btn" onclick="location.reload()">دووبارە</button></div>`;setStatus('⚠️ کێشە د داتابەیسێ دا',true);return 'fail'}}
+  try{await loadSbLib()}catch(e){$('#main').innerHTML=`<div class="card note" style="max-width:520px;margin:40px auto">⚠️ نەشیا پەیوەندیێ ب داتابەیسێ بکەت (ئینتەرنێت؟). <button class="btn" onclick="location.reload()">دووبارە</button></div>`;setStatus('⚠️ داتابەیس بار نەبوو',true);return null}
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const fail=x=>{$('#main').innerHTML=`<div class="card note" style="max-width:520px;margin:40px auto">⚠️ ${x&&x.code==='unavailable'?'ئینتەرنێت نینە.':'داتابەیس نەهاتە خواندن: <span class="ltr">'+esc((x&&x.message)||x)+'</span><br>ئەرێ SQLا نوو (supabase-update-login.sql) ل Supabase هاتیە لێدان؟'} <button class="btn" onclick="location.reload()">دووبارە</button></div>`;setStatus('⚠️ کێشە د داتابەیسێ دا',true);return null};
+  let tok=getTok(),d=null,firstLogin=false;
+  if(tok){try{d=await sbDb(tok)}catch(x){if(x.code!=='auth')return fail(x);setTok('');tok=''}}
+  if(!d){let g;try{setStatus('چوونا ژوور');const st=await rpc('app_status');g=st.has_admin?await sbLogin():await sbSetup()}catch(x){return fail(x)}
+    tok=g.token;setTok(tok,g.remember);setSession(g.uid,g.remember);firstLogin=true;
+    setStatus('ل خواندنا داتایێ...');$('#main').innerHTML='<div class="card muted">ل بارکرنێ...</div>';
+    try{d=await sbDb(tok)}catch(x){return fail(x)}}
+  if(firstLogin)d.collection('logins').add({at:new Date().toISOString(),a:S.session&&S.session.id}).catch(()=>{});
+  return d}
 async function initDb(){
   setStatus('ل گرێدانا داتابەیسێ...');
-  if(SB_ON&&!OFFLINE){const d=await sbConnect();if(!d||d==='fail')return;db=d;downloads=fileDownloads()}
+  if(SB_ON&&!OFFLINE){const d=await sbConnect();if(!d)return;db=d;downloads=fileDownloads()}
   const ok=(OFFLINE||SB_ON)?false:await waitClaude(10000);
   const withTO=(pr,ms)=>Promise.race([pr.catch(()=>null),new Promise(r=>setTimeout(()=>r(null),ms))]);
   if(ok){const [dl,d,u]=await Promise.all([withTO(window.claude.use('downloads'),12000),withTO(window.claude.use('db'),12000),withTO(window.claude.use('user'),12000)]);downloads=dl;db=d;userNs=u}
@@ -633,7 +655,7 @@ function can(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='activ
 async function hashPw(pw,salt){const enc=new TextEncoder();const key=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
   const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:120000,hash:'SHA-256'},key,256);return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 function rndHex(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,'0')).join('')}
-function setSession(id,remember){S.session=id?{id,at:new Date().toISOString()}:null;try{localStorage.removeItem('bandorder-session');sessionStorage.removeItem('bandorder-session');if(id)(remember?localStorage:sessionStorage).setItem('bandorder-session',JSON.stringify(S.session))}catch(e){}}
+function setSession(id,remember){if(!id&&SB_ON&&getTok()){const t=getTok();setTok('');try{localStorage.removeItem('bandorder-session');sessionStorage.removeItem('bandorder-session')}catch(e){}Promise.resolve(sb&&sb.rpc('app_logout',{p_token:t})).catch(()=>{}).finally(()=>location.reload());return}S.session=id?{id,at:new Date().toISOString()}:null;try{localStorage.removeItem('bandorder-session');sessionStorage.removeItem('bandorder-session');if(id)(remember?localStorage:sessionStorage).setItem('bandorder-session',JSON.stringify(S.session))}catch(e){}}
 function loginView(){
   return `<div class="card" style="max-width:420px;margin:50px auto">
    <div style="display:flex;justify-content:center;margin-bottom:12px"><div class="logo" style="width:60px;height:60px"><svg class="ico" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M2 20h20V9l-6 4V9l-6 4V5H4z"/><path d="M6 16h2M11 16h2M16 16h2"/></svg></div></div>
@@ -659,7 +681,7 @@ function setupView(){
     <div id="suErr" class="short" style="min-height:1.2em"></div>
     <button class="btn pri" type="submit" style="justify-content:center">${I('check','sm')} دروستکرن و چوونا ژوور</button>
    </form></div>`}
-async function doSetup(){const err=$('#suErr');err.textContent='';const name=$('#suName').value.trim(),un=$('#suUser').value.trim(),pw=$('#suPass').value,pw2=$('#suPass2').value;
+async function doSetup(){if(SB_ON){location.reload();return}const err=$('#suErr');err.textContent='';const name=$('#suName').value.trim(),un=$('#suUser').value.trim(),pw=$('#suPass').value,pw2=$('#suPass2').value;
   if(!un||!pw){err.textContent='هەمی خانەیان پڕ بکە.';return}if(pw.length<4){err.textContent='پەیڤا نهێنی دڤێت ٤ پیت یان پتر بیت.';return}if(pw!==pw2){err.textContent='هەردوو پەیڤێن نهێنی نە وەکی ئێکن.';return}
   const salt=rndHex(16);const hash=await hashPw(pw,salt);const all={};PERMS.forEach(([k])=>all[k]=true);
   if(S.appUsers.some(x=>norm(x.username)===norm(un))){err.textContent='ئەڤ ناڤێ بکارهێنەری بەری نوکە هەیە، ناڤەکێ دی هەلبژێرە.';return}
@@ -678,7 +700,7 @@ async function doRecover(){const err=$('#rcErr');err.textContent='';const code=$
   if(!pw||pw.length<4){err.textContent='پەیڤا نهێنی دڤێت ٤ پیت یان پتر بیت.';return}
   const a=S.appUsers.find(u=>(u.perms||{}).admin);if(!a){err.textContent='چ بەرپرس نەهاتنە دیتن.';return}
   a.salt=rndHex(16);a.hash=await hashPw(pw,a.salt);a.status='active';await saveAppUsers();S.showRec=false;toast(`✓ پەیڤا نهێنی یا «${esc(a.username)}» هاتە گوهۆڕین — نوکە بچە ژوور.`);render()}
-async function doLogin(){const un=norm($('#lgUser').value),pw=$('#lgPass').value;const err=$('#lgErr');err.textContent='';
+async function doLogin(){if(SB_ON){location.reload();return}const un=norm($('#lgUser').value),pw=$('#lgPass').value;const err=$('#lgErr');err.textContent='';
   const u=S.appUsers.find(x=>norm(x.username)===un);
   if(!u){err.textContent='ناڤێ بکارهێنەری یان پەیڤا نهێنی خەلەتە.';return}
   let hh='';try{hh=await hashPw(pw,u.salt)}catch(e){err.textContent='ئەڤ براوزەرە پشتگیریا Login ناکەت.';return}
@@ -702,7 +724,7 @@ function applyRole(){recalcAdmin();showMe();
   seedPaints();
 }
 function gateView(){const st=myStatus();if(st==='none'){if(!S.appUsers.some(u=>u.status!=='blocked'&&(u.perms||{}).admin))return claudeAdmin?setupView():'<div class="card" style="max-width:460px;margin:50px auto;text-align:center"><h2 style="justify-content:center">چاڤەڕێ بە</h2><p>هێشتا بەرپرسێ پڕۆگرامی هەژمارا خۆ دروست نەکریە.</p></div>';return loginView()}
-  const msg=!me||!me.id?'دا پڕۆگرامی بکار بینی، دڤێت ب هەژمارا خۆ یا Claude بچیە ژوور (claude.ai).':st==='blocked'?'دەستوورا تە بۆ ڤی پڕۆگرامی هاتیە گرتن. پەیوەندیێ ب بەرپرسی بکە.':st==='active'||st==='pending'?'هێشتا چ دەستوور بۆ تە نەهاتینە ڤەکرن. پەیوەندیێ ب بەرپرسی بکە.':'تو هاتیە تۆمارکرن. داخوازیا تە هاتە هنارتن بۆ بەرپرسی — دەمێ ڕێک دایە تە، ئەڤ لاپەڕە ب خۆ دێ ڤەبیت.';
+  const msg=!SB_ON&&(!me||!me.id)?'دا پڕۆگرامی بکار بینی، دڤێت ب هەژمارا خۆ یا Claude بچیە ژوور (claude.ai).':st==='blocked'?'دەستوورا تە بۆ ڤی پڕۆگرامی هاتیە گرتن. پەیوەندیێ ب بەرپرسی بکە.':st==='active'||st==='pending'?'هێشتا چ دەستوور بۆ تە نەهاتینە ڤەکرن. پەیوەندیێ ب بەرپرسی بکە.':'تو هاتیە تۆمارکرن. داخوازیا تە هاتە هنارتن بۆ بەرپرسی — دەمێ ڕێک دایە تە، ئەڤ لاپەڕە ب خۆ دێ ڤەبیت.';
   return `<div class="card" style="max-width:560px;margin:40px auto;text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px"><div class="logo" style="width:56px;height:56px"><svg class="ico" viewBox="0 0 24 24" style="width:28px;height:28px">${ICONS.users}</svg></div></div>
    <h2 style="justify-content:center">${esc((curApp()||{}).name||(me&&me.name)||'بکارهێنەر')}</h2>
    <p>${msg}</p>${st==='pending'&&me&&me.id?'<span class="pill Q">چاڤەڕێی ڕێدانێ</span>':''}${st==='blocked'?'<span class="pill Q" style="background:var(--bad-soft);color:var(--bad)">گرتی</span>':''}${curApp()?`<div style="margin-top:12px"><button class="btn" data-act="logout">دەرکەفتن</button></div>`:''}</div>`}
@@ -1459,7 +1481,7 @@ function viewUsers(){
   const aus=S.appUsers||[];
   return `<div class="card"><h2>${I('users')} بکارهێنەر و دەستوور</h2>
   <div class="info">بکارهێنەر ب <b>ناڤێ بکارهێنەری و پەیڤا نهێنی</b> دچنە ژوور. تو بکارهێنەران دروست دکەی، پەیڤا نهێنی ددەیێ، و دەستووران بۆ هەر ئێکێ ڤەدکەی یان دگری. <b>⛔ گرتی</b> ئێکسەر هەمی تشتان لێ دگریت.<br>
-  ${SB_ON?'هەر ئامیرەک جارەکێ ب ئیمێلا کارگەهێ (Supabase) دهێتە ناسین، پاشی هەر کەسەک ب ناڤ و پەیڤا نهێنی یا خۆ دچیتە ژوور.':'دا کەسەک بشێت پڕۆگرامی ڤەکەت: claude.ai ← Share (ب ئاستێ <b>Contributor</b>). دشێن هەمان هەژمارا Claude ل سەر کۆمپیوتەرەکێ هەڤپشک بکار بینن — هەر کەسەک ب ناڤ و پەیڤا نهێنی یا خۆ دچیتە ژوور.'}</div>
+  ${SB_ON?'هەر کەسەک ب ناڤ و پەیڤا نهێنی یا خۆ ڕاستەوخۆ دچیتە ژوور. پەیڤێن نهێنی تەنێ بۆ بەرپرسی دیار دبن.':'دا کەسەک بشێت پڕۆگرامی ڤەکەت: claude.ai ← Share (ب ئاستێ <b>Contributor</b>). دشێن هەمان هەژمارا Claude ل سەر کۆمپیوتەرەکێ هەڤپشک بکار بینن — هەر کەسەک ب ناڤ و پەیڤا نهێنی یا خۆ دچیتە ژوور.'}</div>
   <div class="row" style="margin:8px 0"><span class="muted grow">Login بۆ هەمی کەسان پێتڤییە. ئەگەر کۆدێ ڤەگەڕاندنێ بەرزە کربیت، یێ نوو دروست بکە:</span><button class="btn" data-act="newRecovery">🔑 کۆدێ ڤەگەڕاندنێ یێ نوو</button></div>
   <h3>${I('plus','sm')} بکارهێنەرەکێ نوو</h3>
   <div class="row" style="align-items:flex-end">
@@ -1628,7 +1650,7 @@ function viewSettings(){
     <div class="row" style="margin-top:6px"><button class="btn pri" data-act="importPaste">${I('up','sm')} ئینان</button></div>
   </details>
   <div id="backupOut"></div>
-  ${SB_ON?`<div class="row" style="margin:6px 0"><span class="muted grow">داتابەیس: <b>Supabase</b> (ئۆنلاین).</span><button class="btn" data-act="sbResync">${I('down','sm')} نووکرن ژ داتابەیسێ</button><button class="btn danger" data-act="sbOut">دەرکەفتنا ڤی ئامیری</button></div>`:''}
+  ${SB_ON?`<div class="row" style="margin:6px 0"><span class="muted grow">داتابەیس: <b>Supabase</b> (ئۆنلاین).</span><button class="btn" data-act="sbResync">${I('down','sm')} نووکرن ژ داتابەیسێ</button></div>`:''}
   <p class="muted">ڕەوشا گرێدانێ: داتابەیس ${capInfo.db?'✓':'✗'} · داگرتن ${capInfo.downloads?'✓':'✗'}</p>
   <p class="muted">${fmt(Object.keys(S.periods).length,0)} ماوە · ${fmt(S.profiles.length,0)} پڕۆفایل · ${fmt(S.paints.length,0)} سبغ</p>
   <h3>ڕەنگێ پڕۆگرامی</h3>
@@ -1992,7 +2014,6 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='importPaste'){const v=$('#importText').value.trim();if(v)confirmImport(v,'پەیستکرن')}
   else if(act==='exportAll'){await doBackup()}
   else if(act==='sbResync'&&db&&db.resync){await db.resync();toast('✓ داتا هاتنە نووکرن')}
-  else if(act==='sbOut'&&sb){dialog('<p>ڤی ئامیری ژ داتابەیسا کارگەهێ دەربێخە؟ جارا بهێت دێ ئیمێل و پەیڤا نهێنی یا کارگەهێ پێتڤی بن.</p>',async()=>{try{await sb.auth.signOut()}catch(e){}setSession(null);location.reload()},'دەرکەفتن')}
   else if(act==='addTape'){const w=toNum($('#newTapeW').value),r=toNum($('#newTapeR').value)||1;if(w>0&&!tapeDef(w)){S.settings.tapes.push({w,rpb:r,on:true,sub:0});S.settings.tapes.sort((a,b)=>a.w-b.w);save('cfg/settings',200)}render()}
   else if(act==='delTape'){const t=S.settings.tapes[+t0.dataset.i];dialog(`<p>پانیا <b class="ltr">${t.w} mm</b> ژێببە؟</p>`,()=>{S.settings.tapes.splice(+t0.dataset.i,1);S.settings.tapes.forEach(x=>{if(x.sub===t.w)x.sub=0});save('cfg/settings',100);render()},'ژێببە')}
   else if(act==='profPaste'){importProfiles(parseProfiles(parseText($('#profPaste').value)))}
