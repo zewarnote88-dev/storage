@@ -228,6 +228,7 @@ nav.tabs{display:none!important}
   .bnav button.on{color:var(--accent);font-weight:700}
   body{padding-bottom:72px}
 }
+.olTot td{background:var(--card2);border-top:2px solid var(--accent)}
 .tapeform .tstep{margin-bottom:14px}.tapeform .lb{font-size:.82rem;color:var(--muted);margin-bottom:7px;font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line2);background:var(--field);color:inherit;font:inherit;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer;display:inline-flex;align-items:center}
@@ -1595,41 +1596,68 @@ function outGroups(rows){const by=(fn)=>{const m=new Map();rows.forEach(r=>{cons
   return {items:by(r=>r.item),people:by(r=>r.who)}}
 const dmy=s=>s?s.split('-').reverse().join('/'):'';
 function olView(){const f=olF();return f.view||'all'}
-function olGrouped(rows,view){if(view==='all')return [{k:null,rows}];const m=new Map();rows.forEach(r=>{const k=view==='person'?r.who:r.item;if(!m.has(k))m.set(k,[]);m.get(k).push(r)});
-  return [...m.entries()].map(([k,rs])=>({k,rows:rs,kg:rs.reduce((s,r)=>s+(r.kg||0),0),qty:rs.reduce((s,r)=>s+r.qty,0)})).sort((a,b)=>(b.kg||b.qty)-(a.kg||a.qty))}
-function viewOutLog(){const K=S.invKind,isP=K==='paint',f=olF();const view=olView();const rows=outRows();
+const hm=iso=>{if(!iso)return '';const d=new Date(iso);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function olTapeParts(r){const [b,w,t,l]=String(r.t.key||'').split('|');const bo=brandObj(b);const W=toNum(w),L=toNum(l);return {brand:bo?bo.name:b,w:W,t,len:L,m2:r.qty*(W/1000)*L*rpbOf(W)}}
+function olCols(isP,hide){const C=[];
+  if(hide!=='date')C.push({h:'ڕۆژ',v:r=>dmy(r.d),ltr:1,nw:1});
+  C.push({h:'دەم',v:r=>hm(r.t.at),ltr:1,nw:1});
+  if(hide!=='person')C.push({h:'کێ',v:r=>esc(r.who),b:1});
+  if(hide!=='item'){if(isP)C.push({h:'سبغ',v:r=>esc(r.item),ltr:1,b:1,sw:1});
+    else C.push({h:'کۆمپانی',v:r=>esc(r.tp.brand),ltr:1,b:1},{h:'پانی',v:r=>r.tp.w+' mm',ltr:1,nw:1},{h:'جۆر',v:r=>r.tp.t==='P'?'Rough':'Normal',pill:1},{h:'درێژی',v:r=>r.tp.len+' m',ltr:1,nw:1})}
+  if(isP)C.push({h:'کیلۆ',v:r=>fmt(r.kg,1),n:1,b:1,sum:r=>r.kg||0,sd:1});
+  C.push({h:'کارتۆن',v:r=>fmt(r.qty,isP?2:1),n:1,b:!isP,sum:r=>r.qty,sd:isP?2:1});
+  if(!isP)C.push({h:'م²',v:r=>fmt(r.tp.m2,1),n:1,sum:r=>r.tp.m2,sd:1});
+  C.push({h:'تێبینی',v:r=>esc(r.t.note||''),mut:1});return C}
+function olRowsX(){const isP=S.invKind==='paint';return outRows().map(r=>isP?r:{...r,tp:olTapeParts(r)})}
+function olGrouped(rows,view){if(view==='all')return [{k:null,rows}];const m=new Map();
+  rows.forEach(r=>{const k=view==='person'?r.who:view==='date'?r.d:r.item;if(!m.has(k))m.set(k,[]);m.get(k).push(r)});
+  const G=[...m.entries()].map(([k,rs])=>({k,rows:rs,kg:rs.reduce((s,r)=>s+(r.kg||0),0),qty:rs.reduce((s,r)=>s+r.qty,0),m2:rs.reduce((s,r)=>s+(r.tp?r.tp.m2:0),0)}));
+  return view==='date'?G.sort((a,b)=>String(b.k).localeCompare(String(a.k))):G.sort((a,b)=>(b.kg||b.qty)-(a.kg||a.qty))}
+function olTotTxt(isP,kg,q,m2){return isP?`${fmt(kg,1)} کیلۆ · ${fmt(q,1)} کارتۆن`:`${fmt(q,1)} کارتۆن · ${fmt(m2,1)} م²`}
+function olTable(rows,isP,hide,print){const C=olCols(isP,hide);const fi=C.findIndex(c=>c.sum);
+  const cell=(c,r)=>{const v=c.v(r);if(print)return `<td class="${c.ltr?'ltr':''}">${c.b?'<b>'+v+'</b>':v}</td>`;
+    return `<td class="${c.n?'n':''}${c.mut?' muted':''}"${c.ltr&&!c.n?' dir="ltr" style="text-align:right'+(c.nw?';white-space:nowrap':'')+'"':''}>${c.sw?sw(r.item):''}${c.pill?pill(r.tp.t==='P'?'P':'N'):c.b?'<b>'+v+'</b>':v}</td>`};
+  const tot=`<tr class="${print?'tot':'olTot'}"><td colspan="${fi}"${print?'':' style="font-weight:700"'}>کۆم (${rows.length})</td>${C.slice(fi).map(c=>c.sum?`<td class="${print?'':'n'}"><b>${fmt(rows.reduce((s,r)=>s+c.sum(r),0),c.sd)}</b></td>`:'<td></td>').join('')}</tr>`;
+  if(print)return `<table><tr><th>#</th>${C.map(c=>`<th>${c.h}</th>`).join('')}</tr>${rows.map((r,i)=>`<tr><td>${i+1}</td>${C.map(c=>cell(c,r)).join('')}</tr>`).join('')}${tot.replace('<td colspan="'+fi+'"','<td colspan="'+(fi+1)+'"')}</table>`;
+  return `<div class="tbl-scroll" data-nosrch><table><thead><tr>${C.map(c=>`<th${c.n?' class="n"':''}>${c.h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${C.map(c=>cell(c,r)).join('')}</tr>`).join('')}${tot}</tbody></table></div>`}
+const olVLbl=(v,isP)=>({all:'هەمی تۆمار (ب پێی دەمی)',person:'ب پێی کەسی',item:'ب پێی '+(isP?'سبغێ':'جۆرێ لسقێ'),date:'ب پێی ڕۆژێ'})[v];
+function viewOutLog(){const K=S.invKind,isP=K==='paint',f=olF();const view=olView();const rows=olRowsX();
   const users=[...new Set((S.tx.out||[]).filter(t=>(t.sec==='box')===!isP).map(t=>t.u).filter(Boolean))];
-  const totKg=rows.reduce((s,r)=>s+(r.kg||0),0),totQ=rows.reduce((s,r)=>s+r.qty,0);const IT=isP?'سبغ':'لسق';
-  const amt=(kg,q)=>isP?`<b>${fmt(kg,1)}</b> کیلۆ <span class="muted">(${fmt(q,1)} کارتۆن)</span>`:`<b>${fmt(q,1)}</b> کارتۆن`;
-  const tbl=(rs,hide)=>`<div class="tbl-scroll" data-nosrch><table><thead><tr><th>ڕۆژ و دەم</th>${hide==='person'?'':'<th>کێ</th>'}${hide==='item'?'':`<th>${IT}</th>`}<th class="n">چەند</th><th>تێبینی</th></tr></thead><tbody>
-    ${rs.map(r=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(r.t.at))}</td>${hide==='person'?'':`<td>${esc(r.who)}</td>`}${hide==='item'?'':`<td class="ltr" style="text-align:right">${isP?sw(r.item):''}${esc(r.item)}</td>`}<td class="n">${isP?`${fmt(r.kg,1)} کیلۆ <span class="muted">(${fmt(r.qty,2)})</span>`:fmt(r.qty,1)+' کارتۆن'}</td><td class="muted">${esc(r.t.note||'')}</td></tr>`).join('')}
-  </tbody></table></div>`;
-  const groups=olGrouped(rows,view);
-  return `<p class="muted" style="margin-top:4px">هەمی دەرئێخستنێن ${isP?'سبغێ':'لسقێ'}: کێ، چ، چەند و کەنگی. دشێی فلتەر بکەی و وەک PDF دەربێخی.</p>
+  const kg=rows.reduce((s,r)=>s+(r.kg||0),0),q=rows.reduce((s,r)=>s+r.qty,0),m2=rows.reduce((s,r)=>s+(r.tp?r.tp.m2:0),0);
+  const people=new Set(rows.map(r=>r.who)).size,items=new Set(rows.map(r=>r.item)).size;
+  return `<p class="muted" style="margin-top:4px">هەمی دەرئێخستنێن ${isP?'سبغێ':'لسقێ'}: کێ، چ، چەند و کەنگی.</p>
   <div class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap">
     <label>ژ ڕۆژا<br><input type="date" data-olf="from" value="${esc(f.from)}"></label>
     <label>هەتا ڕۆژا<br><input type="date" data-olf="to" value="${esc(f.to)}"></label>
     <label>کێ<br><select data-olf="u"><option value="">هەمی</option>${users.map(u=>`<option value="${esc(u)}" ${u===f.u?'selected':''}>${esc(uName(u))}</option>`).join('')}</select></label>
-    <label>نیشاندان<br><select data-olf="view"><option value="all" ${view==='all'?'selected':''}>هەمی تۆمار</option><option value="person" ${view==='person'?'selected':''}>ب پێی کەسی</option><option value="item" ${view==='item'?'selected':''}>ب پێی ${isP?'سبغێ':'لسقێ'}</option></select></label>
-    <label class="grow">لێگەڕیان (${IT}، تێبینی)<br><input type="search" data-olf="q" value="${esc(f.q)}" style="width:100%"></label>
+    <label>نیشاندان<br><select data-olf="view">${['all','item','person','date'].map(v=>`<option value="${v}" ${view===v?'selected':''}>${olVLbl(v,isP)}</option>`).join('')}</select></label>
+    <label class="grow">لێگەڕیان<br><input type="search" data-olf="q" value="${esc(f.q)}" style="width:100%" placeholder="${isP?'سبغ، تێبینی':'کۆمپانی، پانی، تێبینی'}"></label>
     <button class="btn" data-act="olQuick" data-r="today">ئەڤرۆ</button><button class="btn" data-act="olQuick" data-r="month">ئەڤ هەیڤە</button>
     <button class="btn pri" data-act="olPrint">${I('file','sm')} PDF / چاپ</button></div>
-  <div class="info" style="margin:12px 0">کۆم: ${amt(totKg,totQ)} · ${rows.length} جار</div>
+  <div class="kpis" style="margin:12px 0;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+    ${isP?`<div class="kpi"><div class="l">کۆم (کیلۆ)</div><div class="v">${fmt(kg,1)}</div></div>`:''}
+    <div class="kpi"><div class="l">کارتۆن</div><div class="v">${fmt(q,1)}</div></div>
+    ${isP?'':`<div class="kpi"><div class="l">م²</div><div class="v">${fmt(m2,0)}</div></div>`}
+    <div class="kpi"><div class="l">جار</div><div class="v">${rows.length}</div></div>
+    <div class="kpi"><div class="l">${isP?'جۆرێن سبغێ':'جۆرێن لسقێ'}</div><div class="v">${items}</div></div>
+    <div class="kpi"><div class="l">کەس</div><div class="v">${people}</div></div></div>
   ${!rows.length?`<div class="muted" style="padding:20px;text-align:center">د ڤێ ماوەیێ دا چ دەرئێخستن نینن.</div>`
-   :view==='all'?tbl(rows)
-   :groups.map(g=>`<h3 style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">${view==='item'&&isP?sw(g.k):''}<span${view==='item'?' dir="ltr"':''}>${esc(g.k)}</span><span class="muted" style="font-size:.85rem;font-weight:400">${amt(g.kg,g.qty)} · ${g.rows.length} جار</span></h3>${tbl(g.rows,view)}`).join('')}`}
-function printOutLog(){const K=S.invKind,isP=K==='paint',f=olF();const view=olView();const rows=outRows();const IT=isP?'سبغ':'لسق';
-  const totKg=rows.reduce((s,r)=>s+(r.kg||0),0),totQ=rows.reduce((s,r)=>s+r.qty,0);const u=curApp();
-  const amt=(kg,q)=>isP?`${fmt(kg,1)} کیلۆ (${fmt(q,1)} کارتۆن)`:`${fmt(q,1)} کارتۆن`;
-  const tbl=(rs,hide)=>`<table><tr><th>#</th><th>ڕۆژ و دەم</th>${hide==='person'?'':'<th>کێ</th>'}${hide==='item'?'':`<th>${IT}</th>`}<th>چەند</th><th>تێبینی</th></tr>
-    ${rs.map((r,i)=>`<tr><td>${i+1}</td><td class="ltr">${esc(whenTxt(r.t.at))}</td>${hide==='person'?'':`<td>${esc(r.who)}</td>`}${hide==='item'?'':`<td class="ltr">${esc(r.item)}</td>`}<td>${isP?fmt(r.kg,1)+' کیلۆ':fmt(r.qty,1)+' کارتۆن'}</td><td>${esc(r.t.note||'')}</td></tr>`).join('')}</table>`;
-  const vlbl={all:'هەمی تۆمار',person:'ب پێی کەسی',item:'ب پێی '+(isP?'سبغێ':'لسقێ')}[view];
-  const html=`<h1>تۆمارێن دەرئێخستنا ${isP?'سبغێ':'لسقێ'}</h1>
-  <div class="meta">ماوە: <b>${dmy(f.from)||'—'}</b> هەتا <b>${dmy(f.to)||'—'}</b>${f.u?` · کێ: <b>${esc(uName(f.u))}</b>`:''}${f.q?` · لێگەڕیان: <b>${esc(f.q)}</b>`:''} · ${vlbl}<br>
-   دروستکرن: ${esc(whenTxt(new Date().toISOString()))}${u?` · ژ لایێ: ${esc(u.name||u.username)}`:''}</div>
-  <div class="sum">کۆم: <b>${amt(totKg,totQ)}</b> · ${rows.length} جار</div>
-  ${view==='all'?`<h2>هەمی تۆمار</h2>${tbl(rows)}`:olGrouped(rows,view).map(g=>`<h2>${esc(g.k)} — <small>${amt(g.kg,g.qty)} · ${g.rows.length} جار</small></h2>${tbl(g.rows,view)}`).join('')}`;
-  printHtml(html,`out-${K}-${f.from}_${f.to}`)}
+   :view==='all'?olTable(rows,isP)
+   :olGrouped(rows,view).map(g=>`<h3 style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px">${view==='item'&&isP?sw(g.k):''}<span${view!=='person'?' dir="ltr"':''}>${esc(view==='date'?dmy(g.k):g.k)}</span><span class="muted" style="font-size:.85rem;font-weight:400">${olTotTxt(isP,g.kg,g.qty,g.m2)} · ${g.rows.length} جار</span></h3>${olTable(g.rows,isP,view)}`).join('')}`}
+function olPdfAsk(){const isP=S.invKind==='paint';const cur=olView();
+  dialog(`<h3 style="margin-top:0">${I('file','sm')} PDFا تۆمارێن دەرئێخستنێ</h3><p class="muted">ڕیزکرن ب پێی چ بیت؟</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${['all','item','person','date'].map(v=>`<label class="chip" style="justify-content:flex-start"><input type="radio" name="olSort" value="${v}" ${v===cur?'checked':''} style="margin-inline-end:8px">${olVLbl(v,isP)}</label>`).join('')}</div>`,
+  ()=>{const v=(document.querySelector('input[name=olSort]:checked')||{}).value||'all';setTimeout(()=>printOutLog(v),0)},'دروستکرنا PDF')}
+function printOutLog(view){const K=S.invKind,isP=K==='paint',f=olF();view=view||olView();const rows=olRowsX();const u=curApp();
+  const kg=rows.reduce((s,r)=>s+(r.kg||0),0),q=rows.reduce((s,r)=>s+r.qty,0),m2=rows.reduce((s,r)=>s+(r.tp?r.tp.m2:0),0);
+  const html=`<div class="arhd"><div><div class="arco">${esc((S.settings.co||{}).name||'')}</div><div class="armut">دروستکرن: ${dmy(today())} ${hm(new Date().toISOString())}${u?' · ژ لایێ: '+esc(u.name||u.username):''}</div></div>
+    <div style="text-align:left"><h1>تۆمارێن دەرئێخستنا ${isP?'سبغێ':'لسقێ'}</h1><div class="armut">${olVLbl(view,isP)}</div></div></div>
+  <div class="arsum"><div><span>ماوە</span><b>${dmy(f.from)||'—'} → ${dmy(f.to)||'—'}</b>${f.u?`<small>کێ: ${esc(uName(f.u))}</small>`:''}</div>
+    ${isP?`<div><span>کۆم</span><b>${fmt(kg,1)} کیلۆ</b><small>${fmt(q,1)} کارتۆن</small></div>`:`<div><span>کۆم</span><b>${fmt(q,1)} کارتۆن</b><small>${fmt(m2,1)} م²</small></div>`}
+    <div><span>جار</span><b>${rows.length}</b><small>${new Set(rows.map(r=>r.who)).size} کەس</small></div></div>
+  ${!rows.length?'<p>چ دەرئێخستن نینن.</p>':view==='all'?olTable(rows,isP,null,true)
+   :olGrouped(rows,view).map(g=>`<h2><span${view!=='person'?' class="ltr"':''}>${esc(view==='date'?dmy(g.k):g.k)}</span> — <small>${olTotTxt(isP,g.kg,g.qty,g.m2)} · ${g.rows.length} جار</small></h2>${olTable(g.rows,isP,view,true)}`).join('')}`;
+  printHtml(html,`out-${K}-${f.from}_${f.to}-${view}`)}
 /* ======================= PDF language (English / عربي) ======================= */
 function pickLang(title,go){let last='en';try{last=localStorage.getItem('bandorder-pdflang')||'en'}catch(e){}
   dialog(`<h3 style="margin-top:0">${I('file','sm')} ${title}</h3><p class="muted">PDF ب کیژ زمانی بیت؟</p>
@@ -2116,7 +2144,7 @@ $('#main').addEventListener('click',async e=>{
     if(!docs.length){toast('⚠️ ژمارا کارتۆنێن هاتین بنڤیسە');return}
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
-  else if(act==='olPrint'){printOutLog()}
+  else if(act==='olPrint'){olPdfAsk()}
   else if(act==='txSet'){const f=txF(t0.dataset.dir);f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
   else if(act==='txPick'){const f=txF(t0.dataset.dir);const [b,w,tt,l]=t0.dataset.k.split('|');const bo=brandObj(b);f.brand=bo?bo.name:b;f.w=toNum(w);f.t=tt;f.len=toNum(l);render()}
   else if(act==='txStep'){const f=txF(t0.dataset.dir);f.qty=String(Math.max(0,toNum(f.qty)+toNum(t0.dataset.d)));render()}
