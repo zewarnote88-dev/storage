@@ -227,6 +227,15 @@ nav.tabs{display:none!important}
 .act .aic{flex:none;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc)}.act .aic .ico{width:26px;height:26px}
 .act .atx{display:flex;flex-direction:column;gap:2px;flex:1}.act .atx b{font-size:1.08rem}.act .atx small{color:var(--muted)}
 .act .ago{color:var(--muted)}
+.isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
+.isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
+.isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
+.hic{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--tc) 14%,transparent);color:var(--tc)}
+.ihero{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:4px 0 12px;box-shadow:var(--shadow);border-top:5px solid var(--tc)}
+.ihero .bic{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--tc) 14%,transparent);color:var(--tc)}.ihero .bic .ico{width:30px;height:30px}
+.mstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.mstats>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.mstats b{display:block;font-size:1.25rem}.mstats span{color:var(--muted);font-size:.8rem}
+.bdg2{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:10px;background:var(--bad);color:#fff;font-size:.72rem;font-weight:700;vertical-align:middle}
 .bnav{display:none}
 @media (max-width:760px){.bigs{grid-template-columns:1fr 1fr;gap:12px}.big{min-height:170px;padding:16px 14px 14px;border-radius:18px}.big .bic{width:52px;height:52px}.big .bic .ico{width:28px;height:28px}.big .bt{font-size:1.15rem}.big .bs{font-size:.78rem}.big .bgo{width:28px;height:28px;left:12px;bottom:12px}
   .acts{grid-template-columns:1fr}}
@@ -360,7 +369,7 @@ const S={
   paints:[],      // {name,type:'N'|'P'}
   profiles:[],    // {code,b1,b2,w,wrap,per}  w = kg per meter, per = perimeter mm
   periods:{},     // id -> {id,name,start,end,orders:[{ord,code,paint,qty,unit}],stock:{tape:{},paint:{}},note,createdAt}
-  tab:'home', cur:null, sub:'resPaint', invKind:'paint', invSubK:{paint:'stock',tape:'stock'},
+  tab:'home', cur:null, sub:'resPaint', invKind:'paint', invSubK:{paint:'menu',tape:'menu'},
   visits:[], userSel:'', perm:{}, permLoaded:false, appUsers:[], logins:[], session:null, inv:null, invBase:null, invMeta:{}, invLog:[], tx:{in:[],out:[]}, txf:{},
   dbOk:false, loaded:false
 };
@@ -761,8 +770,12 @@ function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('in
 function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;if(!p.inv_paint&&!p.inv_tape)return true;return !!p['inv_'+k]}
 const TAB_PERM={home:()=>true,g_stock:()=>grpItems('stock').length>0,g_work:()=>grpItems('work').length>0,g_data:()=>grpItems('data').length>0,g_admin:()=>grpItems('admin').length>0,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
 function firstTab(){return ['home','period','invPaint','invTape','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
-Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'stock'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
+Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'menu'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='inventory'}
+const SUBMETA={out:{t:'دەرئێخستن',s:'بردنا ژ مەخزەنێ',ic:'up',c:'#c2410c'},in:{t:'داخلکرن',s:'هاتنا نوو و ل ڕێیە',ic:'down',c:'#15803d'},stock:{t:'مەخزەن',s:'چ هەیە و چەند',ic:'box',c:'#0e7478'},
+  outlog:{t:'تۆمار',s:'کێ، چ، چەند و کەنگی',ic:'clock',c:'#6b6f2a'},report:{t:'ڕاپۆرت',s:'PDF و Excel',ic:'file',c:'#1f5f9e'},log:{t:'تۆمارا ژمارتنێ',s:'گوهۆڕینێن ژمارتنێ',ic:'clip',c:'#55606a'}};
+const SUBORDER=['out','in','stock','outlog','report','log'];
+function invSubList(){const ok=invSubs().filter(x=>x!=='|').map(x=>x[0]);return SUBORDER.filter(k=>ok.includes(k))}
 function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمارێن دەرئێخستنێ','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')],['log','تۆمارا ژمارتنێ','clock',isAdmin]].filter(s=>s==='|'||s[3])}
 function recalcAdmin(){const u=curApp();isAdmin=!!(u&&u.status==='active'&&(u.perms||{}).admin)}
 function applyRole(){recalcAdmin();showMe();
@@ -1006,7 +1019,7 @@ const GROUPS=[
 const grpOf=tab=>{const s=SECTIONS.find(x=>x.tab===tab);return s?s.g:null};
 function grpItems(g){return SECTIONS.filter(s=>s.g===g&&(()=>{const f=TAB_PERM[s.tab];return f&&f()})())}
 function grpActions(g){const A=[];const kP=canKind('paint')&&canInv(),kT=canKind('tape')&&canInv();
-  if(g==='stock'){
+  if(g==='stock'&&false){
     if(can('inv_out')){if(kP)A.push({go:'invPaint',sub:'out',ic:'up',t:'دەرئێخستنا سبغێ',s:'کێ، چ، چەند کیلۆ',c:'#c2410c'});if(kT)A.push({go:'invTape',sub:'out',ic:'up',t:'دەرئێخستنا لسقێ',s:'کۆمپانی، پانی، کارتۆن',c:'#c2410c'})}
     if(can('inv_in')){if(kP)A.push({go:'invPaint',sub:'in',ic:'down',t:'داخلکرنا سبغێ',s:'ل ڕێیە و تشتێن نوو',c:'#15803d'});if(kT)A.push({go:'invTape',sub:'in',ic:'down',t:'داخلکرنا لسقێ',s:'ل ڕێیە و تشتێن نوو',c:'#15803d'})}
     if(can('inv_view')){if(kP)A.push({go:'invPaint',sub:'outlog',ic:'clock',t:'تۆمارێن سبغێ',s:'کێ چ دەرئێخست',c:'#6b6f2a'});if(kT)A.push({go:'invTape',sub:'outlog',ic:'clock',t:'تۆمارێن لسقێ',s:'کێ چ دەرئێخست',c:'#6b6f2a'})}}
@@ -1034,6 +1047,8 @@ function viewHome(){
     ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
     <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
 function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
+  if(g==='stock')return `<div class="home">${grpAlerts(g)}<div class="bigs">${its.map(s=>`<button class="big" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
+    <span class="bic">${I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span><span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`;
   return `<div class="home">${grpAlerts(g)}
   ${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}
   ${its.length?`${A.length?`<div class="grp-t">${G.t} — هەمی بەش</div>`:''}<div class="tiles">${its.map(s=>`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">
@@ -1043,8 +1058,10 @@ function updateChrome(){
   const locked=!isAdmin&&S.loaded&&(!curApp()||!firstTab());
   if(locked||S.tab==='home'){sb.innerHTML='';}
   else{const gt=S.tab.startsWith('g_')?S.tab.slice(2):null;const s=SECTIONS.find(x=>x.tab===S.tab);const G=GROUPS.find(x=>x.g===(gt||(s&&s.g)));
-    const back=gt?'home':(G&&TAB_PERM['g_'+G.g]()?'g_'+G.g:'home');const bl=back==='home'?'سەرەکی':G.t;
-    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt?I(G.ic)+' '+G.t:(s?I(s.ic)+' '+s.t:'')}</span>`;$('#backBtn').onclick=()=>go(back)}
+    let back=gt?'home':(G&&TAB_PERM['g_'+G.g]()?'g_'+G.g:'home');let bl=back==='home'?'سەرەکی':G.t;let toMenu=false;
+    if(isInvTab()&&S.invSub!=='menu'&&invSubList().length>1){toMenu=true;bl=s?s.t:bl}
+    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt?I(G.ic)+' '+G.t:(s?I(s.ic)+' '+s.t:'')}</span>`;
+    $('#backBtn').onclick=()=>{if(toMenu){S.invSub='menu';render();window.scrollTo({top:0})}else go(back)}}
   if(locked){bn.innerHTML='';return}
   const cg=S.tab.startsWith('g_')?S.tab.slice(2):grpOf(S.tab);
   const items=[['home','سەرەکی','grid',S.tab==='home'],...visGroups().map(G=>['g_'+G.g,G.t,G.ic,cg===G.g])];
@@ -1738,9 +1755,20 @@ function printHtml(inner,title){let pa=$('#printArea');if(!pa){pa=document.creat
   pa.innerHTML=inner;const old=document.title;if(title)document.title=title;
   const done=()=>{document.title=old;pa.innerHTML='';window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
   setTimeout(()=>window.print(),50)}
+function invMiniStats(K){if(!can('inv_view')&&!can('inv_count'))return '';const r=reportData();
+  return K==='paint'?`<div class="mstats"><div><b>${fmt(r.totKg,0)}</b><span>کیلۆ</span></div><div><b>${fmt(r.totCart,1)}</b><span>کارتۆن</span></div><div><b>${r.paints.length}</b><span>جۆر</span></div></div>`
+   :`<div class="mstats"><div><b>${fmt(r.totM2,0)}</b><span>م²</span></div><div><b>${fmt(r.totBoxes,1)}</b><span>کارتۆن</span></div><div><b>${r.tapes.length}</b><span>جۆر</span></div></div>`}
+function viewInvMenu(ok){const K=S.invKind;const op=can('inv_in')?openPos(K).filter(o=>!o.done).length:0;
+  return `<div class="home"><div class="ihero" style="--tc:${K==='paint'?'#0e7478':'#5d4495'}"><span class="bic">${I(K==='paint'?'drop':'tape')}</span><div class="grow"><h2 style="margin:0">${K==='paint'?'مەخزەنا سبغێ':'مەخزەنا لسقێ'}</h2><div class="muted">چ دڤێت بکەی؟</div></div></div>
+  ${invMiniStats(K)}
+  ${!db&&OFFLINE?`<div class="info">🖥️ پڕۆگرام <b>Offline</b> کار دکەت. ${backupAgeTxt()} <button class="btn" data-act="exportAll" style="padding:2px 10px">${I('down','sm')} Backup</button></div>`:''}
+  <div class="acts">${ok.map(k=>{const m=SUBMETA[k];const b=k==='in'&&op?`<span class="bdg2">${op} ل ڕێیە</span>`:'';
+    return `<button class="act" data-invsub="${k}" style="--tc:${m.c};--tc-soft:${m.c}1f"><span class="aic">${I(m.ic)}</span><span class="atx"><b>${m.t} ${b}</b><small>${m.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
 function viewInv(){
   if(!S.inv)recomputeInv();
-  const K=S.invKind;const subs=invSubs();const ok=subs.filter(s=>s!=='|').map(s=>s[0]);if(!ok.includes(S.invSub))S.invSub=ok[0]||'stock';
+  const K=S.invKind;const subs=invSubs();const ok=invSubList();
+  if(ok.length===1)S.invSub=ok[0];else if(S.invSub!=='menu'&&!ok.includes(S.invSub))S.invSub='menu';
+  if(S.invSub==='menu')return viewInvMenu(ok);
   const P=invPeriod();
   let body='';
   if(S.invSub==='stock')body=K==='paint'?viewStockPaint(P):viewStockTape(P);
@@ -1753,11 +1781,11 @@ function viewInv(){
       const key=String(l.key||'');const nm=l.sec==='box'?key.split('|').map((x,i)=>i===1?x+' mm':i===2?(x==='P'?'Rough':'Normal'):i===3?x+'m':x).join(' · '):key;
       return `<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(l.at))}</td><td>${l.u?`<span data-uid="${esc(l.u)}">…</span>`:'—'}</td><td>${lbl}: <b class="ltr">${esc(nm)}</b></td><td class="n muted">${l.from??'—'}</td><td class="n"><b>${l.to??'—'}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">هێشتا چ گوهۆڕین نەهاتینە تۆمارکرن.</td></tr>'}
     </tbody></table></div>`;
-  return `<div class="card"><h2>${I(K==='paint'?'drop':'tape')} ${K==='paint'?'مەخزەنا سبغێ':'مەخزەنا لسقێ'}</h2>
-  <p class="muted" style="margin-top:-6px">مەخزەنا هەڤپشک و زیندی — هەمی ماوە ب ڤێ مەخزەنێ حیساب دکەن.${me&&me.name?` تو وەکی <b>${esc(me.name)}</b> هاتیە ژوور${isAdmin?' (بەرپرس)':''}.`:''}</p>
+  return `<div class="card"><h2 style="display:flex;align-items:center;gap:10px"><span class="hic" style="--tc:${SUBMETA[S.invSub]?SUBMETA[S.invSub].c:'#0e7478'}">${I(SUBMETA[S.invSub]?SUBMETA[S.invSub].ic:'box')}</span>${SUBMETA[S.invSub]?SUBMETA[S.invSub].t:''} <span class="muted" style="font-size:.9rem;font-weight:400">· ${K==='paint'?'سبغ':'لسق'}</span></h2>
+  <p class="muted" style="display:none">مەخزەنا هەڤپشک و زیندی — هەمی ماوە ب ڤێ مەخزەنێ حیساب دکەن.${me&&me.name?` تو وەکی <b>${esc(me.name)}</b> هاتیە ژوور${isAdmin?' (بەرپرس)':''}.`:''}</p>
   ${!db&&OFFLINE?`<div class="info">🖥️ پڕۆگرام <b>Offline</b> کار دکەت — هەمی داتا ل سەر ڤی کۆمپیوتەری و د ڤی براوزەریدا دهێنە پاشەکەفتکرن. ${backupAgeTxt()} <button class="btn" data-act="exportAll" style="padding:2px 10px">${I('down','sm')} Backup</button></div>`:''}
   ${!db&&!OFFLINE?`<div class="note">داتابەیس گرێنەدایە — گوهۆڕین تەنێ ل سەر ڤی براوزەری دهێنە پاشەکەفتکرن و بکارهێنەرێن دی نابینن.<br><span style="font-size:.82rem">${capInfo.runtime?'ئەگەر: Claude پەیوەندی ب لاپەڕی کر لێ داتابەیس نەدا — بێگومان Tracking prevention یا براوزەری یان تو نەچوویە ناڤ هەژمارا Claude.':'ئەگەر: لاپەڕ ل دەرڤەی claude.ai هاتیە ڤەکرن (یان براوزەری پەیوەندی ب Claude ڤە گرت). لینکا دروست: claude.ai/artifact/PnPX7dKnxJSAiyDcFkLytG'}</span></div>`:''}
-  <div class="sub">${subs.map(s=>s==='|'?'<span class="sep"></span>':`<button data-invsub="${s[0]}" class="${S.invSub===s[0]?'on':''}">${I(s[2],'sm')} ${s[1]}</button>`).join('')}</div>
+  ${ok.length>1?`<div class="isubs">${ok.map(k=>{const m=SUBMETA[k];return `<button data-invsub="${k}" class="${S.invSub===k?'on':''}" style="--tc:${m.c}">${I(m.ic,'sm')}<span>${m.t}</span></button>`}).join('')}</div>`:''}
   ${(S.invSub==='stock')?(can('inv_count')?'<div class="info">ژمار ل ڤێرە = مەخزەنا نوکە (ژمارتن + داخلکرن − دەرئێخستن). ئەگەر تو ژمارەکێ ل ڤێرە بگوهۆڕی، ئەو دبیتە ژمارتنا نوو یا وی تشتی.</div>':'<div class="note">تو دشێی مەخزەنێ ببینی. گوهۆڕینا ژمارێن مەخزەنێ بۆ تە نەهاتیە ڤەکرن.</div>'):''}
   ${body}</div>`;
 }
@@ -1943,7 +1971,7 @@ function bind(){
     const of=$('#ordFile');if(of)of.onchange=async()=>{const f=of.files[0];if(!f)return;try{const rows=await readFileRows(f);importOrders(p,parseOrders(rows,$('#ordUnit').value))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   }
   if(isInvTab()){
-    m.querySelectorAll('[data-invsub]').forEach(b=>b.onclick=()=>{S.invSub=b.dataset.invsub;render()});
+    m.querySelectorAll('[data-invsub]').forEach(b=>b.onclick=()=>{S.invSub=b.dataset.invsub;render();window.scrollTo({top:0})});
     if(!can('inv_count')){m.querySelectorAll('input[data-st],select[data-len]').forEach(el=>el.disabled=true);m.querySelectorAll('[data-act=addLen]').forEach(el=>el.remove())}
     m.querySelectorAll('[data-txk]').forEach(b=>b.onclick=()=>{const [dir,k]=b.dataset.txk.split(':');txF(dir).kind=k;render()});
     m.querySelectorAll('input[data-rcv]').forEach(el=>el.oninput=()=>{const id=el.dataset.rcv,k=el.dataset.k;const f=rcvF(id);f.q[k]=el.value;
