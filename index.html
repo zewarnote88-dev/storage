@@ -232,6 +232,7 @@ nav.tabs{display:none!important}
 .pcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);border-radius:12px;padding:9px 11px;background:var(--field);color:inherit;font:inherit;cursor:pointer;text-align:right;min-width:0}
 .pcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcard .psw .sw{width:22px;height:22px;border-radius:6px;margin:0}
 .pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
+.bigsel{width:100%;min-height:48px;font-size:1.05rem;padding:8px 12px;border-radius:12px}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -1409,11 +1410,13 @@ function tapeForm(dir,f){const isIn=dir==='in';const brands=S.settings.brands||[
 /* ======================= Record on behalf of others + admin edit ======================= */
 function canProxy(){return isAdmin||can('inv_proxy')}
 function activeUsers(){return (S.appUsers||[]).filter(u=>u.status==='active').sort((a,b)=>String(a.name||a.username).localeCompare(String(b.name||b.username)))}
-function takerStep(dir,f,n){if(dir!=='out'||!canProxy())return '';const meU=myUid();const cur=f.taker||meU;const us=activeUsers();
+function userKind(u,k){const p=u.perms||{};if(p.admin)return false;if(!p.inv_paint&&!p.inv_tape)return true;return !!p['inv_'+k]}
+function takerStep(dir,f,n){if(dir!=='out'||!canProxy())return '';const meU=myUid();const K=f.kind==='paint'?'paint':'tape';
+  const us=activeUsers().filter(u=>'a:'+u.id===meU||userKind(u,K));
   const opts=us.map(u=>({id:'a:'+u.id,nm:(u.name||u.username)+('a:'+u.id===meU?' (ئەز)':'')})).sort((a,b)=>(b.id===meU)-(a.id===meU));
-  return `<div class="tstep"><div class="lb">${n}. کێ دبەت؟ <span class="muted" style="font-weight:400">(ل سەر ناڤێ کێ بهێتە تۆمارکرن)</span></div>
-   ${opts.length<=10?`<div class="chips">${opts.map(o=>`<button type="button" class="chip${o.id===cur?' on':''}" data-act="txSet" data-dir="${dir}" data-f="taker" data-v="${esc(o.id)}">👤 ${esc(o.nm)}</button>`).join('')}</div>`
-   :`<select data-txf="${dir}" data-f="taker" style="width:100%">${opts.map(o=>`<option value="${esc(o.id)}" ${o.id===cur?'selected':''}>${esc(o.nm)}</option>`).join('')}</select>`}</div>`}
+  if(f.taker&&!opts.some(o=>o.id===f.taker))f.taker='';const cur=f.taker||meU;
+  return `<div class="tstep"><div class="lb">${n}. کێ دبەت؟ <span class="muted" style="font-weight:400">(بکارهێنەرێن ${K==='paint'?'سبغێ':'لسقێ'} — ${opts.length} کەس)</span></div>
+   <select data-txf="${dir}" data-f="taker" class="bigsel">${opts.map(o=>`<option value="${esc(o.id)}" ${o.id===cur?'selected':''}>👤 ${esc(o.nm)}</option>`).join('')}</select></div>`}
 const isoLocal=iso=>{const d=iso?new Date(iso):new Date();const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
 function txEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t)return;const isP=t.sec!=='box';const P={stock:S.inv};
   const us=activeUsers();const uOpts=[...us.map(u=>['a:'+u.id,u.name||u.username]),...(t.u&&!us.some(u=>'a:'+u.id===t.u)?[[t.u,uName(t.u)]]:[])];
