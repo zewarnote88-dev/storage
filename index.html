@@ -946,7 +946,7 @@ function render(){
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
   const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
   closePick();m.innerHTML=v();
-  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);
+  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
 }
 /* ======================= Search (all lists) ======================= */
 const tblQ={};
