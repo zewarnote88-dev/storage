@@ -211,7 +211,25 @@ nav.tabs{display:none!important}
 .qa button:hover{border-color:var(--accent);color:var(--accent)}
 .qa button .ico{color:var(--accent)}
 .grp-t{font-size:.85rem;color:var(--muted);margin:22px 2px 10px;font-weight:600}
+.bigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.big{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 20px 18px;cursor:pointer;box-shadow:var(--shadow);font:inherit;color:inherit;min-height:190px;overflow:hidden;transition:transform .15s,border-color .15s}
+.big::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--tc)}
+.big:hover{transform:translateY(-2px);border-color:var(--tc)}.big:active{transform:scale(.98)}
+.big .bic{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc);margin-bottom:6px}
+.big .bic .ico{width:32px;height:32px}
+.big .bt{font-size:1.3rem;font-weight:800}.big .bs{color:var(--muted);font-size:.86rem}
+.big .bv{margin-top:auto;padding-top:8px;font-weight:700;font-size:1.05rem}.big .bv small{color:var(--muted);font-weight:400;font-size:.78rem}
+.big .bgo{position:absolute;left:18px;bottom:18px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--tc);color:#fff}
+.big .bdg{position:absolute;top:16px;left:16px;min-width:26px;height:26px;padding:0 7px;border-radius:13px;background:var(--bad);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:8px}
+.act{display:flex;align-items:center;gap:14px;text-align:right;background:var(--card);border:1px solid var(--line);border-inline-start:5px solid var(--tc);border-radius:16px;padding:16px;cursor:pointer;font:inherit;color:inherit;box-shadow:var(--shadow);min-height:76px}
+.act:hover{border-color:var(--tc)}.act:active{transform:scale(.98)}
+.act .aic{flex:none;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc)}.act .aic .ico{width:26px;height:26px}
+.act .atx{display:flex;flex-direction:column;gap:2px;flex:1}.act .atx b{font-size:1.08rem}.act .atx small{color:var(--muted)}
+.act .ago{color:var(--muted)}
 .bnav{display:none}
+@media (max-width:760px){.bigs{grid-template-columns:1fr 1fr;gap:12px}.big{min-height:170px;padding:16px 14px 14px;border-radius:18px}.big .bic{width:52px;height:52px}.big .bic .ico{width:28px;height:28px}.big .bt{font-size:1.15rem}.big .bs{font-size:.78rem}.big .bgo{width:28px;height:28px;left:12px;bottom:12px}
+  .acts{grid-template-columns:1fr}}
 @media (max-width:760px){
   .tiles{grid-template-columns:1fr 1fr;gap:10px}
   .tile{min-height:132px;padding:14px;border-radius:16px}
@@ -741,7 +759,7 @@ async function doLogin(){if(SB_ON){location.reload();return}const un=norm($('#lg
 function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('inv_count')}
 /* کیژ مەخزەن: ئەگەر چ ژ هەردووکان نەهاتبیتە نیشانکرن = هەردوو */
 function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;if(!p.inv_paint&&!p.inv_tape)return true;return !!p['inv_'+k]}
-const TAB_PERM={home:()=>true,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
+const TAB_PERM={home:()=>true,g_stock:()=>grpItems('stock').length>0,g_work:()=>grpItems('work').length>0,g_data:()=>grpItems('data').length>0,g_admin:()=>grpItems('admin').length>0,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
 function firstTab(){return ['home','period','invPaint','invTape','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
 Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'stock'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='inventory'}
@@ -913,7 +931,7 @@ function render(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
   const m=$('#main');
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
-  const v={home:viewHome,period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
+  const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
   closePick();m.innerHTML=v();
   bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);
 }
@@ -964,7 +982,7 @@ const SECTIONS=[
   {tab:'tapes',t:'جۆرێن لسقێ',s:'پانی، کۆمپانی، ڕۆل',ic:'tape',c:'#3a5b82',g:'data'},
   {tab:'users',t:'بکارهێنەر',s:'Login، دەستوور، چالاکی',ic:'users',c:'#9a3b5a',g:'admin'},
   {tab:'settings',t:'ڕێکخستن',s:'Safety factor، Backup، ڕەنگ',ic:'sliders',c:'#55606a',g:'admin'}];
-const HASH={home:'home',invPaint:'paint',invTape:'tape',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
+const HASH={home:'home',g_stock:'stock',g_work:'work',g_data:'info',g_admin:'admin',invPaint:'paint',invTape:'tape',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
 function go(tab,sub){if(sub){const k=tab==='invTape'?'tape':'paint';S.invSubK[k]=sub}S.tab=tab;try{const hh='#'+(HASH[tab]||'home');if(location.hash!==hh)history.pushState(null,'',hh)}catch(e){}render();window.scrollTo({top:0})}
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
 window.addEventListener('popstate',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
@@ -979,35 +997,58 @@ function tileStat(tab){try{
   if(tab==='users')return `${(S.appUsers||[]).length}<small>بکارهێنەر</small>`;
   if(tab==='settings')return `×${fmt(S.settings.sfP,2)}<small>Safety factor</small>`;
  }catch(e){}return ''}
+/* ======================= Home: 4 big sections ======================= */
+const GROUPS=[
+  {g:'stock',t:'مەخزەن',s:'سبغ و لسق — داخلکرن و دەرئێخستن',ic:'box',c:'#0e7478'},
+  {g:'work',t:'کار',s:'ماوە، ئۆردەر، داخوازی و مێژوو',ic:'calendar',c:'#1f5f9e'},
+  {g:'data',t:'زانیاری',s:'پڕۆفایل، جۆرێن سبغێ و لسقێ',ic:'layers',c:'#8a5a1c'},
+  {g:'admin',t:'بەرپرس',s:'بکارهێنەر و ڕێکخستن',ic:'users',c:'#9a3b5a'}];
+const grpOf=tab=>{const s=SECTIONS.find(x=>x.tab===tab);return s?s.g:null};
+function grpItems(g){return SECTIONS.filter(s=>s.g===g&&(()=>{const f=TAB_PERM[s.tab];return f&&f()})())}
+function grpActions(g){const A=[];const kP=canKind('paint')&&canInv(),kT=canKind('tape')&&canInv();
+  if(g==='stock'){
+    if(can('inv_out')){if(kP)A.push({go:'invPaint',sub:'out',ic:'up',t:'دەرئێخستنا سبغێ',s:'کێ، چ، چەند کیلۆ',c:'#c2410c'});if(kT)A.push({go:'invTape',sub:'out',ic:'up',t:'دەرئێخستنا لسقێ',s:'کۆمپانی، پانی، کارتۆن',c:'#c2410c'})}
+    if(can('inv_in')){if(kP)A.push({go:'invPaint',sub:'in',ic:'down',t:'داخلکرنا سبغێ',s:'ل ڕێیە و تشتێن نوو',c:'#15803d'});if(kT)A.push({go:'invTape',sub:'in',ic:'down',t:'داخلکرنا لسقێ',s:'ل ڕێیە و تشتێن نوو',c:'#15803d'})}
+    if(can('inv_view')){if(kP)A.push({go:'invPaint',sub:'outlog',ic:'clock',t:'تۆمارێن سبغێ',s:'کێ چ دەرئێخست',c:'#6b6f2a'});if(kT)A.push({go:'invTape',sub:'outlog',ic:'clock',t:'تۆمارێن لسقێ',s:'کێ چ دەرئێخست',c:'#6b6f2a'})}}
+  if(g==='work'&&can('periods'))A.push({go:'period',ic:'plus',t:'ماوە و ئۆردەر',s:'ماوەیا نوو، ئۆردەر، ئەنجام',c:'#1f5f9e'});
+  return A}
+function grpAlerts(g){let h='';
+  if(g==='work'&&can('periods')){const l=sortedPeriods()[0];if(l){const r=compute(l);const n=r.paintShortN+r.tapeShortN;if(n)h+=`<div class="note" style="cursor:pointer" data-go="period">⚠️ د ماوەیا «${esc(l.name)}» دا ${r.paintShortN?r.paintShortN+' جۆرێن سبغێ':''}${r.paintShortN&&r.tapeShortN?' و ':''}${r.tapeShortN?r.tapeShortN+' جۆرێن لسقێ':''} بەس نینن — بۆ دیتنێ کلیک بکە.</div>`}}
+  if(g==='stock'&&can('inv_in')){const op=openPos().filter(o=>!o.done&&canKind(isPaintKind(o.kind)?'paint':'tape'));if(op.length){const np=op.filter(o=>isPaintKind(o.kind)).length,nt=op.length-np;
+    h+=`<div class="info" style="cursor:pointer" data-go="${np?'invPaint':'invTape'}" data-gsub="in">📦 ${op.length} داخوازی ل ڕێنە${np&&nt?` (${np} سبغ · ${nt} لسق)`:''} — دەمێ دگەهن، بۆ داخلکرنێ کلیک بکە.</div>`}}
+  return h}
+function grpBadge(g){try{if(g==='work'&&can('periods')){const l=sortedPeriods()[0];if(l){const r=compute(l);return r.paintShortN+r.tapeShortN}}
+  if(g==='stock'&&can('inv_in'))return openPos().filter(o=>!o.done&&canKind(isPaintKind(o.kind)?'paint':'tape')).length}catch(e){}return 0}
+function grpStat(g){try{
+  if(g==='stock'){const r=reportData();const a=[];if(canKind('paint'))a.push(`${fmt(r.totKg,0)} <small>کیلۆ سبغ</small>`);if(canKind('tape'))a.push(`${fmt(r.totM2,0)} <small>م² لسق</small>`);return a.join('<br>')}
+  if(g==='work'){const l=sortedPeriods()[0];return l?`<span style="font-size:.95rem">${esc(l.name)}</span>`:'<small>هێشتا چ ماوە نینن</small>'}
+  if(g==='data')return `${S.profiles.length} <small>پڕۆفایل</small> · ${S.paints.length} <small>سبغ</small>`;
+  if(g==='admin')return `${(S.appUsers||[]).length} <small>بکارهێنەر</small>`}catch(e){}return ''}
+function visGroups(){return GROUPS.filter(G=>grpItems(G.g).length)}
 function viewHome(){
   const u=curApp();const nm=(u&&(u.name||u.username))||(me&&me.name)||'';const d=new Date();
   const days=['یەکشەمب','دووشەمب','سێشەمب','چارشەمب','پێنجشەمب','ئەینی','شەمبی'];
-  const vis=SECTIONS.filter(s=>{const f=TAB_PERM[s.tab];return f&&f()});
-  const qa=[];
-  const kP=canKind('paint'),kT=canKind('tape');
-  if(can('inv_in')){if(kP)qa.push(`<button data-go="invPaint" data-gsub="in">${I('down','sm')} داخلکرنا سبغێ</button>`);if(kT)qa.push(`<button data-go="invTape" data-gsub="in">${I('down','sm')} داخلکرنا لسقێ</button>`)}
-  if(can('inv_out')){if(kP)qa.push(`<button data-go="invPaint" data-gsub="out">${I('up','sm')} دەرئێخستنا سبغێ</button>`);if(kT)qa.push(`<button data-go="invTape" data-gsub="out">${I('up','sm')} دەرئێخستنا لسقێ</button>`)}
-  if(can('periods'))qa.push(`<button data-go="period">${I('plus','sm')} ماوە و ئۆردەر</button>`);
-  const groups=[['stock','مەخزەن'],['work','کار'],['data','زانیاری'],['admin','بەرپرس']];
-  const short=(()=>{if(!can('periods'))return '';const l=sortedPeriods()[0];if(!l)return '';const r=compute(l);const n=r.paintShortN+r.tapeShortN;return n?`<div class="note" style="cursor:pointer" data-go="period">⚠️ د ماوەیا «${esc(l.name)}» دا ${r.paintShortN?r.paintShortN+' جۆرێن سبغێ':''}${r.paintShortN&&r.tapeShortN?' و ':''}${r.tapeShortN?r.tapeShortN+' جۆرێن لسقێ':''} بەس نینن — بۆ دیتنێ کلیک بکە.</div>`:''})();
+  const G=visGroups();
   return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div></div>
-  ${short}
-  ${(()=>{if(!can('inv_in'))return '';const op=openPos().filter(o=>!o.done&&canKind(isPaintKind(o.kind)?'paint':'tape'));if(!op.length)return '';const np=op.filter(o=>isPaintKind(o.kind)).length,nt=op.length-np;
-    return `<div class="info" style="cursor:pointer" data-go="${np?'invPaint':'invTape'}" data-gsub="in">📦 ${op.length} داخوازی ل ڕێنە${np&&nt?` (${np} سبغ · ${nt} لسق)`:''} — دەمێ دگەهن، بۆ داخلکرنێ کلیک بکە.</div>`})()}
-  ${qa.length?`<div class="qa">${qa.join('')}</div>`:''}
-  ${groups.map(([g,gt])=>{const its=vis.filter(s=>s.g===g);if(!its.length)return '';
-    return `<div class="grp-t">${gt}</div><div class="tiles">${its.map(s=>`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">
-      <span class="chev">${I('arrow','sm')}</span>
-      <span class="tic">${I(s.ic)}</span><span class="tt">${s.t}</span><span class="ts">${s.s}</span><span class="tv">${tileStat(s.tab)}</span></button>`).join('')}</div>`}).join('')}</div>`;
-}
+  <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="big" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
+    ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
+    <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
+function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
+  return `<div class="home">${grpAlerts(g)}
+  ${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}
+  ${its.length?`${A.length?`<div class="grp-t">${G.t} — هەمی بەش</div>`:''}<div class="tiles">${its.map(s=>`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">
+      <span class="chev">${I('arrow','sm')}</span><span class="tic">${I(s.ic)}</span><span class="tt">${s.t}</span><span class="ts">${s.s}</span><span class="tv">${tileStat(s.tab)}</span></button>`).join('')}</div>`:''}</div>`}
 function updateChrome(){
   const sb=$('#secbar'),bn=$('#bnav');if(!sb)return;
   const locked=!isAdmin&&S.loaded&&(!curApp()||!firstTab());
   if(locked||S.tab==='home'){sb.innerHTML='';}
-  else{const s=SECTIONS.find(x=>x.tab===S.tab);sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} سەرەکی</button><span class="ttl">${s?I(s.ic):''} ${s?s.t:''}</span>`;$('#backBtn').onclick=()=>go('home')}
+  else{const gt=S.tab.startsWith('g_')?S.tab.slice(2):null;const s=SECTIONS.find(x=>x.tab===S.tab);const G=GROUPS.find(x=>x.g===(gt||(s&&s.g)));
+    const back=gt?'home':(G&&TAB_PERM['g_'+G.g]()?'g_'+G.g:'home');const bl=back==='home'?'سەرەکی':G.t;
+    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt?I(G.ic)+' '+G.t:(s?I(s.ic)+' '+s.t:'')}</span>`;$('#backBtn').onclick=()=>go(back)}
   if(locked){bn.innerHTML='';return}
-  const items=[['home','سەرەکی','grid'],['invPaint','سبغ','drop'],['invTape','لسق','tape'],['period','ماوە','calendar'],['profiles','پڕۆفایل','layers']].filter(([t])=>{const f=TAB_PERM[t];return f&&f()});
-  bn.innerHTML=items.map(([t,l,ic])=>`<button data-bn="${t}" class="${S.tab===t?'on':''}">${I(ic)}<span>${l}</span></button>`).join('');
+  const cg=S.tab.startsWith('g_')?S.tab.slice(2):grpOf(S.tab);
+  const items=[['home','سەرەکی','grid',S.tab==='home'],...visGroups().map(G=>['g_'+G.g,G.t,G.ic,cg===G.g])];
+  bn.innerHTML=items.map(([t,l,ic,on])=>`<button data-bn="${t}" class="${on?'on':''}">${I(ic)}<span>${l}</span></button>`).join('');
   bn.querySelectorAll('[data-bn]').forEach(b=>b.onclick=()=>go(b.dataset.bn));
 }
 function sortedPeriods(){return Object.values(S.periods).sort((a,b)=>(b.start||'').localeCompare(a.start||'')||(b.createdAt||'').localeCompare(a.createdAt||''))}
