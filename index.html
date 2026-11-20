@@ -1422,7 +1422,7 @@ function reportData(){const inv=S.inv||normStock({});const P={stock:inv};
     m2N:tapes.filter(x=>x.t==='N').reduce((s,x)=>s+x.m2,0),m2P:tapes.filter(x=>x.t==='P').reduce((s,x)=>s+x.m2,0)}}
 function viewReport(){const r=reportData();const now=new Date();const K=S.invKind;
   const head=`<div class="row" style="margin-bottom:10px"><div class="grow"><b>${K==='paint'?'ڕاپۆرتا مەخزەنا سبغێ':'ڕاپۆرتا مەخزەنا لسقێ'}</b> <span class="muted ltr">${esc(whenTxt(now.toISOString()))}/${now.getFullYear()}</span></div>
-    <button class="btn pri" data-act="repPdf">${I('file','sm')} PDF (English)</button>${K==='paint'?`<button class="btn pri" data-act="countPdf">${I('clip','sm')} PDF بۆ جەردێ</button>`:''}<button class="btn" data-act="repXlsx">${I('down','sm')} Excel</button></div>`;
+    <button class="btn pri" data-act="repPdf">${I('file','sm')} PDF (English)</button><button class="btn" data-act="repXlsx">${I('down','sm')} Excel</button></div>`;
   if(K==='paint')return head+`<div class="kpis">
     <div class="kpi"><div class="l">سبغ ل مەخزەنێ</div><div class="v">${fmtT(r.totKg)} t</div><div class="muted">${fmt(r.totKg,1)} کیلۆ</div></div>
     <div class="kpi"><div class="l">کارتۆن</div><div class="v">${fmt(r.totCart,1)}</div><div class="muted">${r.paints.length} جۆر</div></div>
