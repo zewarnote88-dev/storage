@@ -708,7 +708,7 @@ async function addTx(dir,docs){
   if(!db){docs.forEach((d,i)=>{d.id='l'+Date.now()+'-'+i;S.tx[dir].push(d)});recomputeInv();localSave();return true}
   try{setStatus('تۆمارکرن...');for(const d of docs)await db.collection(dir==='in'?'invin':'invout').add(d);setStatus('✓ هاتە تۆمارکرن');return true}
   catch(e){setStatus(e&&e.code==='invalid_argument'?'⚠️ تو دەستووری ڤی کاری نینە':'⚠️ تۆمار نەبوو: '+(e&&e.code||e),true);return false}}
-const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_paint','🎨 مەخزەنا سبغێ'],['inv_tape','🧻 مەخزەنا لسقێ'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن (هەمی)'],['m_profiles','پڕۆفایل'],['m_paints','جۆرێن سبغێ'],['m_tapes','جۆرێن لسقێ'],['m_settings','ڕێکخستن']];
+const PERMS=[['admin','بەرپرس (هەمی تشت)'],['inv_paint','🎨 مەخزەنا سبغێ'],['inv_tape','🧻 مەخزەنا لسقێ'],['inv_proxy','👤 تۆمارکرن ل سەر ناڤێ کەسێن دی (بەرپرسێ مەخزەنێ)'],['inv_view','دیتنا مەخزەنێ و ڕاپۆرتێ'],['inv_out','دەرئێخستن (OUT)'],['inv_in','داخلکرن (IN)'],['inv_count','گوهۆڕینا ژمارێن مەخزەنێ (ژمارتن)'],['periods','ماوە، ئۆردەر، ئەنجام و داخوازی'],['history','مێژوو'],['master','پڕۆفایل، جۆرێن سبغێ و لسقێ، ڕێکخستن (هەمی)'],['m_profiles','پڕۆفایل'],['m_paints','جۆرێن سبغێ'],['m_tapes','جۆرێن لسقێ'],['m_settings','ڕێکخستن']];
 (()=>{try{S.session=JSON.parse(localStorage.getItem('bandorder-session')||sessionStorage.getItem('bandorder-session')||'null')}catch(e){S.session=null}})();
 function curApp(){if(!S.session||!S.session.id)return null;return S.appUsers.find(u=>u.id===S.session.id)||null}
 function myUid(){const u=curApp();return u?'a:'+u.id:(me.id||null)}
@@ -1402,9 +1402,45 @@ function tapeForm(dir,f){const isIn=dir==='in';const brands=S.settings.brands||[
        <button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="1">+</button>
        <span class="chips" style="margin-inline-start:4px">${[1,2,5,10].map(n=>`<button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${n}">${n}</button>`).join('')}</span></div>
      ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(cur,1)} کارتۆن هەنە</div>`:''}</div>
+   ${takerStep(dir,f,'👤')}
    <div class="tstep"><div class="lb">تێبینی (ئەگەر هەبیت)</div><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${isIn?'بۆ نموونە: فاتورە 123':'بۆ نموونە: بۆ خەتا 2'}"></div>
    <button class="btn pri big" data-act="txAdd" data-dir="${dir}" ${(!isIn&&cur<=0)?'disabled':''}>${I('check','sm')} ${isIn?'تۆمارکرنا داخلکرنێ':'تۆمارکرنا دەرئێخستنێ'}${q>0?` — ${fmt(q,1)} کارتۆن`:''}</button>
   </div>`}
+/* ======================= Record on behalf of others + admin edit ======================= */
+function canProxy(){return isAdmin||can('inv_proxy')}
+function activeUsers(){return (S.appUsers||[]).filter(u=>u.status==='active').sort((a,b)=>String(a.name||a.username).localeCompare(String(b.name||b.username)))}
+function takerStep(dir,f,n){if(dir!=='out'||!canProxy())return '';const meU=myUid();const cur=f.taker||meU;const us=activeUsers();
+  const opts=us.map(u=>({id:'a:'+u.id,nm:(u.name||u.username)+('a:'+u.id===meU?' (ئەز)':'')})).sort((a,b)=>(b.id===meU)-(a.id===meU));
+  return `<div class="tstep"><div class="lb">${n}. کێ دبەت؟ <span class="muted" style="font-weight:400">(ل سەر ناڤێ کێ بهێتە تۆمارکرن)</span></div>
+   ${opts.length<=10?`<div class="chips">${opts.map(o=>`<button type="button" class="chip${o.id===cur?' on':''}" data-act="txSet" data-dir="${dir}" data-f="taker" data-v="${esc(o.id)}">👤 ${esc(o.nm)}</button>`).join('')}</div>`
+   :`<select data-txf="${dir}" data-f="taker" style="width:100%">${opts.map(o=>`<option value="${esc(o.id)}" ${o.id===cur?'selected':''}>${esc(o.nm)}</option>`).join('')}</select>`}</div>`}
+const isoLocal=iso=>{const d=iso?new Date(iso):new Date();const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
+function txEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t)return;const isP=t.sec!=='box';const P={stock:S.inv};
+  const us=activeUsers();const uOpts=[...us.map(u=>['a:'+u.id,u.name||u.username]),...(t.u&&!us.some(u=>'a:'+u.id===t.u)?[[t.u,uName(t.u)]]:[])];
+  let body='';
+  if(isP){const kg=t.kg!=null?toNum(t.kg):toNum(t.qty)*kgcOf(P,t.key);const def=paintDef(t.key);
+    body=`<label>سبغ<br><select id="teP" style="width:100%">${S.paints.map(p=>`<option value="${esc(p.name)}" ${norm(p.name)===t.key?'selected':''}>${esc(p.name)}</option>`).join('')}${def?'':`<option selected value="${esc(t.key)}">${esc(t.key)}</option>`}</select></label>
+     <div class="row" style="gap:8px"><label class="grow">چەند<br><input id="teQ" class="num" inputmode="decimal" value="${+kg.toFixed(3)}" style="width:100%"></label>
+     <label>یەکە<br><select id="teU"><option value="kg" selected>کیلۆ</option><option value="t">تۆن</option><option value="ctn">کارتۆن</option></select></label></div>`}
+  else{const [b,w,tt,l]=String(t.key).split('|');const bo=brandObj(b);const brands=S.settings.brands||[];
+    body=`<div class="row" style="gap:8px;flex-wrap:wrap"><label>کۆمپانی<br><select id="teB">${brands.map(x=>`<option ${bo&&x.name===bo.name?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+     <label>پانی<br><select id="teW">${[...new Set([...tapeWidths(),toNum(w)])].sort((a,b)=>a-b).map(x=>`<option value="${x}" ${x==w?'selected':''}>${x} mm</option>`).join('')}</select></label>
+     <label>جۆر<br><select id="teT"><option value="N" ${tt!=='P'?'selected':''}>Normal</option><option value="P" ${tt==='P'?'selected':''}>Rough</option></select></label>
+     <label>درێژی<br><select id="teL">${[...new Set([...rollLens().map(Number),toNum(l)])].sort((a,b)=>a-b).map(x=>`<option value="${x}" ${x==l?'selected':''}>${x}m</option>`).join('')}</select></label></div>
+     <label>کارتۆن<br><input id="teQ" class="num" inputmode="decimal" value="${toNum(t.qty)}" style="width:100%"></label>`}
+  dialog(`<h3 style="margin-top:0">✎ گوهۆڕینا تۆمارێ (${dir==='out'?'دەرئێخستن':'داخلکرن'})</h3><div style="display:flex;flex-direction:column;gap:10px">${body}
+    <label>${dir==='out'?'کێ برن':'کێ تۆمار کر'}<br><select id="teWho" style="width:100%">${uOpts.map(([id,nm])=>`<option value="${esc(id)}" ${id===t.u?'selected':''}>${esc(nm)}</option>`).join('')}</select></label>
+    <label>ڕۆژ و دەم<br><input id="teAt" type="datetime-local" value="${isoLocal(t.at)}" style="width:100%"></label>
+    <label>تێبینی<br><input id="teN" value="${esc(t.note||'')}" style="width:100%"></label><div id="teErr" class="short"></div></div>`,
+  ()=>{const er=$('#teErr');const q0=toNum($('#teQ').value);if(!(q0>0)){er.textContent='⚠️ چەندیێ بنڤیسە';return false}
+    const d={...t};delete d.id;let sec,key,qty=q0,kg=null;
+    if(isP){key=norm($('#teP').value);sec='cart';const kgc=kgcOf(P,key);const u=$('#teU').value;kg=u==='t'?q0*1000:u==='ctn'?q0*kgc:q0;qty=+(kg/kgc).toFixed(4);d.kg=+kg.toFixed(2)}
+    else{sec='box';key=brandKey($('#teB').value)+'|'+toNum($('#teW').value)+'|'+$('#teT').value+'|'+toNum($('#teL').value);delete d.kg}
+    d.sec=sec;d.key=key;d.qty=qty;d.u=$('#teWho').value||t.u;d.note=$('#teN').value.trim();const at=$('#teAt').value;if(at)d.at=new Date(at).toISOString();
+    if(d.po){if(isP)d.poAmt=+(kg/1000).toFixed(4);else{const [,w,,l]=key.split('|');d.poAmt=+(qty*(toNum(w)/1000)*toNum(l)*rpbOf(toNum(w))).toFixed(4)}}
+    d.edited={by:myUid(),at:new Date().toISOString()};
+    (async()=>{if(!db){const i=S.tx[dir].findIndex(x=>x.id===id);if(i>=0)S.tx[dir][i]={...d,id};recomputeInv();localSave();render();toast('✓ تۆمار هاتە گوهۆڕین');return}
+      try{await db.doc((dir==='in'?'invin/':'invout/')+id).set(d);toast('✓ تۆمار هاتە گوهۆڕین')}catch(e){toast('⚠️ گوهۆڕین نەبوو')}})()},'پاشەکەفتکرن')}
 /* ---- Paint OUT form: tap-friendly ---- */
 function paintStep(f,k){const kgc=kgcOf({stock:S.inv},k)||25;return f.unit==='ctn'?1:f.unit==='t'?kgc/1000:kgc}
 function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=paintDef(k);
@@ -1431,7 +1467,8 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
        <button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(kg).toFixed(dec)}">هەمی (${fmt(inU(kg),dec)})</button></div>
      ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(kg,1)} کیلۆ هەنە</div>`:''}
      ${q>0&&U!=='kg'&&!over?`<div class="muted" style="margin-top:6px">= ${fmt(qKg,1)} کیلۆ</div>`:''}</div>
-   <div class="tstep"><div class="lb">٣. تێبینی (ئەگەر هەبیت)</div><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: بۆ خەتا سبغکرنێ 2"></div>
+   ${takerStep(dir,f,'٣')}
+   <div class="tstep"><div class="lb">${canProxy()?'٤':'٣'}. تێبینی (ئەگەر هەبیت)</div><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: بۆ خەتا سبغکرنێ 2"></div>
    <button class="btn pri big" data-act="txAdd" data-dir="${dir}" ${c<=0?'disabled':''}>${I('check','sm')} تۆمارکرنا دەرئێخستنێ${q>0?` — ${fmt(q,dec)} ${UL}`:''}</button>`
    :`<div class="muted" style="text-align:center;padding:14px;border:1px dashed var(--line2);border-radius:12px">☝️ ل سەرێ سبغەکێ هەلبژێرە</div>`}
   </div>`}
@@ -1517,7 +1554,7 @@ function viewIn(){const K=S.invKind;const ops=openPos(K);const open=ops.filter(o
   ${isAdmin?txList('in'):''}`}
 function txList(dir){const L=[...(S.tx[dir]||[])].filter(t=>(t.sec==='box')===(S.invKind==='tape')).sort((a,b)=>(b.at||'').localeCompare(a.at||'')).slice(0,60);
   return `<div class="tbl-scroll"><table><thead><tr><th>دەم</th><th>کێ</th><th>چ</th><th class="n">کارتۆن</th><th>تێبینی</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
-  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}</td>${isAdmin?`<td><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
+  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
   </tbody></table></div>`}
 function reportData(){const inv=S.inv||normStock({});const P={stock:inv};
   const paints=Object.keys(inv.cart).filter(k=>toNum(inv.cart[k])>0).map(k=>{const d=paintDef(k);const kc=kgcOf(P,k);const c=toNum(inv.cart[k]);return {name:d?d.name:k,pul:d?d.pul||'':'',type:d?d.type:'?',co:d?d.co||'':'',cart:c,kgc:kc,kg:c*kc}}).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
@@ -1695,23 +1732,23 @@ const dmy=s=>s?s.split('-').reverse().join('/'):'';
 function olView(){const f=olF();return f.view||'all'}
 const hm=iso=>{if(!iso)return '';const d=new Date(iso);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function olTapeParts(r){const [b,w,t,l]=String(r.t.key||'').split('|');const bo=brandObj(b);const W=toNum(w),L=toNum(l);return {brand:bo?bo.name:b,w:W,t,len:L,m2:r.qty*(W/1000)*L*rpbOf(W)}}
-function olCols(isP,hide){const C=[];
+function olCols(isP,hide,print){const C=[];
   if(hide!=='date')C.push({h:'ڕۆژ',v:r=>dmy(r.d),ltr:1,nw:1});
   C.push({h:'دەم',v:r=>hm(r.t.at),ltr:1,nw:1});
-  if(hide!=='person')C.push({h:'کێ',v:r=>esc(r.who),b:1});
+  if(hide!=='person')C.push({h:'کێ',v:r=>esc(r.who)+(r.t.rec&&!print?`<div class="muted" style="font-size:.72rem;font-weight:400">تۆمارکر: ${esc(uName(r.t.rec))}</div>`:''),b:1});
   if(hide!=='item'){if(isP)C.push({h:'سبغ',v:r=>esc(r.item),ltr:1,b:1,sw:1});
     else C.push({h:'کۆمپانی',v:r=>esc(r.tp.brand),ltr:1,b:1},{h:'پانی',v:r=>r.tp.w+' mm',ltr:1,nw:1},{h:'جۆر',v:r=>r.tp.t==='P'?'Rough':'Normal',pill:1},{h:'درێژی',v:r=>r.tp.len+' m',ltr:1,nw:1})}
   if(isP)C.push({h:'کیلۆ',v:r=>fmt(r.kg,1),n:1,b:1,sum:r=>r.kg||0,sd:1});
   C.push({h:'کارتۆن',v:r=>fmt(r.qty,isP?2:1),n:1,b:!isP,sum:r=>r.qty,sd:isP?2:1});
   if(!isP)C.push({h:'م²',v:r=>fmt(r.tp.m2,1),n:1,sum:r=>r.tp.m2,sd:1});
-  C.push({h:'تێبینی',v:r=>esc(r.t.note||''),mut:1});return C}
+  C.push({h:'تێبینی',v:r=>esc(r.t.note||'')+(r.t.edited&&!print?` <span title="هاتیە گوهۆڕین ژ لایێ ${esc(uName(r.t.edited.by))}">✎</span>`:''),mut:1});return C}
 function olRowsX(){const isP=S.invKind==='paint';return outRows().map(r=>isP?r:{...r,tp:olTapeParts(r)})}
 function olGrouped(rows,view){if(view==='all')return [{k:null,rows}];const m=new Map();
   rows.forEach(r=>{const k=view==='person'?r.who:view==='date'?r.d:r.item;if(!m.has(k))m.set(k,[]);m.get(k).push(r)});
   const G=[...m.entries()].map(([k,rs])=>({k,rows:rs,kg:rs.reduce((s,r)=>s+(r.kg||0),0),qty:rs.reduce((s,r)=>s+r.qty,0),m2:rs.reduce((s,r)=>s+(r.tp?r.tp.m2:0),0)}));
   return view==='date'?G.sort((a,b)=>String(b.k).localeCompare(String(a.k))):G.sort((a,b)=>(b.kg||b.qty)-(a.kg||a.qty))}
 function olTotTxt(isP,kg,q,m2){return isP?`${fmt(kg,1)} کیلۆ · ${fmt(q,1)} کارتۆن`:`${fmt(q,1)} کارتۆن · ${fmt(m2,1)} م²`}
-function olTable(rows,isP,hide,print){const C=olCols(isP,hide);const fi=C.findIndex(c=>c.sum);
+function olTable(rows,isP,hide,print){const C=olCols(isP,hide,print);if(!print&&isAdmin)C.push({h:'',v:r=>`<span style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="out" data-id="${esc(r.t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="out" data-id="${esc(r.t.id)}" title="ژێبرن">✕</button></span>`});const fi=C.findIndex(c=>c.sum);
   const cell=(c,r)=>{const v=c.v(r);if(print)return `<td class="${c.ltr?'ltr':''}">${c.b?'<b>'+v+'</b>':v}</td>`;
     return `<td class="${c.n?'n':''}${c.mut?' muted':''}"${c.ltr&&!c.n?' dir="ltr" style="text-align:right'+(c.nw?';white-space:nowrap':'')+'"':''}>${c.sw?sw(r.item):''}${c.pill?pill(r.tp.t==='P'?'P':'N'):c.b?'<b>'+v+'</b>':v}</td>`};
   const tot=`<tr class="${print?'tot':'olTot'}"><td colspan="${fi}"${print?'':' style="font-weight:700"'}>کۆم (${rows.length})</td>${C.slice(fi).map(c=>c.sum?`<td class="${print?'':'n'}"><b>${fmt(rows.reduce((s,r)=>s+c.sum(r),0),c.sd)}</b></td>`:'<td></td>').join('')}</tr>`;
@@ -2275,10 +2312,12 @@ $('#main').addEventListener('click',async e=>{
       const kgc=kgcOf({stock:S.inv},k);if(f.unit==='ctn'){kg=q0*kgc}else{kg=f.unit==='t'?q0*1000:q0;qty=+(kg/kgc).toFixed(4)}}
     else{const bk=brandKey(f.brand);if(!f.brand){toast('⚠️ کۆمپانیەکێ هەلبژێرە');return}sec='box';key=bk+'|'+toNum(f.w)+'|'+f.t+'|'+toNum(f.len)}
     if(dir==='out'&&toNum(S.inv[sec][key])<qty-1e-4){toast(`⚠️ ل مەخزەنێ تەنێ ${sec==='cart'?paintCurTxt(key):fmt(toNum(S.inv[sec][key]),1)+' کارتۆن'} هەنە`);return}
-    const doc={at:new Date().toISOString(),u:myUid(),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim()};
+    const meU=myUid();const tk=(dir==='out'&&canProxy()&&f.taker)?f.taker:meU;
+    const doc={at:new Date().toISOString(),u:tk,...(tk!==meU?{rec:meU}:{}),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim()};
     if(!db){doc.id='l'+Date.now();S.tx[dir].push(doc);recomputeInv();localSave()}
     else{try{setStatus('تۆمارکرن...');await db.collection(dir==='in'?'invin':'invout').add(doc);setStatus('✓ هاتە تۆمارکرن')}catch(e){setStatus(e&&e.code==='invalid_argument'?'⚠️ تو دەستووری ڤی کاری نینە':'⚠️ تۆمار نەبوو: '+(e&&e.code||e),true);return}}
-    f.qty='';f.note='';toast(`✓ ${dir==='in'?'داخلکرن':'دەرئێخستن'}: ${kg!==null?fmt(kg,1)+' کیلۆ':fmt(qty,1)+' کارتۆن'} ${txLabel(sec,key)}`);render()}
+    f.qty='';f.note='';toast(`✓ ${dir==='in'?'داخلکرن':'دەرئێخستن'}: ${kg!==null?fmt(kg,1)+' کیلۆ':fmt(qty,1)+' کارتۆن'} ${txLabel(sec,key)}${tk!==meU?' — بۆ '+esc(uName(tk)):''}`);render()}
+  else if(act==='txEdit'&&isAdmin){txEdit(t0.dataset.dir,t0.dataset.id)}
   else if(act==='txDel'&&isAdmin){const dir=t0.dataset.dir,id=t0.dataset.id;dialog('<p>ئەڤ تۆمارە ژێببە؟ مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</p>',async()=>{
       if(!db){S.tx[dir]=S.tx[dir].filter(x=>x.id!==id);recomputeInv();localSave();render();return}
       try{await db.doc((dir==='in'?'invin/':'invout/')+id).delete()}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
