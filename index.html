@@ -1318,10 +1318,6 @@ function tapeForm(dir,f){const isIn=dir==='in';const brands=S.settings.brands||[
     .sort((a,b)=>a.b.localeCompare(b.b)||a.w-b.w||a.t.localeCompare(b.t));
   return `<div class="card tapeform" style="background:var(--bg)">
    <h3 style="margin-top:0">${I(isIn?'down':'up','sm')} ${isIn?'داخلکرنا لسقێ':'دەرئێخستنا لسقێ'}</h3>
-   ${avail.length?`<div class="tstep"><div class="lb">⚡ زوو هەلبژێرە — یێن ل مەخزەنێ هەین</div><div class="qpick">
-     ${avail.map(a=>{const on=a.b===bk&&a.w==f.w&&a.t===f.t&&a.l==f.len;const bn=(brandObj(a.b)||{}).name||a.b;
-       return `<button type="button" class="qcard${on?' on':''}" data-act="txPick" data-dir="${dir}" data-k="${esc(a.k)}"><b dir="ltr">${a.w} mm · ${a.t==='P'?'Rough':'Normal'}</b><span class="muted" style="font-size:.76rem" dir="ltr">${esc(bn)} · ${a.l}m</span><span class="qv">${fmt(a.v,0)} کارتۆن</span></button>`}).join('')}
-   </div></div>`:''}
    <div class="tstep"><div class="lb">کۆمپانی</div><div class="chips">${brands.map(b=>chip('brand',b.name,esc(b.name),isIn?null:tapeStock(brandKey(b.name)),b.name===f.brand)).join('')}</div></div>
    <div class="tstep"><div class="lb">پانی</div><div class="chips">${o.ws.map(w=>chip('w',w,`<span class="ltr">${w} mm</span>`,isIn?null:tapeStock(bk,w),w==f.w)).join('')}</div></div>
    <div class="tstep"><div class="lb">جۆر</div><div class="chips">${ts.map(t=>chip('t',t,t==='P'?'Rough':'Normal',isIn?null:tapeStock(bk,f.w,t),t===f.t)).join('')}</div></div>
