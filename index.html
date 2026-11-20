@@ -212,21 +212,26 @@ nav.tabs{display:none!important}
 .qa button .ico{color:var(--accent)}
 .grp-t{font-size:.85rem;color:var(--muted);margin:22px 2px 10px;font-weight:600}
 .bigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
-.big{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 20px 18px;cursor:pointer;box-shadow:var(--shadow);font:inherit;color:inherit;min-height:190px;overflow:hidden;transition:transform .15s,border-color .15s}
-.big::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--tc)}
-.big:hover{transform:translateY(-2px);border-color:var(--tc)}.big:active{transform:scale(.98)}
-.big .bic{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc);margin-bottom:6px}
-.big .bic .ico{width:32px;height:32px}
-.big .bt{font-size:1.3rem;font-weight:800}.big .bs{color:var(--muted);font-size:.86rem}
-.big .bv{margin-top:auto;padding-top:8px;font-weight:700;font-size:1.05rem}.big .bv small{color:var(--muted);font-weight:400;font-size:.78rem}
-.big .bgo{position:absolute;left:18px;bottom:18px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--tc);color:#fff}
-.big .bdg{position:absolute;top:16px;left:16px;min-width:26px;height:26px;padding:0 7px;border-radius:13px;background:var(--bad);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.bigc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 20px 18px;cursor:pointer;box-shadow:var(--shadow);font:inherit;color:inherit;min-height:190px;overflow:hidden;transition:transform .15s,border-color .15s}
+.bigc::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--tc)}
+.bigc:hover{transform:translateY(-2px);border-color:var(--tc)}.bigc:active{transform:scale(.98)}
+.bigc .bic{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc);margin-bottom:6px}
+.bigc .bic .ico{width:32px;height:32px}
+.bigc .bt{font-size:1.3rem;font-weight:800}.bigc .bs{color:var(--muted);font-size:.86rem}
+.bigc .bv{margin-top:auto;padding-top:8px;font-weight:700;font-size:1.05rem}.bigc .bv small{color:var(--muted);font-weight:400;font-size:.78rem}
+.bigc .bgo{position:absolute;left:18px;bottom:18px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--tc);color:#fff}
+.bigc .bdg{position:absolute;top:16px;left:16px;min-width:26px;height:26px;padding:0 7px;border-radius:13px;background:var(--bad);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:8px}
 .act{display:flex;align-items:center;gap:14px;text-align:right;background:var(--card);border:1px solid var(--line);border-inline-start:5px solid var(--tc);border-radius:16px;padding:16px;cursor:pointer;font:inherit;color:inherit;box-shadow:var(--shadow);min-height:76px}
 .act:hover{border-color:var(--tc)}.act:active{transform:scale(.98)}
 .act .aic{flex:none;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc)}.act .aic .ico{width:26px;height:26px}
 .act .atx{display:flex;flex-direction:column;gap:2px;flex:1}.act .atx b{font-size:1.08rem}.act .atx small{color:var(--muted)}
 .act .ago{color:var(--muted)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
+@media (max-width:480px){.pgrid{grid-template-columns:1fr 1fr}}
+.pcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);border-radius:12px;padding:9px 11px;background:var(--field);color:inherit;font:inherit;cursor:pointer;text-align:right;min-width:0}
+.pcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcard .psw .sw{width:22px;height:22px;border-radius:6px;margin:0}
+.pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -237,7 +242,7 @@ nav.tabs{display:none!important}
 .mstats b{display:block;font-size:1.25rem}.mstats span{color:var(--muted);font-size:.8rem}
 .bdg2{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:10px;background:var(--bad);color:#fff;font-size:.72rem;font-weight:700;vertical-align:middle}
 .bnav{display:none}
-@media (max-width:760px){.bigs{grid-template-columns:1fr 1fr;gap:12px}.big{min-height:170px;padding:16px 14px 14px;border-radius:18px}.big .bic{width:52px;height:52px}.big .bic .ico{width:28px;height:28px}.big .bt{font-size:1.15rem}.big .bs{font-size:.78rem}.big .bgo{width:28px;height:28px;left:12px;bottom:12px}
+@media (max-width:760px){.bigs{grid-template-columns:1fr 1fr;gap:12px}.bigc{min-height:170px;padding:16px 14px 14px;border-radius:18px}.bigc .bic{width:52px;height:52px}.bigc .bic .ico{width:28px;height:28px}.bigc .bt{font-size:1.15rem}.bigc .bs{font-size:.78rem}.bigc .bgo{width:28px;height:28px;left:12px;bottom:12px}
   .acts{grid-template-columns:1fr}}
 @media (max-width:760px){
   .tiles{grid-template-columns:1fr 1fr;gap:10px}
@@ -265,7 +270,7 @@ nav.tabs{display:none!important}
 .qpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}@media (max-width:480px){.qpick{grid-template-columns:1fr 1fr}}
 .qcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);border-radius:12px;padding:9px 11px;background:var(--field);color:inherit;font:inherit;cursor:pointer;text-align:right;min-width:0}.qcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .qcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.qcard .qv{margin-top:4px;font-weight:700;color:var(--good)}
-.stockbox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:var(--field);border:1px solid var(--line);border-inline-start:4px solid var(--good);margin:2px 0 14px}
+.stockbox{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:var(--field);border:1px solid var(--line);border-inline-start:4px solid var(--good);margin:2px 0 14px}
 .stockbox.empty{border-inline-start-color:var(--bad)}.stockbox .v{font-size:1.6rem;font-weight:700;white-space:nowrap}.stockbox.empty .v{color:var(--bad)}
 .stepper{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stepper>.btn{width:48px;height:48px;justify-content:center;font-size:1.4rem;padding:0}
 .stepper input{width:90px;height:48px;text-align:center;font-size:1.3rem}
@@ -1043,11 +1048,11 @@ function viewHome(){
   const days=['یەکشەمب','دووشەمب','سێشەمب','چارشەمب','پێنجشەمب','ئەینی','شەمبی'];
   const G=visGroups();
   return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div></div>
-  <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="big" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
+  <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="bigc" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
     ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
     <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
 function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
-  if(g==='stock')return `<div class="home">${grpAlerts(g)}<div class="bigs">${its.map(s=>`<button class="big" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
+  if(g==='stock')return `<div class="home">${grpAlerts(g)}<div class="bigs">${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
     <span class="bic">${I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span><span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`;
   return `<div class="home">${grpAlerts(g)}
   ${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}
@@ -1400,8 +1405,39 @@ function tapeForm(dir,f){const isIn=dir==='in';const brands=S.settings.brands||[
    <div class="tstep"><div class="lb">تێبینی (ئەگەر هەبیت)</div><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${isIn?'بۆ نموونە: فاتورە 123':'بۆ نموونە: بۆ خەتا 2'}"></div>
    <button class="btn pri big" data-act="txAdd" data-dir="${dir}" ${(!isIn&&cur<=0)?'disabled':''}>${I('check','sm')} ${isIn?'تۆمارکرنا داخلکرنێ':'تۆمارکرنا دەرئێخستنێ'}${q>0?` — ${fmt(q,1)} کارتۆن`:''}</button>
   </div>`}
+/* ---- Paint OUT form: tap-friendly ---- */
+function paintStep(f,k){const kgc=kgcOf({stock:S.inv},k)||25;return f.unit==='ctn'?1:f.unit==='t'?kgc/1000:kgc}
+function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=paintDef(k);
+  const list=S.paints.map(p=>{const kk=norm(p.name);const c=toNum(S.inv.cart[kk]);return {p,kk,c,kg:c*kgcOf(P,kk)}}).filter(x=>x.c>0).sort((a,b)=>String(a.p.name).localeCompare(String(b.p.name),undefined,{numeric:true}));
+  const sel=def?list.find(x=>x.kk===k):null;const c=toNum(S.inv.cart[k]),kgc=kgcOf(P,k),kg=c*kgc;
+  const U=f.unit==='t'?'t':f.unit==='ctn'?'ctn':'kg';const UL=U==='t'?'تۆن':U==='ctn'?'کارتۆن':'کیلۆ';
+  const q=toNum(f.qty);const qKg=U==='ctn'?q*kgc:U==='t'?q*1000:q;const over=def&&q>0&&qKg>kg+1e-6;
+  const inU=x=>U==='ctn'?x/kgc:U==='t'?x/1000:x;const dec=U==='t'?3:U==='ctn'?2:1;
+  return `<div class="card tapeform" style="background:var(--bg)">
+   <h3 style="margin-top:0">${I('up','sm')} دەرئێخستنا سبغێ</h3>
+   <div class="tstep"><div class="lb">١. سبغێ هەلبژێرە <span class="muted" style="font-weight:400">(${list.length} جۆر ل مەخزەنێ هەنە)</span></div>
+     <input type="search" id="pfSearch" placeholder="🔍 لێگەڕیان: 7016، Mat، ..." style="width:100%;margin-bottom:8px">
+     <div class="pgrid" id="pfGrid">${list.length?list.map(x=>`<button type="button" class="pcard${x.kk===k?' on':''}" data-act="txSet" data-dir="${dir}" data-f="paint" data-v="${esc(x.p.name)}" data-n="${esc(normQ(x.p.name+' '+(x.p.pul||'')+' '+(x.p.co||'')))}">
+        <span class="psw">${sw(x.p.name)}</span><b dir="ltr">${esc(x.p.name)}</b><span class="muted" style="font-size:.74rem">${x.p.type==='P'?'Rough':'Normal'}${x.p.co?' · '+esc(x.p.co):''}</span><span class="qv">${fmt(x.kg,0)} کیلۆ</span></button>`).join('')
+       :'<div class="muted">مەخزەنا سبغێ ڤالایە.</div>'}</div>
+     <div class="muted" id="pfNone" style="display:none;padding:8px">چ سبغ نەهاتە دیتن.</div></div>
+   ${def?`<div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
+   <div class="tstep"><div class="lb">٢. چەند؟</div>
+     <div class="chips" style="margin-bottom:8px">${[['kg','کیلۆ'],['t','تۆن'],['ctn','کارتۆن']].map(([u,l])=>`<button type="button" class="chip${U===u?' on':''}" data-act="txSet" data-dir="${dir}" data-f="unit" data-v="${u}">${l}</button>`).join('')}</div>
+     <div class="stepper"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button>
+       <input class="num" inputmode="decimal" data-txf="${dir}" data-f="qty" value="${esc(f.qty)}" placeholder="0" style="width:120px">
+       <button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="1">+</button><span class="muted">${UL}</span></div>
+     <div class="chips" style="margin-top:8px">${[1,2,5].map(n=>`<button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(n*kgc).toFixed(dec)}">${n} کارتۆن</button>`).join('')}
+       <button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(kg).toFixed(dec)}">هەمی (${fmt(inU(kg),dec)})</button></div>
+     ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(kg,1)} کیلۆ هەنە</div>`:''}
+     ${q>0&&U!=='kg'&&!over?`<div class="muted" style="margin-top:6px">= ${fmt(qKg,1)} کیلۆ</div>`:''}</div>
+   <div class="tstep"><div class="lb">٣. تێبینی (ئەگەر هەبیت)</div><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: بۆ خەتا سبغکرنێ 2"></div>
+   <button class="btn pri big" data-act="txAdd" data-dir="${dir}" ${c<=0?'disabled':''}>${I('check','sm')} تۆمارکرنا دەرئێخستنێ${q>0?` — ${fmt(q,dec)} ${UL}`:''}</button>`
+   :`<div class="muted" style="text-align:center;padding:14px;border:1px dashed var(--line2);border-radius:12px">☝️ ل سەرێ سبغەکێ هەلبژێرە</div>`}
+  </div>`}
 function txForm(dir){const f=txF(dir);const isIn=dir==='in';
   if(f.kind!=='paint')return tapeForm(dir,f)+(isAdmin?txList(dir):'');
+  if(dir==='out')return paintForm(dir,f)+(isAdmin?txList(dir):'');
   const brands=S.settings.brands||[];const ws=tapeWidths();
   const cur=(()=>{if(f.kind==='paint'){const k=norm(f.paint);return paintDef(k)?paintCurTxt(k):''}const bk=brandKey(f.brand);const k=bk+'|'+f.w+'|'+f.t+'|'+f.len;return `${fmt(toNum(S.inv.box[k]),1)} کارتۆن`})();
   return `<div class="card" style="background:var(--bg)">
@@ -1979,6 +2015,7 @@ function bind(){
       if(c&&it){const q=toNum(el.value);c.textContent=q>0?fmt(rcvAmt(o,f,it,q),isPaintKind(o.kind)?3:1):''}});
     m.querySelectorAll('[data-rcvf]').forEach(el=>{const h=()=>{const f=rcvF(el.dataset.rcvf);f[el.dataset.f]=el.value;if(el.tagName==='SELECT')render()};if(el.tagName==='SELECT')el.onchange=h;else el.oninput=h});
     m.querySelectorAll('[data-binunit]').forEach(el=>el.onchange=()=>{binF().unit=el.value;render()});
+    {const ps=m.querySelector('#pfSearch');if(ps)ps.oninput=()=>{const qs=normQ(ps.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#pfGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#pfNone');if(z)z.style.display=n?'none':''}}
     m.querySelectorAll('[data-olf]').forEach(el=>el.onchange=()=>{olF()[el.dataset.olf]=el.value;render()});
     m.querySelectorAll('[data-binf]').forEach(el=>el.oninput=()=>{binF()[el.dataset.binf]=el.value});
     m.querySelectorAll('[data-bin]').forEach(el=>{const h=()=>{const f=binF();const r=f.rows[+el.dataset.bin];if(!r)return;r[el.dataset.f]=el.value;
@@ -2217,9 +2254,9 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='olPrint'){olPdfAsk()}
-  else if(act==='txSet'){const f=txF(t0.dataset.dir);f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
+  else if(act==='txSet'){const f=txF(t0.dataset.dir);if(t0.dataset.f==='paint'&&f.paint!==t0.dataset.v)f.qty='';if(t0.dataset.f==='unit'&&f.unit!==t0.dataset.v)f.qty='';f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
   else if(act==='txPick'){const f=txF(t0.dataset.dir);const [b,w,tt,l]=t0.dataset.k.split('|');const bo=brandObj(b);f.brand=bo?bo.name:b;f.w=toNum(w);f.t=tt;f.len=toNum(l);render()}
-  else if(act==='txStep'){const f=txF(t0.dataset.dir);f.qty=String(Math.max(0,toNum(f.qty)+toNum(t0.dataset.d)));render()}
+  else if(act==='txStep'){const f=txF(t0.dataset.dir);const st=f.kind==='paint'?paintStep(f,norm(f.paint)):1;f.qty=String(+Math.max(0,toNum(f.qty)+toNum(t0.dataset.d)*st).toFixed(3));render()}
   else if(act==='olQuick'){const f=olF();f.to=today();f.from=t0.dataset.r==='today'?today():today().slice(0,8)+'01';render()}
   else if(act==='binAdd'){const f=binF();for(let i=0;i<toNum(t0.dataset.n);i++)f.rows.push(binNew());render()}
   else if(act==='binDel'){const f=binF();f.rows.splice(+t0.dataset.i,1);if(!f.rows.length)f.rows.push(binNew());render()}
