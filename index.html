@@ -250,6 +250,12 @@ nav.tabs{display:none!important}
 @media print{body>*:not(#printArea){display:none!important}#printArea{display:block!important;direction:rtl;color:#000;background:#fff;font-family:Tahoma,Arial,sans-serif;font-size:11pt}
  #printArea h1{font-size:16pt;margin:0 0 6px}#printArea h2{font-size:12.5pt;margin:14px 0 6px}#printArea .meta{color:#444;margin-bottom:8px}#printArea .sum{border:1px solid #999;padding:6px 10px;border-radius:6px;display:inline-block}
  #printArea table{width:100%;border-collapse:collapse;margin-bottom:6px}#printArea th,#printArea td{border:1px solid #bbb;padding:4px 6px;text-align:right}#printArea th{background:#eee}#printArea .ltr{direction:ltr;unicode-bidi:embed}
+ #printArea .arhd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0e7478;padding-bottom:8px;margin-bottom:12px}#printArea .arhd h1{color:#0e7478;margin:0}
+ #printArea .arco{font-size:15pt;font-weight:700}#printArea .armut{color:#555;font-size:9.5pt}
+ #printArea .arsum{display:flex;gap:10px;margin:10px 0 14px}#printArea .arsum>div{flex:1;border:1px solid #bbb;border-right:4px solid #0e7478;border-radius:6px;padding:6px 10px}
+ #printArea .arsum span{display:block;color:#555;font-size:9pt}#printArea .arsum b{font-size:13pt}#printArea .arsum small{display:block;color:#666}
+ #printArea tr.tot td{font-weight:700;background:#eef4f4;border-top:2px solid #0e7478}
+ #printArea .arsig{display:flex;justify-content:space-between;margin-top:60px}#printArea .arsig div{width:40%;border-top:1px solid #888;padding-top:4px;color:#555;text-align:center}
  #printArea .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}#printArea tr{break-inside:avoid}@page{margin:12mm}}
 .tsrch{display:flex;align-items:center;gap:8px;margin:6px 0 8px;max-width:440px;background:var(--field);border:1px solid var(--line2);border-radius:8px;padding:0 10px;color:var(--muted)}
 .tsrch:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
@@ -1161,7 +1167,7 @@ function viewPo(p){ensP(p);
     <tr><td></td><td colspan="3"><b>Total</b></td><td class="n"><b data-pot="${kind}">${fmt(tot,isP?3:1)}</b></td><td class="ltr">${isP?'ton':'m²'}</td>${isP?'':'<td></td>'}<td></td></tr>
     </tbody></table></div>
     <div style="margin-top:8px"><label class="muted">Notes (ب ئینگلیزی، دێ چیتە د PDF دا)</label><textarea data-po="${kind}" data-f="note" style="min-height:50px">${esc(po.note)}</textarea></div>
-    <div class="row" style="margin-top:8px"><button class="btn pri" data-act="pdf" data-kind="${kind}">${I('file','sm')} دروستکرنا PDF (English)</button>${downloads?'':'<span class="muted">داگرتن ل ڤێرە بەردەست نینە.</span>'}
+    <div class="row" style="margin-top:8px"><button class="btn pri" data-act="pdf" data-kind="${kind}">${I('file','sm')} دروستکرنا PDF</button>${downloads?'':'<span class="muted">داگرتن ل ڤێرە بەردەست نینە.</span>'}
       ${po.sent?'':`<button class="btn pri" data-act="poSend" data-kind="${kind}">📦 هاتە هنارتن — بکە «ل ڕێیە»</button>`}</div>
     ${po.sent?`<div class="info" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><span class="grow">📦 ل <span class="ltr">${esc(po.sent.slice(0,10))}</span> هاتە هنارتن — ${po.items.length} تشت ل ڕێنە (${fmt(po.items.reduce((s,x)=>s+x.qty,0),isP?3:1)} ${isP?'تۆن':'م²'}). دەمێ دگەهن، ل «مەخزەن ← داخلکرن (IN)» وەربگرە.</span>
       <button class="btn" data-act="poSend" data-kind="${kind}">نووکرن</button><button class="btn danger" data-act="poUnsend" data-kind="${kind}">ڤەکێشان</button></div>`:''}
@@ -1422,7 +1428,7 @@ function reportData(){const inv=S.inv||normStock({});const P={stock:inv};
     m2N:tapes.filter(x=>x.t==='N').reduce((s,x)=>s+x.m2,0),m2P:tapes.filter(x=>x.t==='P').reduce((s,x)=>s+x.m2,0)}}
 function viewReport(){const r=reportData();const now=new Date();const K=S.invKind;
   const head=`<div class="row" style="margin-bottom:10px"><div class="grow"><b>${K==='paint'?'ڕاپۆرتا مەخزەنا سبغێ':'ڕاپۆرتا مەخزەنا لسقێ'}</b> <span class="muted ltr">${esc(whenTxt(now.toISOString()))}/${now.getFullYear()}</span></div>
-    <button class="btn pri" data-act="repPdf">${I('file','sm')} PDF (English)</button><button class="btn" data-act="repXlsx">${I('down','sm')} Excel</button></div>`;
+    <button class="btn pri" data-act="repPdf">${I('file','sm')} PDF</button><button class="btn" data-act="repXlsx">${I('down','sm')} Excel</button></div>`;
   if(K==='paint')return head+`<div class="kpis">
     <div class="kpi"><div class="l">سبغ ل مەخزەنێ</div><div class="v">${fmtT(r.totKg)} t</div><div class="muted">${fmt(r.totKg,1)} کیلۆ</div></div>
     <div class="kpi"><div class="l">کارتۆن</div><div class="v">${fmt(r.totCart,1)}</div><div class="muted">${r.paints.length} جۆر</div></div>
@@ -1624,6 +1630,38 @@ function printOutLog(){const K=S.invKind,isP=K==='paint',f=olF();const view=olVi
   <div class="sum">کۆم: <b>${amt(totKg,totQ)}</b> · ${rows.length} جار</div>
   ${view==='all'?`<h2>هەمی تۆمار</h2>${tbl(rows)}`:olGrouped(rows,view).map(g=>`<h2>${esc(g.k)} — <small>${amt(g.kg,g.qty)} · ${g.rows.length} جار</small></h2>${tbl(g.rows,view)}`).join('')}`;
   printHtml(html,`out-${K}-${f.from}_${f.to}`)}
+/* ======================= PDF language (English / عربي) ======================= */
+function pickLang(title,go){let last='en';try{last=localStorage.getItem('bandorder-pdflang')||'en'}catch(e){}
+  dialog(`<h3 style="margin-top:0">${I('file','sm')} ${title}</h3><p class="muted">PDF ب کیژ زمانی بیت؟</p>
+    <div class="chips" style="gap:10px"><label class="chip"><input type="radio" name="pdfLang" value="en" ${last!=='ar'?'checked':''} style="margin-inline-end:6px">English</label>
+    <label class="chip"><input type="radio" name="pdfLang" value="ar" ${last==='ar'?'checked':''} style="margin-inline-end:6px">عربي</label></div>`,
+  ()=>{const v=(document.querySelector('input[name=pdfLang]:checked')||{}).value||'en';try{localStorage.setItem('bandorder-pdflang',v)}catch(e){}setTimeout(()=>go(v),0)},'دروستکرنا PDF')}
+const arT=t=>t==='P'?'خشن (Rough)':'عادي (Normal)';
+const arDate=()=>{const n=new Date(),p=x=>String(x).padStart(2,'0');return `${p(n.getDate())}/${p(n.getMonth()+1)}/${n.getFullYear()} ${p(n.getHours())}:${p(n.getMinutes())}`};
+function arHead(title,sub){const co=S.settings.co||{};return `<div class="arhd"><div><div class="arco">${esc(co.name||'')}</div><div class="armut">${esc([co.addr,co.phone].filter(Boolean).join(' · '))}</div></div>
+  <div style="text-align:left"><h1>${title}</h1><div class="armut">${sub||''}</div></div></div>`}
+function arReportHtml(){const r=reportData();const K=S.invKind;
+  if(K==='paint'){const nKg=r.paints.filter(x=>x.type==='N').reduce((s,x)=>s+x.kg,0),pKg=r.paints.filter(x=>x.type==='P').reduce((s,x)=>s+x.kg,0);
+    return arHead('تقرير مخزن الأصباغ','التاريخ: <span class="ltr">'+arDate()+'</span>')+
+    `<div class="arsum"><div><span>إجمالي الصبغ</span><b>${fmt(r.totKg,1)} كغم</b><small>${fmtT(r.totKg)} طن</small></div><div><span>عدد الكراتين</span><b>${fmt(r.totCart,1)}</b><small>${r.paints.length} نوع</small></div><div><span>عادي / خشن</span><b>${fmt(nKg,0)} / ${fmt(pKg,0)}</b><small>كغم</small></div></div>
+    <table><tr><th>#</th><th>الصبغ</th><th>كود البودرة</th><th>النوع</th><th>الشركة</th><th>كراتين</th><th>كغم/كرتون</th><th>كغم</th></tr>
+    ${r.paints.map((x,i)=>`<tr><td>${i+1}</td><td class="ltr"><b>${esc(x.name)}</b></td><td class="ltr">${esc(x.pul)}</td><td>${arT(x.type)}</td><td class="ltr">${esc(x.co)}</td><td>${fmt(x.cart,1)}</td><td>${fmt(x.kgc)}</td><td><b>${fmt(x.kg,1)}</b></td></tr>`).join('')||'<tr><td colspan="8">المخزن فارغ</td></tr>'}
+    ${r.paints.length?`<tr class="tot"><td colspan="5">المجموع</td><td>${fmt(r.totCart,1)}</td><td></td><td>${fmt(r.totKg,1)}</td></tr>`:''}</table>`}
+  const tt=(L,lbl)=>`<h2>${lbl}</h2><table><tr><th>#</th><th>الشركة</th><th>العرض</th><th>طول اللفة</th><th>كراتين</th><th>لفات</th><th>م²</th></tr>
+    ${L.map((x,i)=>`<tr><td>${i+1}</td><td class="ltr"><b>${esc(x.brand)}</b></td><td class="ltr">${x.w} mm</td><td class="ltr">${x.len} m</td><td>${fmt(x.boxes,1)}</td><td>${fmt(x.rolls,0)}</td><td><b>${fmt(x.m2,1)}</b></td></tr>`).join('')||'<tr><td colspan="7">لا يوجد</td></tr>'}
+    ${L.length?`<tr class="tot"><td colspan="4">المجموع</td><td>${fmt(L.reduce((s,x)=>s+x.boxes,0),1)}</td><td>${fmt(L.reduce((s,x)=>s+x.rolls,0),0)}</td><td>${fmt(L.reduce((s,x)=>s+x.m2,0),1)}</td></tr>`:''}</table>`;
+  return arHead('تقرير مخزن شريط الحماية','التاريخ: <span class="ltr">'+arDate()+'</span>')+
+    `<div class="arsum"><div><span>عادي (Normal)</span><b>${fmt(r.m2N,0)} م²</b></div><div><span>خشن (Rough)</span><b>${fmt(r.m2P,0)} م²</b></div><div><span>الإجمالي</span><b>${fmt(r.totM2,0)} م²</b><small>${fmt(r.totBoxes,1)} كرتون</small></div></div>
+    ${tt(r.tapes.filter(x=>x.t==='N'),'شريط عادي (Normal)')}${tt(r.tapes.filter(x=>x.t!=='N'),'شريط خشن (Rough)')}`}
+function arPoHtml(p,kind){const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0);const tot=items.reduce((s,x)=>s+x.qty,0);
+  return arHead('أمر شراء',isP?'صبغ بودرة (Powder Coating)':'شريط حماية (Protective Tape)')+
+  `<div class="arsum"><div><span>رقم الطلب</span><b class="ltr">${esc(d.no||'-')}</b></div><div><span>التاريخ</span><b class="ltr">${esc((d.date||'').split('-').reverse().join('/'))}</b></div><div><span>إلى</span><b>${esc(d.supplier||'-')}</b></div></div>
+  <table><tr><th>#</th>${isP?'<th>كود الصبغ</th><th>النوع</th><th>الكمية</th><th>الوحدة</th>':'<th>العرض</th><th>النوع</th><th>الكمية</th><th>الوحدة</th><th>كراتين تقريباً</th>'}</tr>
+  ${items.map((it,i)=>`<tr><td>${i+1}</td>${isP?`<td class="ltr"><b>${esc(it.name)}</b></td><td>${arT(it.type)}</td><td><b>${fmt(it.qty,3)}</b></td><td>طن</td>`:`<td class="ltr"><b>${it.w} mm</b></td><td>${arT(it.type)}</td><td><b>${fmt(it.qty,1)}</b></td><td>م²</td><td>${it.boxes?fmt(Math.ceil(it.boxes-1e-9),0):'-'}</td>`}</tr>`).join('')}
+  <tr class="tot"><td colspan="3">المجموع</td><td>${isP?fmt(tot,3):fmt(tot,1)}</td><td>${isP?'طن':'م²'}</td>${isP?'':'<td></td>'}</tr></table>
+  ${isP?'':`<p class="armut">طول اللفة ${fmt(S.settings.rollLen)} م. عدد الكراتين تقريبي.</p>`}
+  ${po.note?`<h2>ملاحظات</h2><p>${esc(po.note)}</p>`:''}
+  <div class="arsig"><div>أعدّه</div><div>وافق عليه</div></div>`}
 function printHtml(inner,title){let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
   pa.innerHTML=inner;const old=document.title;if(title)document.title=title;
   const done=()=>{document.title=old;pa.innerHTML='';window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
@@ -2053,7 +2091,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='logout'){setSession(null);showMe();applyRole();render()}
   else if(act==='userSel'){S.userSel=S.userSel===t.dataset.u?'':t.dataset.u;render()}
   else if(act==='countPdf'){try{const buf=await makeReportPdf(true);await saveFile(`paint-count-${today().replace(/-/g,'')}.pdf`,new Uint8Array(buf),'application/pdf')}catch(e){toast('⚠️ PDF دروست نەبوو')}}
-  else if(act==='repPdf'){try{const buf=await makeReportPdf();const d=today().replace(/-/g,'');await saveFile(`${S.invKind}-stock-${d}.pdf`,new Uint8Array(buf),'application/pdf')}catch(e){toast('⚠️ PDF دروست نەبوو')}}
+  else if(act==='repPdf'){pickLang('PDF ڕاپۆرتا مەخزەنێ',async lang=>{if(lang==='ar'){printHtml(arReportHtml(),`${S.invKind}-stock-ar-${today()}`);return}try{const buf=await makeReportPdf();const d=today().replace(/-/g,'');await saveFile(`${S.invKind}-stock-${d}.pdf`,new Uint8Array(buf),'application/pdf')}catch(e){toast('⚠️ PDF دروست نەبوو')}})}
   else if(act==='repXlsx'){try{const X=await loadXLSX();const r=reportData();const wb=X.utils.book_new();
       if(S.invKind==='paint')X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Paint','Puler Code','Finish','Supplier','Cartons','kg/carton','kg'],...r.paints.map(x=>[x.name,x.pul,x.type==='P'?'Rough':'Normal',x.co,x.cart,x.kgc,+x.kg.toFixed(2)]),['Total','','','',r.totCart,'',+r.totKg.toFixed(2)]]),'Paint');
       if(S.invKind==='tape')X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Company','Width (mm)','Type','Roll length (m)','Boxes','Rolls','m2'],...r.tapes.map(x=>[x.brand,x.w,x.t==='P'?'Rough':'Normal',x.len,x.boxes,x.rolls,+x.m2.toFixed(2)]),['Total','','','',r.totBoxes,'',+r.totM2.toFixed(2)]]),'Tape');
@@ -2116,8 +2154,9 @@ $('#main').addEventListener('click',async e=>{
     if(!downloads){toast('⚠️ داگرتن ل ڤێرە بەردەست نینە');return}
     const kind=t.dataset.kind;const po=getPo(p,kind);const d=poDefaults(p,kind);po.no=po.no||d.no;po.date=po.date||d.date;po.supplier=po.supplier||d.supplier;
     if(!poItems(p,kind).some(x=>x.qty>0)){toast('⚠️ چ ژمارەکا داخوازیێ نینە');return}
-    try{const {buf,name}=await makePdf(p,kind);save('periods/'+p.id,200);await downloads.save({filename:name,data:new Uint8Array(buf)});toast('✓ PDF هاتە دروستکرن')}
-    catch(err){if(!err||err.code!=='declined')toast('⚠️ PDF دروست نەبوو'+(err&&err.code?' ('+err.code+')':(err&&err.message?' ('+err.message+')':'')))}
+    pickLang('PDF داخوازیێ (Purchase Order)',async lang=>{save('periods/'+p.id,200);if(lang==='ar'){printHtml(arPoHtml(p,kind),(d.no||'purchase-order')+'-ar');return}
+    try{const {buf,name}=await makePdf(p,kind);await downloads.save({filename:name,data:new Uint8Array(buf)});toast('✓ PDF هاتە دروستکرن')}
+    catch(err){if(!err||err.code!=='declined')toast('⚠️ PDF دروست نەبوو'+(err&&err.code?' ('+err.code+')':(err&&err.message?' ('+err.message+')':'')))}})
   }
   else if(act==='addPco'){const v=$('#newPco').value.trim();if(v&&!S.settings.paintCos.some(x=>norm(x)===norm(v))){S.settings.paintCos.push(v);save('cfg/settings',200)}render()}
   else if(act==='delPco'){const x=S.settings.paintCos[+t0.dataset.i];dialog(`<p>کۆمپانیا <b class="ltr">${esc(x)}</b> ژێببە؟</p>`,()=>{S.settings.paintCos.splice(+t0.dataset.i,1);S.paints.forEach(c=>{if(c.co===x)c.co=''});save('cfg/settings',100);save('cfg/paints',100);render()},'ژێببە')}
