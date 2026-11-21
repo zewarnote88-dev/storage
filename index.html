@@ -233,6 +233,7 @@ nav.tabs{display:none!important}
 .pcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcard .psw .sw{width:22px;height:22px;border-radius:6px;margin:0}
 .pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
 .bigsel{width:100%;min-height:48px;font-size:1.05rem;padding:8px 12px;border-radius:12px}
+.card.cust.off{opacity:.6;border-style:dashed}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -617,7 +618,7 @@ async function initDb(){
       const path='periods/'+d.id;
       if(dirty[path]||writing[path])return;
       const v=d.data();
-      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
+      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
     });
     Object.keys(S.periods).forEach(id=>{const path='periods/'+id;if(!seen.has(id)&&!dirty[path]&&!writing[path]&&!q.metadata.hasPendingWrites&&!q.metadata.fromCache)delete S.periods[id]});
     if(!q.metadata.fromCache)resolvePer();
@@ -838,6 +839,34 @@ async function fillNames(){let els=[...document.querySelectorAll('[data-uid]')];
   const ids=[...new Set(els.map(e=>e.dataset.uid))];let ps={};try{ps=await userNs.profiles(ids)}catch(e){}
   els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||'کەسەک'})}
 const owk=o=>toNum(o.wkg!=null?o.wkg:o.wkgm);
+/* ======================= Customer order numbers ======================= */
+const cnoKey=o=>String(o.cno||'').trim();
+function orderKg(o){const p=maps().prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);const wk=owk(o);return wk>0?wk:(p&&p.w>0?p.w*m:0)}
+function custGroups(p){const {paint}=maps();const G=new Map();const bar=S.settings.bar||6,ratio=S.settings.ratio||16,sf=S.settings.sfP||1;
+  (p.orders||[]).forEach(o=>{if(!o.code&&!o.paint)return;const q=toNum(o.qty);if(q<=0)return;const k=cnoKey(o);
+    if(!G.has(k))G.set(k,{k,bands:new Set(),rows:0,bars:0,kg:0,noW:0,paints:new Map()});const g=G.get(k);
+    const meters=o.unit==='m'?q:q*(toNum(o.len)||bar);const kg=orderKg(o);if(o.ord)g.bands.add(String(o.ord).trim());
+    g.rows++;g.bars+=meters/bar;g.kg+=kg;if(!(kg>0))g.noW++;
+    const c=paint[norm(o.paint)];const pk=c?c.name:(o.paint||'(بێ ناڤ)');const x=g.paints.get(pk)||{name:pk,type:c?c.type:'?',bars:0,kg:0};x.bars+=meters/bar;x.kg+=kg;g.paints.set(pk,x)});
+  return [...G.values()].map(g=>({...g,paintKg:g.kg/ratio*sf,paints:[...g.paints.values()].map(x=>({...x,need:x.kg/ratio*sf})).sort((a,b)=>b.need-a.need)}))
+    .sort((a,b)=>(a.k===''?1:0)-(b.k===''?1:0)||String(a.k).localeCompare(String(b.k),undefined,{numeric:true}))}
+function viewCust(p){const gs=custGroups(p);const cancel=p.cancel||[];const q=normQ(S.custQ||'').trim();
+  const shown=gs.filter(g=>!q||normQ(g.k+' '+[...g.bands].join(' ')+' '+g.paints.map(x=>x.name).join(' ')).includes(q));
+  const canc=gs.filter(g=>g.k&&cancel.includes(g.k));const cKg=canc.reduce((s,g)=>s+g.paintKg,0);
+  return `<div class="card"><h2>${I('clip')} داخوازیێن کڕیاران <span class="muted" style="font-size:.9rem;font-weight:400">(Customer Order No.)</span></h2>
+  <p class="muted" style="margin-top:-4px">بۆ هەر ژمارەکا داخوازیێ: کێشا پڕۆفایلان و سبغا پێتڤی (کێش ÷ ${fmt(S.settings.ratio)} × ${fmt(S.settings.sfP,2)}). ئەگەر داخوازیەک هاتە بەتالکرن، «بەتالکرن» بکە دا ژ حیسابێ ماوەیێ دەربکەڤیت و بزانی چەند سبغ زێدە دمینیت.</p>
+  ${canc.length?`<div class="note">❌ ${canc.length} داخوازی هاتینە بەتالکرن — <b>${fmt(cKg,1)} کیلۆ سبغ</b> زێدە دمینیت (${canc.map(g=>esc(g.k)).join('، ')}).</div>`:''}
+  <input type="search" id="custQ" value="${esc(S.custQ||'')}" placeholder="🔍 لێگەڕیان: ژمارا داخوازیێ، Band، سبغ" style="width:100%;margin:8px 0 12px">
+  ${!gs.length?'<p class="muted">هێشتا چ ئۆردەر نینن.</p>':shown.map(g=>{const off=g.k&&cancel.includes(g.k);
+    return `<div class="card cust${off?' off':''}" style="background:var(--bg)">
+     <div class="row" style="align-items:center;gap:10px;margin-bottom:8px"><div class="grow"><b style="font-size:1.1rem" dir="ltr">${g.k?esc(g.k):'<span class="muted">(بێ ژمارا داخوازیێ)</span>'}</b>
+       ${g.bands.size?`<span class="muted" dir="ltr"> · ${esc([...g.bands].join(', '))}</span>`:''}${off?' <span class="pill" style="background:var(--bad);color:#fff">بەتالکری</span>':''}
+       <div class="muted" style="font-size:.85rem">${g.rows} ڕیز · ${fmt(g.bars,1)} قەد · کێشا پڕۆفایلان <b>${fmt(g.kg,1)} kg</b>${g.noW?` · <span class="short">${g.noW} ڕیز بێ کێش</span>`:''}</div></div>
+       <div style="text-align:center"><div class="muted" style="font-size:.8rem">سبغا پێتڤی</div><div style="font-size:1.4rem;font-weight:800;color:var(--accent)">${fmt(g.paintKg,1)} <small>kg</small></div></div>
+       ${g.k&&can('periods')?`<button class="btn ${off?'':'danger'}" data-act="custCancel" data-k="${esc(g.k)}">${off?'↩️ ڤەگەڕاندن':'❌ بەتالکرن'}</button>`:''}</div>
+     <div class="tbl-scroll" data-nosrch><table><thead><tr><th>سبغ</th><th>جۆر</th><th class="n">قەد</th><th class="n">کێش (kg)</th><th class="n">سبغا پێتڤی (kg)</th></tr></thead><tbody>
+      ${g.paints.map(x=>`<tr><td dir="ltr" style="text-align:right">${sw(x.name)}<b>${esc(x.name)}</b></td><td>${pill(x.type)}</td><td class="n">${fmt(x.bars,1)}</td><td class="n">${fmt(x.kg,1)}</td><td class="n"><b>${fmt(x.need,1)}</b></td></tr>`).join('')}
+     </tbody></table></div></div>`}).join('')}</div>`}
 function fixLearnedW(){if(!(isAdmin||can('master')||can('m_profiles')))return;const {prof}=maps();let n=0;
   Object.values(S.periods).forEach(pr=>(pr.orders||[]).forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];if(!(wk>0)||!x||!(x.w>0))return;
     const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);if(m>0&&Math.abs(x.w-wk)<1e-9&&m>1.0001){x.w=+(wk/m).toFixed(4);n++}}));
@@ -850,7 +879,7 @@ function compute(period){
   let totalBars=0,totalMeters=0,totalProfKg=0;
   const st=S.settings;
   period.orders.forEach(o=>{
-    const q0=toNum(o.qty); if(!o.code&&!o.paint)return; if(q0<=0)return;
+    const q0=toNum(o.qty); if(!o.code&&!o.paint)return; if(q0<=0)return; if(o.cno&&(period.cancel||[]).includes(cnoKey(o)))return;
     const meters=o.unit==='m'?q0:q0*(toNum(o.len)||bar); const qty=meters/bar;
     totalBars+=qty; totalMeters+=meters;
     const p=prof[norm(o.code)]; const c=paint[norm(o.paint)];
@@ -907,7 +936,7 @@ function findHeader(rows,tests){
   for(let i=0;i<Math.min(rows.length,10);i++){
     const r=rows[i].map(c=>String(c??'').toLowerCase());
     const idx={};let hits=0;
-    for(const [key,re] of Object.entries(tests)){const j=r.findIndex(c=>re.test(c));if(j>=0){idx[key]=j;hits++}}
+    const used=new Set();for(const [key,re] of Object.entries(tests)){const j=r.findIndex((c,ci)=>!used.has(ci)&&re.test(c));if(j>=0){idx[key]=j;used.add(j);hits++}}
     if(hits>=2)return {row:i,idx};
   }
   return null;
@@ -938,11 +967,11 @@ function parsePaints(rows){
   return out;
 }
 function parseOrders(rows,unit){
-  const h=findHeader(rows,{code:/code|کۆد|profile|پڕۆفایل/,paint:/coat|paint|colou?r|سبغ|ڕەنگ|رنگ/,qty:/qty|quant|pcs|piece|count|ژمار|عدد|کمیة|کمية|قەد/,ord:/order|ئۆردەر|no\.?$|رقم|band|brand|customer|client|کۆمپانی/,len:/length|len|درێژ|طول/,w:/wight|weight|kg|کێش|وزن/});
+  const h=findHeader(rows,{code:/code|کۆد|profile|پڕۆفایل/,paint:/coat|paint|colou?r|سبغ|ڕەنگ|رنگ/,cno:/customer|cust\.?|c\.?o\.?\s*(no|#|num)|order\s*(no|#|num)|^p\.?o\.?\s*(no|#)?$|ژمارا داخوازی|داخوازی|رقم الطلب|طلب/,qty:/qty|quant|pcs|piece|count|ژمار|عدد|کمیة|کمية|قەد/,ord:/order|ئۆردەر|no\.?$|رقم|band|brand|customer|client|کۆمپانی/,len:/length|len|درێژ|طول/,w:/wight|weight|kg|کێش|وزن/});
   const out=[];
   if(h){
     for(let i=h.row+1;i<rows.length;i++){const r=rows[i];const code=String(r[h.idx.code]??'').trim();const qty=toNum(r[h.idx.qty]);if(!code||qty<=0)continue;
-      out.push({ord:h.idx.ord!==undefined?String(r[h.idx.ord]??'').trim():'',code,paint:h.idx.paint!==undefined?String(r[h.idx.paint]??'').trim():'',qty,unit,len:(h.idx.len!==undefined&&unit!=='m')?toNum(r[h.idx.len]):0,wkg:h.idx.w!==undefined?toNum(r[h.idx.w]):0})}
+      out.push({cno:h.idx.cno!==undefined?String(r[h.idx.cno]??'').trim():'',ord:h.idx.ord!==undefined?String(r[h.idx.ord]??'').trim():'',code,paint:h.idx.paint!==undefined?String(r[h.idx.paint]??'').trim():'',qty,unit,len:(h.idx.len!==undefined&&unit!=='m')?toNum(r[h.idx.len]):0,wkg:h.idx.w!==undefined?toNum(r[h.idx.w]):0})}
     return out;
   }
   for(const r0 of rows){
@@ -1122,11 +1151,11 @@ function viewPeriods(){
       return `<div class="pitem ${p.id===S.cur?'on':''}" data-act="pick" data-id="${p.id}"><div class="pi">${I('calendar','sm')}</div><div class="grow"><b>${esc(p.name)}</b><div class="muted ltr pdate" style="text-align:right">${esc(p.start)} → ${esc(p.end)}</div></div>${bad?'<span class="pill Q">کێمی</span>':`<span class="muted" style="font-size:.78rem">${fmt(p.orders.length,0)} ڕیز</span>`}</div>`}).join(''):'<div class="muted">هێشتا چ ماوە نینن. «ماوەیەکا نوو» بکە.</div>'}</div></div>`;
   if(!S.cur)return warn+`<div class="layout"><aside>${left}</aside><section><div class="card muted">ماوەیەکێ هەلبژێرە یان یا نوو دروست بکە.</div></section></div>`;
   const p=S.periods[S.cur];
-  if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','resPaint','resTape','po'].includes(S.sub))S.sub='orders';
+  if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','cust','resPaint','resTape','po'].includes(S.sub))S.sub='orders';
   ensP(p);const nSel=p.sel.paint.length+p.sel.tape.length;
-  const subs=[['orders','ئۆردەر','clip'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
+  const subs=[['orders','ئۆردەر','clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
   let body='';
-  body={orders:viewOrders,resPaint:viewResPaint,resTape:viewResTape,po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
+  body={orders:viewOrders,cust:viewCust,resPaint:viewResPaint,resTape:viewResTape,po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
   return warn+`<div class="layout"><aside>${left}</aside><section><div class="card">
     <div class="ptitle"><input id="pName" class="grow" value="${esc(p.name)}">
       <label class="muted">ژ <input type="date" id="pStart" value="${esc(p.start)}"></label>
@@ -1143,7 +1172,7 @@ function viewOrders(p){
   <div style="border:2px dashed var(--accent);border-radius:12px;padding:12px;margin:10px 0">
     <b>پەیستکرن ژ ئێکسلێ</b>
     <p class="muted" style="margin:4px 0">د ئێکسلێدا هەمی تابلۆیێ هەلبژێرە <b>دگەل سەرناڤان</b> (<span class="ltr">Profile name · Length · Wight · Quantity · Color Code · Band</span>)، <span class="ltr">Ctrl+C</span> بکە، پاشی ل ڤێرە <span class="ltr">Ctrl+V</span> بکە.</p>
-    <textarea id="ordPaste" placeholder="Profile name	Length	Wight	Quantity	Color Code	Band&#10;TM0001A	6		121	7016 Parlak	DULA"></textarea>
+    <textarea id="ordPaste" placeholder="Customer Order	Profile name	Length	Wight	Quantity	Color Code	Band&#10;CO-1024	TM0001A	6	350	400	7016 Parlak	DULA"></textarea>
     <div id="ordPreview" class="muted"></div>
     <div class="row" style="margin-top:6px"><button class="btn pri" data-act="ordPaste">زێدە بکە</button>
       <label class="btn">${I('up','sm')} بارکرنا فایلێ ئێکسلێ <input type="file" id="ordFile" accept=".xlsx,.xls,.csv" class="hide"></label>
@@ -1154,9 +1183,10 @@ function viewOrders(p){
     <button class="btn" data-act="addRow">+ ڕیزەک</button>${rows.length?'<button class="btn danger" data-act="clearOrders">هەمیان ژێببە</button>':''}</div>
   <datalist id="dlCodes">${S.profiles.map(x=>`<option value="${esc(x.code)}">`).join('')}</datalist>
   <datalist id="dlPaints">${S.paints.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>
-  <div class="tbl-scroll"><table><thead><tr><th>#</th><th>Band</th><th>کۆدێ پڕۆفایلی</th><th>سبغ</th><th class="n">ژمار</th><th>یەکە</th><th class="n">کێشا هەمی (kg)</th><th>جۆر</th><th></th></tr></thead><tbody>
+  <div class="tbl-scroll"><table><thead><tr><th>#</th><th>ژ. داخوازیێ</th><th>Band</th><th>کۆدێ پڕۆفایلی</th><th>سبغ</th><th class="n">ژمار</th><th>یەکە</th><th class="n">کێشا هەمی (kg)</th><th>جۆر</th><th></th></tr></thead><tbody>
   ${rows.map((o,i)=>{const pp=prof[norm(o.code)],cc=paint[norm(o.paint)];
-    return `<tr><td class="muted">${i+1}</td>
+    return `<tr${o.cno&&(p.cancel||[]).includes(cnoKey(o))?' style="opacity:.45" title="داخوازی هاتیە بەتالکرن"':''}><td class="muted">${i+1}</td>
+    <td><input class="code" data-o="${i}" data-f="cno" value="${esc(o.cno||'')}" placeholder="—"></td>
     <td><input class="code" data-o="${i}" data-f="ord" value="${esc(o.ord)}"></td>
     <td><input class="code" list="dlCodes" data-o="${i}" data-f="code" value="${esc(o.code)}" style="${o.code&&!pp?'border-color:var(--bad)':''}"></td>
     <td><input class="paint" list="dlPaints" data-o="${i}" data-f="paint" value="${esc(o.paint)}" style="${o.paint&&!cc?'border-color:var(--bad)':''}"></td>
@@ -2065,7 +2095,7 @@ function bind(){
     m.querySelectorAll('input[data-o]').forEach(el=>el.oninput=()=>{
       const o=p.orders[+el.dataset.o];const f=el.dataset.f;o[f]=(f==='qty'||f==='wkg')?toNum(el.value):el.value;if(f==='wkg')delete o.wkgm;save('periods/'+p.id);
       if(f==='code'||f==='paint'){const {prof,paint}=maps();const ok=f==='code'?prof[norm(el.value)]:paint[norm(el.value)];el.style.borderColor=el.value&&!ok?'var(--bad)':'';
-        if(f==='paint'){const td=el.closest('tr').children[7];td.innerHTML=ok?pill(ok.type):(el.value?pill('?'):'')}}
+        if(f==='paint'){const td=el.closest('tr').children[8];td.innerHTML=ok?pill(ok.type):(el.value?pill('?'):'')}}
     });
     m.querySelectorAll('input[data-st]').forEach(el=>el.oninput=()=>{
       const kind=el.dataset.st,k=el.dataset.k;
@@ -2092,6 +2122,7 @@ function bind(){
     m.querySelectorAll('[data-rcvf]').forEach(el=>{const h=()=>{const f=rcvF(el.dataset.rcvf);f[el.dataset.f]=el.value;if(el.tagName==='SELECT')render()};if(el.tagName==='SELECT')el.onchange=h;else el.oninput=h});
     m.querySelectorAll('[data-binunit]').forEach(el=>el.onchange=()=>{binF().unit=el.value;render()});
     {const ps=m.querySelector('#pfSearch');if(ps)ps.oninput=()=>{const qs=normQ(ps.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#pfGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#pfNone');if(z)z.style.display=n?'none':''}}
+    {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
     m.querySelectorAll('[data-olf]').forEach(el=>el.onchange=()=>{olF()[el.dataset.olf]=el.value;render()});
     m.querySelectorAll('[data-binf]').forEach(el=>el.oninput=()=>{binF()[el.dataset.binf]=el.value});
     m.querySelectorAll('[data-bin]').forEach(el=>{const h=()=>{const f=binF();const r=f.rows[+el.dataset.bin];if(!r)return;r[el.dataset.f]=el.value;
@@ -2221,7 +2252,7 @@ async function importAll(D){
   if(D.settings)S.settings={...S.settings,...D.settings};
   S.paints=(D.paints||[]).map(p=>({name:String(p.name||''),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||'')}));
   S.profiles=(D.profiles||[]).map(p=>({code:String(p.code||''),b1:toNum(p.b1),b2:toNum(p.b2),s1:toNum(p.s1)===2?2:1,s2:toNum(p.s2)===2?2:1,w:toNum(p.w),wrap:!!p.wrap,per:toNum(p.per)}));
-  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
+  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
   S.periods=np;S.cur=null;
   if(Array.isArray(D.appUsers)&&D.appUsers.length){S.appUsers=D.appUsers;if(D.recovery)S.recovery=D.recovery}
   if(D.inv){S.invBase=normStock(D.inv);const now=new Date().toISOString();S.invMeta={};INV_SECS.forEach(sec=>Object.keys(S.invBase[sec]||{}).forEach(k=>S.invMeta[sec+':'+k]={u:me.id||null,at:now}));recomputeInv()}
@@ -2331,6 +2362,9 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='myProfile'){myProfile()}
+  else if(act==='custCancel'&&p){const k=t0.dataset.k;p.cancel=p.cancel||[];const on=p.cancel.includes(k);
+    const doIt=()=>{p.cancel=on?p.cancel.filter(x=>x!==k):[...p.cancel,k];save('periods/'+p.id,100);render();toast(on?`↩️ داخوازی ${k} زڤڕی د حیسابێ دا`:`❌ داخوازی ${k} هاتە بەتالکرن — ژ حیسابێ سبغ و لسقێ دەرکەفت`)};
+    if(on)doIt();else dialog(`<p>داخوازیا <b dir="ltr">${esc(k)}</b> بەتال بکە؟ ئۆردەرێن وێ ژ حیسابێ ماوەیێ (سبغ و لسق) دەردکەڤن، لێ ژێ نابن — دشێی پاشی ڤەگەڕینی.</p>`,doIt,'بەتالکرن')}
   else if(act==='olPrint'){olPdfAsk()}
   else if(act==='txSet'){const f=txF(t0.dataset.dir);if(t0.dataset.f==='paint'&&f.paint!==t0.dataset.v)f.qty='';if(t0.dataset.f==='unit'&&f.unit!==t0.dataset.v)f.qty='';f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
   else if(act==='txPick'){const f=txF(t0.dataset.dir);const [b,w,tt,l]=t0.dataset.k.split('|');const bo=brandObj(b);f.brand=bo?bo.name:b;f.w=toNum(w);f.t=tt;f.len=toNum(l);render()}
