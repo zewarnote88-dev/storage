@@ -693,7 +693,7 @@ async function initDb(){
       const path='periods/'+d.id;
       if(dirty[path]||writing[path])return;
       const v=d.data();
-      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
+      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],ptype:v.ptype&&typeof v.ptype==='object'?{...v.ptype}:{},note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
     });
     Object.keys(S.periods).forEach(id=>{const path='periods/'+id;if(!seen.has(id)&&!dirty[path]&&!writing[path]&&!q.metadata.hasPendingWrites&&!q.metadata.fromCache)delete S.periods[id]});
     if(!q.metadata.fromCache)resolvePer();
@@ -952,14 +952,14 @@ function compute(period){
   const {prof,paint}=maps();
   const bar=S.settings.bar||6, ratio=S.settings.ratio||16;
   const tape={}; const pnt={}; const missProf={}, missPaint={}, missW={}, missPer={}, missWidth={}, subUsed={}, noSupply={}, tapeB={}, bandDisp={};
-  let totalBars=0,totalMeters=0,totalProfKg=0;
+  let totalBars=0,totalMeters=0,totalProfKg=0;const unkType={};
   const st=S.settings;
   period.orders.forEach(o=>{
     const q0=toNum(o.qty); if(!o.code&&!o.paint)return; if(q0<=0)return; if(o.cno&&(period.cancel||[]).includes(cnoKey(o)))return;
     const meters=o.unit==='m'?q0:q0*(lenM(o)||bar); const qty=meters/bar;
     totalBars+=qty; totalMeters+=meters;
     const p=prof[norm(o.code)]; const c=paint[norm(o.paint)];
-    const t=c?c.type:'?';
+    const pk0=norm(o.paint)||'(بێ ناڤ)';const known=c&&(c.type==='N'||c.type==='P');const t=known?c.type:(((period.ptype||{})[pk0])==='N'?'N':'P');if(!known)unkType[pk0]={name:o.paint||'(بێ ناڤ)',t,bars:((unkType[pk0]||{}).bars||0)+(o.unit==='m'?q0/bar:q0)};
     if(!c&&o.paint)missPaint[norm(o.paint)]=(missPaint[norm(o.paint)]||0)+qty;
     if(!c&&!o.paint)missPaint['(بێ ناڤ)']=(missPaint['(بێ ناڤ)']||0)+qty;
     const pk=c?norm(c.name):norm(o.paint)||'(بێ ناڤ)';
@@ -999,7 +999,7 @@ function compute(period){
   const paintRows=Object.entries(allP).map(([k,v])=>{const needRaw=v.profKg/ratio;const need=needRaw*(S.settings.sfP||1);const st=stockKg(period,k);const inc=toNum(period.stock.inc[k]);const diff=st+inc-need;const kc=kgcOf(period,k);return {key:k,...v,need,needRaw,stock:st,inc,cart:toNum(period.stock.cart[k]),diff,kgc:kc,orderCart:diff<-0.0005?Math.ceil(-diff/kc-1e-9):0}})
     .sort((a,b)=>b.need-a.need||a.name.localeCompare(b.name));
   const sum=(arr,f)=>arr.reduce((s,r)=>s+f(r),0);
-  return {tapeRows,brandRows,paintRows,missWidth,subUsed,noSupply,missProf,missPaint,missW,missPer,totalBars,totalMeters,totalProfKg,
+  return {unkType,tapeRows,brandRows,paintRows,missWidth,subUsed,noSupply,missProf,missPaint,missW,missPer,totalBars,totalMeters,totalProfKg,
     tapeNeed:sum(tapeRows,r=>r.need),tapeShort:sum(tapeRows,r=>Math.max(0,-r.diff)),
     paintNeed:sum(paintRows,r=>r.need),paintShort:sum(paintRows,r=>Math.max(0,-r.diff)),paintShortN:paintRows.filter(r=>r.need>0&&r.diff<-0.0005).length,paintUsedN:paintRows.filter(r=>r.need>0).length,
     tapeShortN:tapeRows.filter(r=>r.need>0&&r.diff<-0.0005).length,tapeUsedN:tapeRows.filter(r=>r.need>0).length,
@@ -1501,6 +1501,11 @@ function viewResTape(p){
     <div class="kpi"><div class="l">لسقا پێتڤی (م²) × ${fmt(S.settings.sfT,2)}</div><div class="v">${fmt(r.tapeNeed)}</div><div class="muted">Normal ${fmt(r.tapeNeedNR.N)} · Rough ${fmt(r.tapeNeedNR.P)}</div></div>
     <div class="kpi"><div class="l">کێمیا لسقێ (م²)</div><div class="v ${r.tapeShort>0.0001?'bad':''}">${fmt(r.tapeShort)}</div></div>
   </div>
+  ${(()=>{const U=Object.entries(r.unkType||{});if(!U.length)return '';
+    return `<div class="note" style="background:var(--warn-soft);border-color:var(--warn-line)"><b>❓ جۆرێ ئەڤان سبغان نەدیارە</b> (نە د لیستا جۆرێن سبغێ دا، یان بێ Normal/Rough). ب پێشکەفتی وەک <b>Rough</b> دهێنە حیسابکرن — دشێی ب دەستی بگوهۆڕی:
+     <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${U.map(([k,x])=>`<div class="row" style="align-items:center;gap:8px"><b dir="ltr" class="grow" style="text-align:right">${esc(x.name)}</b><span class="muted">${fmt(x.bars,0)} قەد</span>
+       <span class="chips"><button type="button" class="chip${x.t==='P'?' on':''}" data-act="ptype" data-k="${esc(k)}" data-v="P">Rough</button><button type="button" class="chip${x.t==='N'?' on':''}" data-act="ptype" data-k="${esc(k)}" data-v="N">Normal</button></span></div>`).join('')}</div>
+     <div class="muted" style="margin-top:6px;font-size:.82rem">باشترین ڕێک: سبغێ ل «زانیاری ← جۆرێن سبغێ» زێدە بکە دا هەمی ماوە بزانن.</div></div>`})()}
   ${warnHtml(warns)}
   ${Object.keys(r.subUsed).length?`<div class="info">🔁 گوهۆڕینا لسقێ: ${Object.entries(r.subUsed).map(([k,m])=>`<span class="ltr">${k.replace('→',' mm → ')} mm</span> (${fmt(m,0)} مەتر پڕۆفایل)`).join('، ')}</div>`:''}
   <div class="row"><h3 class="grow">ئەنجاما لسقێ — ئەرێ بەسە بۆ هەمی ئۆردەران؟</h3>${resTools('tape')}</div>
@@ -2403,7 +2408,7 @@ async function importAll(D){
   if(D.settings)S.settings={...S.settings,...D.settings};
   S.paints=(D.paints||[]).map(p=>({name:String(p.name||''),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||'')}));
   S.profiles=(D.profiles||[]).map(p=>({code:String(p.code||''),b1:toNum(p.b1),b2:toNum(p.b2),s1:toNum(p.s1)===2?2:1,s2:toNum(p.s2)===2?2:1,w:toNum(p.w),wrap:!!p.wrap,per:toNum(p.per)}));
-  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
+  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],ptype:v.ptype&&typeof v.ptype==='object'?{...v.ptype}:{},note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
   S.periods=np;S.cur=null;
   if(Array.isArray(D.appUsers)&&D.appUsers.length){S.appUsers=D.appUsers;if(D.recovery)S.recovery=D.recovery}
   if(D.inv){S.invBase=normStock(D.inv);const now=new Date().toISOString();S.invMeta={};INV_SECS.forEach(sec=>Object.keys(S.invBase[sec]||{}).forEach(k=>S.invMeta[sec+':'+k]={u:me.id||null,at:now}));recomputeInv()}
@@ -2520,6 +2525,7 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='myProfile'){myProfile()}
+  else if(act==='ptype'&&p){p.ptype=p.ptype||{};p.ptype[t0.dataset.k]=t0.dataset.v;save('periods/'+p.id,100);render()}
   else if(act==='poEarly'&&isAdmin){const id=t0.dataset.id;const o=openPos().find(x=>x.p.id+'~'+x.kind===id);if(!o)return;o.po.early=true;save('periods/'+o.p.id,100);render();toast('✅ نوکە دشێی داخل بکەی')}
   else if(act==='rcvUndo'&&isAdmin){const id=t0.dataset.id;const t=(S.tx.in||[]).find(x=>x.id===id);if(!t)return;
     dialog(`<p>ئەڤ گەهشتنە ژێببە؟ (<b>${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'}</b> ${esc(txLabel(t.sec,t.key))})</p><p class="muted">دێ ژ مەخزەنێ کێم بیت و دیسا وەک «ل ڕێیە / هێشتا نەگەهشتیە» دیار بیت.</p>`,async()=>{
