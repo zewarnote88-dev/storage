@@ -297,9 +297,9 @@ html[data-glass="1"] input,html[data-glass="1"] select,html[data-glass="1"] text
 .qin{position:relative;display:flex}
 .qin input{width:100%!important;height:64px;text-align:center;font-size:1.7rem!important;font-weight:700;border-radius:16px;padding-inline:44px}
 .qin .qu{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem;pointer-events:none}
-.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .qgrid .chip{margin:0;min-height:48px;justify-content:center;display:flex;align-items:center;border-radius:14px;font-size:.95rem;text-align:center}
-@media (max-width:640px){.qgrid{grid-template-columns:repeat(2,1fr)}}
+
 
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1864,8 +1864,7 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
      <div class="qstep"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="1">+</button>
        <span class="qin"><input class="num" inputmode="decimal" data-txf="${dir}" data-f="qty" value="${esc(f.qty)}" placeholder="0"><span class="qu">${UL}</span></span>
        <button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button></div>
-     <div class="qgrid">${[1,2,5].map(n=>`<button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(n*kgc).toFixed(dec)}">${n} کارتۆن</button>`).join('')}
-       <button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(kg).toFixed(dec)}">هەمی (${fmt(inU(kg),dec)})</button></div></div>
+     <div class="qgrid">${[1,2,5].map(n=>`<button type="button" class="chip" data-act="txSet" data-dir="${dir}" data-f="qty" data-v="${+inU(n*kgc).toFixed(dec)}">${n} کارتۆن</button>`).join('')}</div></div>
      ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(kg,1)} کیلۆ هەنە</div>`:''}
      ${q>0&&U!=='kg'&&!over?`<div class="muted" style="margin-top:6px">= ${fmt(qKg,1)} کیلۆ</div>`:''}</div>
    ${takerStep(dir,f,'٣')}
