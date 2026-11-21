@@ -854,13 +854,14 @@ async function fillNames(){let els=[...document.querySelectorAll('[data-uid]')];
   const ids=[...new Set(els.map(e=>e.dataset.uid))];let ps={};try{ps=await userNs.profiles(ids)}catch(e){}
   els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||'کەسەک'})}
 const owk=o=>toNum(o.wkg!=null?o.wkg:o.wkgm);
+const lenM=o=>{const L=toNum(o.len);return L>50?L/1000:L}; /* درێژیا قەدی: ئەگەر ب mm بیت (6000) دبیتە m (6) */
 /* ======================= Customer order numbers ======================= */
 const cnoKey=o=>String(o.cno||'').trim();
-function orderKg(o){const p=maps().prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);const wk=owk(o);return wk>0?wk:(p&&p.w>0?p.w*m:0)}
+function orderKg(o){const p=maps().prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar);const wk=owk(o);return wk>0?wk:(p&&p.w>0?p.w*m:0)}
 function custGroups(p){const {paint}=maps();const G=new Map();const bar=S.settings.bar||6,ratio=S.settings.ratio||16,sf=S.settings.sfP||1;
   (p.orders||[]).forEach(o=>{if(!o.code&&!o.paint)return;const q=toNum(o.qty);if(q<=0)return;const k=cnoKey(o);
     if(!G.has(k))G.set(k,{k,bands:new Set(),rows:0,bars:0,kg:0,noW:0,paints:new Map()});const g=G.get(k);
-    const meters=o.unit==='m'?q:q*(toNum(o.len)||bar);const kg=orderKg(o);if(o.ord)g.bands.add(String(o.ord).trim());
+    const meters=o.unit==='m'?q:q*(lenM(o)||bar);const kg=orderKg(o);if(o.ord)g.bands.add(String(o.ord).trim());
     g.rows++;g.bars+=meters/bar;g.kg+=kg;if(!(kg>0))g.noW++;
     const c=paint[norm(o.paint)];const pk=c?c.name:(o.paint||'(بێ ناڤ)');const x=g.paints.get(pk)||{name:pk,type:c?c.type:'?',bars:0,kg:0};x.bars+=meters/bar;x.kg+=kg;g.paints.set(pk,x)});
   return [...G.values()].map(g=>({...g,paintKg:g.kg/ratio*sf,paints:[...g.paints.values()].map(x=>({...x,need:x.kg/ratio*sf})).sort((a,b)=>b.need-a.need)}))
@@ -884,7 +885,7 @@ function viewCust(p){const gs=custGroups(p);const cancel=p.cancel||[];const q=no
      </tbody></table></div></div>`}).join('')}</div>`}
 function fixLearnedW(){if(!(isAdmin||can('master')||can('m_profiles')))return;const {prof}=maps();let n=0;
   Object.values(S.periods).forEach(pr=>(pr.orders||[]).forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];if(!(wk>0)||!x||!(x.w>0))return;
-    const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);if(m>0&&Math.abs(x.w-wk)<1e-9&&m>1.0001){x.w=+(wk/m).toFixed(4);n++}}));
+    const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar);if(m>0&&Math.abs(x.w-wk)<1e-9&&m>1.0001){x.w=+(wk/m).toFixed(4);n++}}));
   if(n){save('cfg/profiles',300);toast(`🔧 کێشا ${n} پڕۆفایلان هاتە ڕاستکرن (ژ کێشا هەمی بۆ kg/m)`)}return n}
 function compute(period){
   period=effP(period);
@@ -895,7 +896,7 @@ function compute(period){
   const st=S.settings;
   period.orders.forEach(o=>{
     const q0=toNum(o.qty); if(!o.code&&!o.paint)return; if(q0<=0)return; if(o.cno&&(period.cancel||[]).includes(cnoKey(o)))return;
-    const meters=o.unit==='m'?q0:q0*(toNum(o.len)||bar); const qty=meters/bar;
+    const meters=o.unit==='m'?q0:q0*(lenM(o)||bar); const qty=meters/bar;
     totalBars+=qty; totalMeters+=meters;
     const p=prof[norm(o.code)]; const c=paint[norm(o.paint)];
     const t=c?c.type:'?';
@@ -1197,7 +1198,7 @@ function viewOrders(p){
       <label class="muted">ژمار ب: <select id="ordUnit"><option value="bar">قەد</option><option value="m">مەتر</option></select></label>
       <label class="muted"><input type="checkbox" id="ordReplace"> ئۆردەرێن کەڤن ژێببە</label></div>
   </div>
-  <div class="row" style="margin:10px 0"><span class="grow muted">${fmt(rows.length,0)} ڕیز · ${(()=>{const m=rows.reduce((s,o)=>s+(o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar)),0);return fmt(m/S.settings.bar,1)+' قەد · '+fmt(m,0)+' مەتر'})()}</span>
+  <div class="row" style="margin:10px 0"><span class="grow muted">${fmt(rows.length,0)} ڕیز · ${(()=>{const m=rows.reduce((s,o)=>s+(o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar)),0);return fmt(m/S.settings.bar,1)+' قەد · '+fmt(m,0)+' مەتر'})()}</span>
     <button class="btn" data-act="addRow">+ ڕیزەک</button>${rows.length?'<button class="btn danger" data-act="clearOrders">هەمیان ژێببە</button>':''}</div>
   <datalist id="dlCodes">${S.profiles.map(x=>`<option value="${esc(x.code)}">`).join('')}</datalist>
   <datalist id="dlPaints">${S.paints.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>
@@ -1210,7 +1211,7 @@ function viewOrders(p){
     <td><input class="paint" list="dlPaints" data-o="${i}" data-f="paint" value="${esc(o.paint)}" style="${o.paint&&!cc?'border-color:var(--bad)':''}"></td>
     <td class="n"><input class="num" inputmode="decimal" data-o="${i}" data-f="qty" value="${o.qty||''}"></td>
     <td><select data-o="${i}" data-f="unit"><option value="bar" ${o.unit!=='m'?'selected':''}>قەد</option><option value="m" ${o.unit==='m'?'selected':''}>مەتر</option></select></td>
-    <td class="n"><input class="num" inputmode="decimal" data-o="${i}" data-f="wkg" value="${owk(o)||''}" placeholder="${(()=>{const mm=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);return pp&&pp.w>0&&mm>0?'≈'+fmt(pp.w*mm,1):''})()}" title="کێشا هەمی ڤێ ڕیزێ ب کیلۆ. ئەگەر ڤالا بیت: kg/m یا پڕۆفایلی × مەتر"></td>
+    <td class="n"><input class="num" inputmode="decimal" data-o="${i}" data-f="wkg" value="${owk(o)||''}" placeholder="${(()=>{const mm=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar);return pp&&pp.w>0&&mm>0?'≈'+fmt(pp.w*mm,1):''})()}" title="کێشا هەمی ڤێ ڕیزێ ب کیلۆ. ئەگەر ڤالا بیت: kg/m یا پڕۆفایلی × مەتر"></td>
     <td>${cc?pill(cc.type):(o.paint?pill('?'):'')}</td>
     <td><button class="x" data-act="delRow" data-i="${i}" title="ژێبرن">✕</button></td></tr>`}).join('')}
   </tbody></table></div>
@@ -1403,6 +1404,12 @@ async function makePdf(p,kind){
   doc.setFontSize(8);doc.text(`${ascii(d.no)}  -  generated ${today().split('-').reverse().join('/')}`,W/2,288,{align:'center'});
   return {buf:doc.output('arraybuffer'),name:(ascii(d.no)||'purchase-order').replace(/[^\w\-]/g,'_')+'.pdf'};
 }
+function tapeByProfile(p){const {prof}=maps();const st=S.settings;const bar=st.bar||6;const M=new Map();
+  (p.orders||[]).forEach(o=>{const q0=toNum(o.qty);if(q0<=0||(!o.code&&!o.paint))return;if(o.cno&&(p.cancel||[]).includes(cnoKey(o)))return;
+    const pr=prof[norm(o.code)];if(!pr)return;const meters=o.unit==='m'?q0:q0*(lenM(o)||bar);const bars=meters/bar;
+    const m2=pr.wrap?(pr.per>0?(st.wWidth/1000)*(pr.per/1000)*st.wTurns*st.wSpots*bars:0):((pr.b1||0)*(pr.s1||1)+(pr.b2||0)*(pr.s2||1))/1000*meters;
+    const k=pr.code;const g=M.get(k)||{code:pr.code,pr,bars:0,meters:0,m2:0,lens:new Set()};g.bars+=bars;g.meters+=meters;g.m2+=m2;if(o.unit!=='m')g.lens.add(lenM(o)||bar);M.set(k,g)});
+  return [...M.values()].sort((a,b)=>b.m2-a.m2)}
 function viewResTape(p){
   const r=compute(p);
   const warns=commonWarns(r);
@@ -1433,6 +1440,12 @@ function viewResTape(p){
   ${r.tapeRows.map(x=>`<tr><td><b class="ltr">${x.w} mm</b></td><td>${pill(x.t)}</td><td class="n muted">${fmt(x.needRaw)}</td><td class="n"><b>${fmt(x.need)}</b></td><td class="n">${fmt(x.stock)}${x.boxes?` <span class="muted">(${fmt(x.boxes,1)} کارتۆن)</span>`:''}${x.by.length>1?`<div class="muted" style="font-size:.78rem">${x.by.map(b=>esc(b.brand)+': '+fmt(b.boxes,1)).join(' · ')}</div>`:(x.by.length?`<div class="muted" style="font-size:.78rem">${esc(x.by[0].brand)}</div>`:'')}</td>${diffCell(x.diff,'م²')}<td class="n ${x.orderBoxes?'short':''}">${x.orderBoxes||''}</td></tr>`).join('')||'<tr><td colspan="8" class="muted">هێشتا چ نینە.</td></tr>'}
   </tbody></table></div>
   <p class="muted">Safety factor یێ لسقێ: × ${fmt(S.settings.sfT,2)} (ل تابا «ڕێکخستن» دهێتە گوهۆڕین). حیسابێ لسقێ: (پانی ÷ ١٠٠٠) × مەترێن پڕۆفایلی. پڕۆفایلێن ب پێچان: (${fmt(S.settings.wWidth)} ÷ ١٠٠٠) × (دەور ÷ ١٠٠٠) × ${fmt(S.settings.wTurns)} جار × ${fmt(S.settings.wSpots)} جه × ژمارا قەدان. جۆرێ لسقێ (Normal / Rough) ل دویڤ جۆرێ سبغێ یە.</p>
+  ${(()=>{const L=tapeByProfile(p);if(!L.length)return '';const tot=L.reduce((s,x)=>s+x.m2,0);
+    return `<details style="margin:10px 0"><summary><b>📊 لسق ژ کیژ پڕۆفایلان دهێت؟</b> <span class="muted">(بۆ کۆنترۆلکرنا ژمارێن مەزن — بێ Safety factor)</span></summary>
+    <div class="tbl-scroll" data-nosrch style="margin-top:8px"><table><thead><tr><th>پڕۆفایل</th><th>لسق ل سەر پڕۆفایلی</th><th class="n">درێژیا قەدی</th><th class="n">قەد</th><th class="n">مەتر</th><th class="n">م² لسق</th><th class="n">%</th></tr></thead><tbody>
+    ${L.slice(0,60).map(x=>`<tr><td dir="ltr" style="text-align:right"><b>${esc(x.code)}</b></td><td dir="ltr" style="text-align:right">${x.pr.wrap?`wrap · ${fmt(x.pr.per)} mm`:[[x.pr.b1,x.pr.s1],[x.pr.b2,x.pr.s2]].filter(([w])=>w>0).map(([w,sd])=>`${w} mm${(sd||1)>1?' ×'+sd:''}`).join(' + ')||'—'}</td>
+      <td class="n">${[...x.lens].map(l=>fmt(l,2)+' m').join('، ')||'—'}</td><td class="n">${fmt(x.bars,1)}</td><td class="n">${fmt(x.meters,0)}</td><td class="n"><b>${fmt(x.m2,1)}</b></td><td class="n muted">${tot>0?fmt(x.m2/tot*100,1):0}</td></tr>`).join('')}
+    </tbody></table></div><p class="muted">ئەگەر ژمارەکا مەزن ببینی: پانیا لسقێ (mm) و ×2 ل تابا «پڕۆفایل» کۆنترۆل بکە، و درێژیا قەدی (دڤێت ب مەتر بیت، بۆ نموونە 6).</p></details>`})()}
   ${noteBox(p)}`;
 }
 function viewResPaint(p){
@@ -2228,7 +2241,7 @@ function importOrders(p,list){
   if($('#ordReplace')&&$('#ordReplace').checked)p.orders=[];
   p.orders.push(...list);save('periods/'+p.id,200);
   const {prof}=maps();let learned=0;
-  list.forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);
+  list.forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar);
     if(wk>0&&m>0&&x){const kgm=+(wk/m).toFixed(4);if(Math.abs((x.w||0)-kgm)>1e-4){x.w=kgm;learned++}}});
   if(learned)save('cfg/profiles',300);
   toast(`✓ ${fmt(list.length,0)} ڕیز هاتنە زێدەکرن`+(learned?` · کێشا ${learned} پڕۆفایلان (kg/m) هاتە پاشەکەفتکرن`:''));render();
