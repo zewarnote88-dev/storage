@@ -387,7 +387,7 @@ const I=(n,cls='')=>`<svg class="ico ${cls}" viewBox="0 0 24 24">${ICONS[n]||''}
 /* ======================= State ======================= */
 const DEFAULT_WIDTHS=[40,56,75,100];
 const S={
-  settings:{ratio:16,bar:6,wSpots:4,wTurns:3.5,wWidth:40,co:{name:'',addr:'',phone:''},rollLens:[300,400,500],sfP:1.1,sfT:1.1,paintCos:['Pulver','IBA'],rollLen:300,rpb:{40:11,56:8,75:6,100:4},tapes:[{w:40,rpb:11,on:true,sub:0},{w:56,rpb:8,on:true,sub:0},{w:75,rpb:6,on:true,sub:0},{w:100,rpb:4,on:true,sub:0}],brands:[]},
+  settings:{lenUnit:'mm',ratio:16,bar:6,wSpots:4,wTurns:3.5,wWidth:40,co:{name:'',addr:'',phone:''},rollLens:[300,400,500],sfP:1.1,sfT:1.1,paintCos:['Pulver','IBA'],rollLen:300,rpb:{40:11,56:8,75:6,100:4},tapes:[{w:40,rpb:11,on:true,sub:0},{w:56,rpb:8,on:true,sub:0},{w:75,rpb:6,on:true,sub:0},{w:100,rpb:4,on:true,sub:0}],brands:[]},
   paints:[],      // {name,type:'N'|'P'}
   profiles:[],    // {code,b1,b2,w,wrap,per}  w = kg per meter, per = perimeter mm
   periods:{},     // id -> {id,name,start,end,orders:[{ord,code,paint,qty,unit}],stock:{tape:{},paint:{}},note,createdAt}
@@ -598,7 +598,7 @@ async function initDb(){
   const onErr=e=>{clearTimeout(timeout);setStatus('⚠️ کێشە د خواندنا داتایێ دا: '+(e&&e.code||''),true);if(!S.loaded){S.loaded=true;render()}};
   let f1=false,f2=false,f3=false,f4=false;
   db.doc('cfg/settings').onSnapshot(s=>{
-    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[]};
+    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[]};
       S.settings.tapes=Array.isArray(d.tapes)&&d.tapes.length?d.tapes.map(t=>({w:toNum(t.w),rpb:toNum(t.rpb)||1,on:t.on!==false,sub:toNum(t.sub)})):Object.entries(S.settings.rpb).map(([w,r])=>({w:toNum(w),rpb:toNum(r),on:true,sub:0})).sort((a,b)=>a.w-b.w)}
     if(!f1&&!s.metadata.fromCache){f1=true;done()}else if(S.loaded)softRender();
   },onErr);
@@ -854,7 +854,7 @@ async function fillNames(){let els=[...document.querySelectorAll('[data-uid]')];
   const ids=[...new Set(els.map(e=>e.dataset.uid))];let ps={};try{ps=await userNs.profiles(ids)}catch(e){}
   els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||'کەسەک'})}
 const owk=o=>toNum(o.wkg!=null?o.wkg:o.wkgm);
-const lenM=o=>{const L=toNum(o.len);return L>50?L/1000:L}; /* درێژیا قەدی: ئەگەر ب mm بیت (6000) دبیتە m (6) */
+const lenM=o=>{const L=toNum(o.len);if(!(L>0))return 0;return S.settings.lenUnit==='m'?(L>50?L/1000:L):L/1000}; /* درێژیا قەدی: ئەگەر ب mm بیت (6000) دبیتە m (6) */
 /* ======================= Customer order numbers ======================= */
 const cnoKey=o=>String(o.cno||'').trim();
 function orderKg(o){const p=maps().prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(lenM(o)||S.settings.bar);const wk=owk(o);return wk>0?wk:(p&&p.w>0?p.w*m:0)}
@@ -1191,7 +1191,7 @@ function viewOrders(p){
   <div style="border:2px dashed var(--accent);border-radius:12px;padding:12px;margin:10px 0">
     <b>پەیستکرن ژ ئێکسلێ</b>
     <p class="muted" style="margin:4px 0">د ئێکسلێدا هەمی تابلۆیێ هەلبژێرە <b>دگەل سەرناڤان</b> (<span class="ltr">Profile name · Length · Wight · Quantity · Color Code · Band</span>)، <span class="ltr">Ctrl+C</span> بکە، پاشی ل ڤێرە <span class="ltr">Ctrl+V</span> بکە.</p>
-    <textarea id="ordPaste" placeholder="Customer Order	Profile name	Length	Wight	Quantity	Color Code	Band&#10;CO-1024	TM0001A	6	350	400	7016 Parlak	DULA"></textarea>
+    <textarea id="ordPaste" placeholder="Customer Order	Profile name	Length	Wight	Quantity	Color Code	Band&#10;CO-1024	TM0001A	6000	350	400	7016 Parlak	DULA"></textarea>
     <div id="ordPreview" class="muted"></div>
     <div class="row" style="margin-top:6px"><button class="btn pri" data-act="ordPaste">زێدە بکە</button>
       <label class="btn">${I('up','sm')} بارکرنا فایلێ ئێکسلێ <input type="file" id="ordFile" accept=".xlsx,.xls,.csv" class="hide"></label>
@@ -2108,7 +2108,8 @@ function viewSettings(){
   <h3>سبغ و پڕۆفایل</h3>
   <div class="row" style="margin-bottom:12px"><label style="min-width:260px">هەر چەند تۆن پڕۆفایل = ١ تۆن سبغ</label><input class="num" id="setRatio" inputmode="decimal" value="${S.settings.ratio}"></div>
   <p class="muted">نوکە ${fmt(S.settings.ratio)}: ئانکو ١٠٠٠ کیلۆ پڕۆفایل ← ${fmt(1000/S.settings.ratio,1)} کیلۆ سبغ. ئەگەر دیت ژمارا ڕاست ١٥ یە، ل ڤێرە بگوهۆڕە. هەمی ماوە دێ ب ژمارا نوو هێنە حیسابکرن.</p>
-  <div class="row" style="margin-bottom:12px"><label style="min-width:260px">درێژیا قەدەکێ پڕۆفایلی (مەتر)</label><input class="num" id="setBar" inputmode="decimal" value="${S.settings.bar}"></div>
+  <div class="row" style="margin-bottom:12px"><label style="min-width:260px">درێژیا قەدەکێ پڕۆفایلی (مەتر)</label><input class="num" id="setBar" inputmode="decimal" value="${S.settings.bar}"><span class="muted">ئەگەر د ئۆردەرێ دا Length نەبیت</span></div>
+  <div class="row" style="margin-bottom:12px"><label style="min-width:260px">ستوینا Length د ئۆردەران دا ب</label><select id="setLenU"><option value="mm" ${S.settings.lenUnit!=='m'?'selected':''}>میلیمەتر (mm) — بۆ نموونە 6000</option><option value="m" ${S.settings.lenUnit==='m'?'selected':''}>مەتر (m) — بۆ نموونە 6</option></select></div>
   <h3>زانیاریێن کارگەهێ (بۆ سەرێ PDF، ب ئینگلیزی)</h3>
   <div class="row" style="margin-bottom:8px"><label style="min-width:260px">Company name</label><input class="ltr grow" data-co="name" value="${esc(S.settings.co.name)}" style="text-align:left"></div>
   <div class="row" style="margin-bottom:8px"><label style="min-width:260px">Address</label><input class="ltr grow" data-co="addr" value="${esc(S.settings.co.addr)}" style="text-align:left"></div>
@@ -2222,6 +2223,7 @@ function bindSettingsExtra(m){
   m.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{applyAccent(b.dataset.acc);render()});
   [['#setSfP','sfP'],['#setSfT','sfT']].forEach(([id,k])=>{const el=$(id);if(el)el.oninput=()=>{const v=toNum(el.value);if(v>0){S.settings[k]=v;save('cfg/settings')}}});
   const sr=$('#setRatio');if(sr)sr.oninput=()=>{const v=toNum(sr.value);if(v>0){S.settings.ratio=v;save('cfg/settings')}};
+  {const lu=$('#setLenU');if(lu)lu.onchange=()=>{S.settings.lenUnit=lu.value;save('cfg/settings');toast('✓ Length: '+lu.value)}}
   const sb=$('#setBar');if(sb)sb.oninput=()=>{const v=toNum(sb.value);if(v>0){S.settings.bar=v;save('cfg/settings')}};
   const rls=$('#setRLs');if(rls)rls.onchange=()=>{const l=rls.value.split(/[ ,،]+/).map(toNum).filter(x=>x>0);if(l.length){S.settings.rollLens=[...new Set(l)].sort((a,b)=>a-b);save('cfg/settings',300)}};
   const rl=$('#setRL');if(rl)rl.oninput=()=>{const v=toNum(rl.value);if(v>0){S.settings.rollLen=v;save('cfg/settings')}};
