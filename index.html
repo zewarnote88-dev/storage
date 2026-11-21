@@ -1381,14 +1381,14 @@ async function makePdf(p,kind){
   box(M,'ORDER NO.',ascii(d.no));box(M+62,'DATE',d.date.split('-').reverse().join('/'));box(M+110,'TO',ascii(d.supplier)||'-');
   y+=14;doc.setDrawColor(220,224,221);doc.line(M,y,W-M,y);y+=8;
   // table
-  const cols=isP?[['#',10],['Paint Code',60],['Finish',35],['Quantity',35],['Unit',38]]:[['#',10],['Tape Width',45],['Type',35],['Quantity',35],['Unit',20],['Approx. Boxes',33]];
+  const cols=isP?[['#',10],['Paint Code',55],['Company Code',50],['Quantity',35],['Unit',28]]:[['#',10],['Tape Width',45],['Type',35],['Quantity',35],['Unit',20],['Approx. Boxes',33]];
   const rowH=9;let x=M;
   doc.setFillColor(...green);doc.rect(M,y,W-2*M,rowH,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10);
   cols.forEach(([t,w],i)=>{doc.text(t,i>=3?x+w-3:x+3,y+6,{align:i>=3?'right':'left'});x+=w});
   y+=rowH;doc.setFont('helvetica','normal');doc.setTextColor(30,35,33);
   items.forEach((it,idx)=>{if(y>260){doc.addPage();y=20}
     if(idx%2){doc.setFillColor(243,246,244);doc.rect(M,y,W-2*M,rowH,'F')}
-    const vals=isP?[String(idx+1),ascii(it.name),it.type==='P'?'Rough':'Normal',fmt(it.qty,3),'Ton']:[String(idx+1),it.w+' mm',it.type==='P'?'Rough':'Normal',fmt(it.qty,1),'m2',it.boxes?fmt(Math.ceil(it.boxes-1e-9),0):'-'];
+    const vals=isP?[String(idx+1),ascii(it.name),ascii((paintDef(it.key)||{}).pul||'-'),fmt(it.qty,3),'Ton']:[String(idx+1),it.w+' mm',it.type==='P'?'Rough':'Normal',fmt(it.qty,1),'m2',it.boxes?fmt(Math.ceil(it.boxes-1e-9),0):'-'];
     x=M;cols.forEach(([t,w],i)=>{doc.text(vals[i],i>=3?x+w-3:x+3,y+6,{align:i>=3?'right':'left'});x+=w});y+=rowH});
   doc.setDrawColor(...green);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=7;
   const tot=items.reduce((s,x)=>s+x.qty,0);
@@ -1918,8 +1918,8 @@ function arReportHtml(){const r=reportData();const K=S.invKind;
 function arPoHtml(p,kind){const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0);const tot=items.reduce((s,x)=>s+x.qty,0);
   return arHead('أمر شراء',isP?'صبغ بودرة (Powder Coating)':'شريط حماية (Protective Tape)')+
   `<div class="arsum"><div><span>رقم الطلب</span><b class="ltr">${esc(d.no||'-')}</b></div><div><span>التاريخ</span><b class="ltr">${esc((d.date||'').split('-').reverse().join('/'))}</b></div><div><span>إلى</span><b>${esc(d.supplier||'-')}</b></div></div>
-  <table><tr><th>#</th>${isP?'<th>كود الصبغ</th><th>النوع</th><th>الكمية</th><th>الوحدة</th>':'<th>العرض</th><th>النوع</th><th>الكمية</th><th>الوحدة</th><th>كراتين تقريباً</th>'}</tr>
-  ${items.map((it,i)=>`<tr><td>${i+1}</td>${isP?`<td class="ltr"><b>${esc(it.name)}</b></td><td>${arT(it.type)}</td><td><b>${fmt(it.qty,3)}</b></td><td>طن</td>`:`<td class="ltr"><b>${it.w} mm</b></td><td>${arT(it.type)}</td><td><b>${fmt(it.qty,1)}</b></td><td>م²</td><td>${it.boxes?fmt(Math.ceil(it.boxes-1e-9),0):'-'}</td>`}</tr>`).join('')}
+  <table><tr><th>#</th>${isP?'<th>كود الصبغ</th><th>كود الشركة</th><th>الكمية</th><th>الوحدة</th>':'<th>العرض</th><th>النوع</th><th>الكمية</th><th>الوحدة</th><th>كراتين تقريباً</th>'}</tr>
+  ${items.map((it,i)=>`<tr><td>${i+1}</td>${isP?`<td class="ltr"><b>${esc(it.name)}</b></td><td class="ltr">${esc((paintDef(it.key)||{}).pul||'-')}</td><td><b>${fmt(it.qty,3)}</b></td><td>طن</td>`:`<td class="ltr"><b>${it.w} mm</b></td><td>${arT(it.type)}</td><td><b>${fmt(it.qty,1)}</b></td><td>م²</td><td>${it.boxes?fmt(Math.ceil(it.boxes-1e-9),0):'-'}</td>`}</tr>`).join('')}
   <tr class="tot"><td colspan="3">المجموع</td><td>${isP?fmt(tot,3):fmt(tot,1)}</td><td>${isP?'طن':'م²'}</td>${isP?'':'<td></td>'}</tr></table>
   ${isP?'':`<p class="armut">طول اللفة ${fmt(S.settings.rollLen)} م. عدد الكراتين تقريبي.</p>`}
   ${po.note?`<h2>ملاحظات</h2><p>${esc(po.note)}</p>`:''}
