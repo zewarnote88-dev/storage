@@ -751,7 +751,7 @@ async function initDb(){
   const onErr=e=>{clearTimeout(timeout);setStatus('⚠️ کێشە د خواندنا داتایێ دا: '+(e&&e.code||''),true);if(!S.loaded){S.loaded=true;render()}};
   let f1=false,f2=false,f3=false,f4=false;
   db.doc('cfg/settings').onSnapshot(s=>{
-    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={lead:d.lead&&typeof d.lead==='object'?Object.fromEntries(Object.entries(d.lead).map(([k,v])=>[norm(k),toNum(v)])):{PULVER:15,IBA:12},noBrand:d.noBrand&&typeof d.noBrand==='object'?{name:String(d.noBrand.name??''),factor:toNum(d.noBrand.factor)||1,normal:d.noBrand.normal!==false}:{name:'Alko',factor:0.5,normal:true},lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[]};
+    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={lead:d.lead&&typeof d.lead==='object'?Object.fromEntries(Object.entries(d.lead).map(([k,v])=>[norm(k),toNum(v)])):{PULVER:15,IBA:12},noBrand:d.noBrand&&typeof d.noBrand==='object'?{name:String(d.noBrand.name??''),factor:toNum(d.noBrand.factor)||1,normal:d.noBrand.normal!==false}:{name:'Alko',factor:0.5,normal:true},lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[],bkDays:toNum(d.bkDays)||15,lastBackup:String(d.lastBackup||''),lastBackupBy:String(d.lastBackupBy||'')};
       S.settings.tapes=Array.isArray(d.tapes)&&d.tapes.length?d.tapes.map(t=>({w:toNum(t.w),rpb:toNum(t.rpb)||1,on:t.on!==false,sub:toNum(t.sub)})):Object.entries(S.settings.rpb).map(([w,r])=>({w:toNum(w),rpb:toNum(r),on:true,sub:0})).sort((a,b)=>a.w-b.w)}
     if(!f1&&!s.metadata.fromCache){f1=true;done()}else if(S.loaded)softRender();
   },onErr);
@@ -2348,6 +2348,9 @@ function viewSettings(){
   const curA=document.documentElement.dataset.accent;
   return `<div class="card"><h2>${I('sliders')} ڕێکخستن</h2>
   <h3>${I('box','sm')} Backup — دەرئێخستن و ئینانا داتایێ</h3>
+  <div class="kpi" style="margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="grow"><b>💾 Backup یێ ب خۆ</b><div class="muted" style="font-size:.85rem">${backupAgeTxt()}${S.settings.lastBackupBy?' — ژ لایێ '+esc(S.settings.lastBackupBy):''} · یێ دی: ${(()=>{const lb=lastBackup();if(!lb)return 'نوکە';const d=bkDays()-Math.floor((Date.now()-new Date(lb).getTime())/86400000);return d<=0?'نوکە':'پشتی '+d+' ڕۆژان'})()}</div>
+    <div class="muted" style="font-size:.8rem">دەمێ بەرپرسەک پڕۆگرامی ڤەدکەت و دەم هاتبیت، فایلێ Backup ب خۆ دهێتە داگرتن (Downloads).</div></div>
+    <label class="muted">هەر <input class="num" id="setBkDays" inputmode="numeric" value="${bkDays()}" style="width:60px"> ڕۆژان</label></div>
   <div class="info">«دەرئێخستن» هەمی داتایێ (ماوە، ئۆردەر، مەخزەن، داخوازی، پڕۆفایل، سبغ، لسق و ڕێکخستن) دکەتە ئێک فایل (.json). پاشی دشێی وی فایلی ل جهەکێ دی ب «ئینان» بینی.</div>
   <div class="row" style="margin-bottom:6px">
     <button class="btn pri" data-act="exportAll">${I('down','sm')} دەرئێخستن ب فایل (.json)</button>
@@ -2495,7 +2498,7 @@ function bindSettingsExtra(m){
   m.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{applyAccent(b.dataset.acc);render()});
   {const nb=()=>{S.settings.noBrand=S.settings.noBrand||{};return S.settings.noBrand};const a=$('#setNbName'),f=$('#setNbF'),n=$('#setNbN');
    if(a)a.oninput=()=>{nb().name=a.value.trim();save('cfg/settings')};if(f)f.oninput=()=>{const v=toNum(f.value);if(v>0){nb().factor=v;save('cfg/settings')}};if(n)n.onchange=()=>{nb().normal=n.checked;save('cfg/settings')}}
-  [['#setSfP','sfP'],['#setSfT','sfT']].forEach(([id,k])=>{const el=$(id);if(el)el.oninput=()=>{const v=toNum(el.value);if(v>0){S.settings[k]=v;save('cfg/settings')}}});
+  [['#setSfP','sfP'],['#setSfT','sfT'],['#setBkDays','bkDays']].forEach(([id,k])=>{const el=$(id);if(el)el.oninput=()=>{const v=toNum(el.value);if(v>0){S.settings[k]=v;save('cfg/settings')}}});
   const sr=$('#setRatio');if(sr)sr.oninput=()=>{const v=toNum(sr.value);if(v>0){S.settings.ratio=v;save('cfg/settings')}};
   {const lu=$('#setLenU');if(lu)lu.onchange=()=>{S.settings.lenUnit=lu.value;save('cfg/settings');toast('✓ Length: '+lu.value)}}
   const sb=$('#setBar');if(sb)sb.oninput=()=>{const v=toNum(sb.value);if(v>0){S.settings.bar=v;save('cfg/settings')}};
@@ -2561,14 +2564,24 @@ function checkLocal(){const d=localData();if(!d)return;let mig=false;try{mig=loc
     await importAll({settings:{...S.settings,...(D.settings||{})},profiles:Object.values(pm),paints:Object.values(cm),periods:per,inv:hasStock(S.inv)?S.inv:(D.inv||S.inv),invMeta:S.invMeta});
     try{localStorage.setItem(LS+'-migrated',JSON.stringify(d).length+'')}catch(e){}};
   $('#migNo').onclick=()=>{$('#banner').innerHTML='';try{localStorage.setItem(LS+'-migrated',JSON.stringify(d).length+'')}catch(e){}}}
-function lastBackup(){try{return localStorage.getItem('bandorder-lastbackup')||''}catch(e){return ''}}
+function lastBackup(){let l='';try{l=localStorage.getItem('bandorder-lastbackup')||''}catch(e){}const g=(S.settings&&S.settings.lastBackup)||'';return g>l?g:l}
+const bkDays=()=>Math.max(1,toNum(S.settings.bkDays)||15);
+function bkDue(){const lb=lastBackup();return !lb||(Date.now()-new Date(lb).getTime())>=bkDays()*86400000}
+let bkTried=false;
+function autoBackupCheck(){if(!db||!S.loaded||!S.permLoaded)return;const u=curApp();if(!u||u.status!=='active'||!(u.perms||{}).admin)return;if(!bkDue())return;
+  if(!(Object.keys(S.periods).length||S.profiles.length||hasStock(S.invBase)||(S.tx.out||[]).length))return;
+  if(!bkTried){bkTried=true;doBackup(true)}
+  if(!$('#bkNow')){const lb=lastBackup();$('#banner').innerHTML=`<div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">💾 ${lb?'پتر ژ '+bkDays()+' ڕۆژانە Backup نەهاتیە کرن.':'هێشتا چ Backup نەهاتیە کرن.'} Backup ب خۆ دهێتە داگرتن — ئەگەر فایل نەهات، ل ڤێرە کلیک بکە.</span><button class="btn pri" id="bkNow">${I('down','sm')} نوکە Backup بکە</button></div>`;$('#bkNow').onclick=()=>doBackup()}}
+setTimeout(autoBackupCheck,5000);setInterval(autoBackupCheck,10*60000);
 function backupAgeTxt(){const lb=lastBackup();if(!lb)return '<b>هێشتا چ Backup نەهاتینە کرن.</b>';const d=Math.floor((Date.now()-new Date(lb).getTime())/86400000);return `دوماهیک Backup: ${d<=0?'ئەڤرۆ':d+' ڕۆژ بەری نوکە'}.`}
 function backupReminder(){if(!OFFLINE)return;const lb=lastBackup();const old=!lb||(Date.now()-new Date(lb).getTime())>5*86400000;
   if(old&&(Object.keys(S.periods).length||S.profiles.length||hasStock(S.invBase))){$('#banner').innerHTML=`<div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">💾 ${lb?'پتر ژ ٥ ڕۆژانە تە Backup نەکریە.':'هێشتا تە Backup نەکریە.'} داتا تەنێ ل سەر ڤی کۆمپیوتەری نە — ئەگەر براوزەر پاقژ ببیت یان کۆمپیوتەر خراب ببیت، دێ بەرزە بن.</span><button class="btn pri" id="bkNow">${I('down','sm')} نوکە Backup بکە</button></div>`;
     $('#bkNow').onclick=()=>{const b=document.querySelector('[data-act=exportAll]');doBackup()}}}
-async function doBackup(){const ymd=today().replace(/-/g,'');const fn=`band-order-backup-${ymd}.json`;const txt=JSON.stringify(exportData(),null,1);
-  const ok=await saveFile(fn,txt,'application/json');if(ok!==false||OFFLINE){try{localStorage.setItem('bandorder-lastbackup',new Date().toISOString())}catch(e){}$('#banner').innerHTML='';toast('✓ Backup هاتە داگرتن: '+fn+' — ل جهەکێ پاراستی (فلاش، Google Drive) بپارێزە.')}}
-function exportData(){return {app:'band-order',version:1,exportedAt:new Date().toISOString(),data:{settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,inv:S.inv,invMeta:S.invMeta,tx:S.tx,appUsers:S.appUsers,recovery:S.recovery||null}}}
+async function doBackup(auto){const ymd=today().replace(/-/g,'');const fn=`band-order-backup-${ymd}.json`;const txt=JSON.stringify(exportData(),null,1);
+  const ok=await saveFile(fn,txt,'application/json');if(ok!==false||OFFLINE||db){const now=new Date().toISOString();try{localStorage.setItem('bandorder-lastbackup',now)}catch(e){}
+    if(db&&isAdmin){S.settings.lastBackup=now;S.settings.lastBackupBy=(curApp()||{}).name||'';save('cfg/settings',100)}
+    $('#banner').innerHTML='';toast((auto?'💾 Backup یێ ب خۆ (هەر '+bkDays()+' ڕۆژان): ':'✓ Backup هاتە داگرتن: ')+fn+' — ل جهەکێ پاراستی (فلاش، Google Drive) بپارێزە.');if(S.tab==='settings')render()}}
+function exportData(){return {app:'band-order',version:1,exportedAt:new Date().toISOString(),data:{settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,inv:S.inv,invMeta:S.invMeta,tx:S.tx,manInc:S.manInc||[],appUsers:S.appUsers,recovery:S.recovery||null}}}
 async function importAll(D){
   const old=Object.keys(S.periods);
   if(D.settings)S.settings={...S.settings,...D.settings};
@@ -2579,12 +2592,14 @@ async function importAll(D){
   if(Array.isArray(D.appUsers)&&D.appUsers.length){S.appUsers=D.appUsers;if(D.recovery)S.recovery=D.recovery}
   if(D.inv){S.invBase=normStock(D.inv);const now=new Date().toISOString();S.invMeta={};INV_SECS.forEach(sec=>Object.keys(S.invBase[sec]||{}).forEach(k=>S.invMeta[sec+':'+k]={u:me.id||null,at:now}));recomputeInv()}
   const txIn=D.tx&&Array.isArray(D.tx.in)?D.tx:null;
+  if(Array.isArray(D.manInc))S.manInc=D.manInc;
   if(!db){if(txIn)S.tx={in:txIn.in||[],out:txIn.out||[]};recomputeInv();localSave();toast('✓ Backup هاتە ئینان');render();return}
   setStatus('ئینانا داتایێ...');
   try{
     for(const path of ['cfg/settings','cfg/paints','cfg/profiles']){dirty[path]=false;await db.doc(path).set(docData(path))}
     for(const id of Object.keys(np)){const path='periods/'+id;dirty[path]=false;await db.doc(path).set(docData(path))}
     for(const id of old)if(!np[id]){await db.doc('periods/'+id).delete().catch(()=>{})}
+    if(Array.isArray(D.manInc)){dirty['inv/incoming']=false;await db.doc('inv/incoming').set(docData('inv/incoming'))}
     if(D.inv){const iv=S.invBase;await db.doc('inv/stock').set({cart:iv.cart,kgc:iv.kgc,inc:iv.inc,box:iv.box,paint:iv.paint,meta:S.invMeta||{}})}
     if(Array.isArray(D.appUsers)&&D.appUsers.length)await db.doc('perm/appusers').set({list:S.appUsers,recovery:S.recovery||null});
     if(txIn){for(const dir of ['in','out']){const L=(txIn[dir]||[]).filter(t=>t&&t.sec&&t.key);for(let i=0;i<L.length;i+=20)await Promise.all(L.slice(i,i+20).map(t=>{const {id,...d}=t;return db.doc((dir==='in'?'invin/':'invout/')+(id||('i'+i+Math.random().toString(36).slice(2,8)))).set(d)}))}}
