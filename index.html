@@ -1294,6 +1294,7 @@ function poItems(p,kind){const r=compute(p);const po=getPo(p,kind);
   return p.sel.tape.filter(k=>tapeKeyBrand(k)===tb).map(k=>{const parts=k.split('|');const x=parts.length===3?r.brandRows.find(y=>y.key===k):r.tapeRows.find(y=>y.key===k);const [w,t]=parts.slice(-2);const short=x&&x.diff<0?-x.diff:0;
     const def=Math.ceil(short-1e-9);const q=po.qty[k]!==undefined?toNum(po.qty[k]):def;
     return {key:k,name:w+' mm',w:toNum(w),type:t,short,qty:q,unit:'m²',boxes:q>0?q/m2PerBox(toNum(w)):0}})}
+const byNeed=(a,b)=>b.qty-a.qty||b.short-a.short;
 function tapeKeyBrand(k){const s=k.split('|');return s.length===3?s[0]:''}
 function tapeBrandName(p,bk){if(!bk)return '';const b=brandObj(bk);if(b)return b.name;const o=p.orders.find(o=>brandKey(o.ord)===bk);return o?String(o.ord).trim():bk}
 function viewPo(p){ensP(p);
@@ -1366,7 +1367,7 @@ async function makeProfilesPdf(onlyMissing){
 }
 async function makePdf(p,kind){
   const {jsPDF}=await loadPDF();const doc=new jsPDF({unit:'mm',format:'a4'});
-  const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0);
+  const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0).sort(byNeed);
   const co=S.settings.co;const W=210,M=16;let y=0;
   const green=[31,111,92];
   doc.setFillColor(...green);doc.rect(0,0,W,34,'F');
@@ -1915,7 +1916,7 @@ function arReportHtml(){const r=reportData();const K=S.invKind;
   return arHead('تقرير مخزن شريط الحماية','التاريخ: <span class="ltr">'+arDate()+'</span>')+
     `<div class="arsum"><div><span>عادي (Normal)</span><b>${fmt(r.m2N,0)} م²</b></div><div><span>خشن (Rough)</span><b>${fmt(r.m2P,0)} م²</b></div><div><span>الإجمالي</span><b>${fmt(r.totM2,0)} م²</b><small>${fmt(r.totBoxes,1)} كرتون</small></div></div>
     ${tt(r.tapes.filter(x=>x.t==='N'),'شريط عادي (Normal)')}${tt(r.tapes.filter(x=>x.t!=='N'),'شريط خشن (Rough)')}`}
-function arPoHtml(p,kind){const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0);const tot=items.reduce((s,x)=>s+x.qty,0);
+function arPoHtml(p,kind){const isP=isPaintKind(kind);const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0).sort(byNeed);const tot=items.reduce((s,x)=>s+x.qty,0);
   return arHead('أمر شراء',isP?'صبغ بودرة (Powder Coating)':'شريط حماية (Protective Tape)')+
   `<div class="arsum"><div><span>رقم الطلب</span><b class="ltr">${esc(d.no||'-')}</b></div><div><span>التاريخ</span><b class="ltr">${esc((d.date||'').split('-').reverse().join('/'))}</b></div><div><span>إلى</span><b>${esc(d.supplier||'-')}</b></div></div>
   <table><tr><th>#</th>${isP?'<th>كود الصبغ</th><th>كود الشركة</th><th>الكمية</th><th>الوحدة</th>':'<th>العرض</th><th>النوع</th><th>الكمية</th><th>الوحدة</th><th>كراتين تقريباً</th>'}</tr>
@@ -2374,7 +2375,7 @@ $('#main').addEventListener('click',async e=>{
       if(S.invKind==='tape')X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Company','Width (mm)','Type','Roll length (m)','Boxes','Rolls','m2'],...r.tapes.map(x=>[x.brand,x.w,x.t==='P'?'Rough':'Normal',x.len,x.boxes,x.rolls,+x.m2.toFixed(2)]),['Total','','','',r.totBoxes,'',+r.totM2.toFixed(2)]]),'Tape');
       await saveFile(`${S.invKind}-stock-${today().replace(/-/g,'')}.xlsx`,new Uint8Array(X.write(wb,{bookType:'xlsx',type:'array'})),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}catch(e){toast('⚠️ Excel دروست نەبوو')}}
   else if(act==='poSend'&&p){if(!can('periods')){toast('⚠️ ئەڤ کار بۆ تە نەهاتیە ڤەکرن');return}const kind=t.dataset.kind;const po=getPo(p,kind);
-    const items=poItems(p,kind).filter(x=>x.qty>0).map(x=>({key:x.key,name:x.name,type:x.type,w:x.w||0,qty:x.qty,unit:x.unit}));
+    const items=poItems(p,kind).filter(x=>x.qty>0).sort(byNeed).map(x=>({key:x.key,name:x.name,type:x.type,w:x.w||0,qty:x.qty,unit:x.unit}));
     if(!items.length){toast('⚠️ چ ژمارەکا داخوازیێ نینە');return}
     const d=poDefaults(p,kind);po.no=po.no||d.no;po.date=po.date||d.date;po.supplier=po.supplier||d.supplier;
     po.items=items;po.sent=po.sent||new Date().toISOString();po.closed='';save('periods/'+p.id,100);render();toast(`📦 ${items.length} تشت ل ڕێنە — دەمێ گەهشتن ل «مەخزەن ← داخلکرن» وەربگرە.`)}
