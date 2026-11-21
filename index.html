@@ -281,6 +281,13 @@ html[data-glass="1"] input,html[data-glass="1"] select,html[data-glass="1"] text
 .mi-tot{font-size:1.05rem;font-weight:800;color:var(--accent)}
 @media (max-width:700px){.mitbl thead{display:none}.mitbl tr{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;border-bottom:1px solid var(--line)}.mitbl td{border:none;padding:0}.mitbl td.m2{text-align:start}}
 
+.selpaint{display:flex;align-items:center;gap:14px;padding:14px 16px;margin:4px 0 10px;border-radius:18px;background:var(--accent-soft);border:2px solid var(--accent);box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 18%,transparent)}
+.selpaint .spsw .sw.big{width:64px;height:64px;border-width:3px}
+.selpaint .spinfo{flex:1;display:flex;flex-direction:column;min-width:0}
+.selpaint .splb{font-size:.78rem;font-weight:700;color:var(--accent)}
+.selpaint b{font-size:1.6rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.selpaint .spch{flex:none;padding:6px 12px;font-size:.85rem}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -1837,7 +1844,8 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
         <span class="psw">${sw(x.p.name,1)}</span><span class="pinfo"><b dir="ltr">${esc(x.p.name)}</b><span class="muted psub">${x.p.type==='P'?'Rough':'Normal'}${x.p.co?' · '+esc(x.p.co):''}</span>${x.p.pul?`<span class="muted ppul" dir="ltr">${esc(x.p.pul)}</span>`:''}</span><span class="qv">${fmt(x.kg,0)} کیلۆ</span></button>`).join('')
        :'<div class="muted">مەخزەنا سبغێ ڤالایە.</div>'}</div>
      <div class="muted" id="pfNone" style="display:none;padding:8px">چ سبغ نەهاتە دیتن.</div></div>
-   ${def?`<div id="pfAnchor"></div><div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
+   ${def?`<div id="pfAnchor"></div><div class="selpaint"><span class="spsw">${sw(def.name,1)}</span><span class="spinfo"><span class="splb">✓ سبغا هەلبژارتی</span><b dir="ltr">${esc(def.name)}</b><span class="muted">${def.type==='P'?'Rough':'Normal'}${def.co?' · '+esc(def.co):''}</span></span><button type="button" class="btn spch" onclick="document.getElementById('pfSearch').scrollIntoView({behavior:'smooth',block:'center'})">گوهۆڕین</button></div>
+   <div class="stockbox${c<=0?' empty':''}"><span>ل مەخزەنێ نوکە</span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
    <div class="tstep"><div class="lb">٢. چەند؟</div>
      <div class="chips" style="margin-bottom:8px">${(dir==='out'?[['kg','کیلۆ'],['ctn','کارتۆن']]:[['kg','کیلۆ'],['t','تۆن'],['ctn','کارتۆن']]).map(([u,l])=>`<button type="button" class="chip${U===u?' on':''}" data-act="txSet" data-dir="${dir}" data-f="unit" data-v="${u}">${l}</button>`).join('')}</div>
      <div class="stepper"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button>
