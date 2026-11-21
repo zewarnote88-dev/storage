@@ -128,6 +128,13 @@ td.ltr,td b.ltr{white-space:nowrap}
 .pill.Q{background:var(--warn-soft);color:var(--warn)}
 .sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-inline-end:7px;border:1px solid rgba(0,0,0,.18);box-shadow:inset 0 1px 1px rgba(255,255,255,.35)}
 .sw.none{background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 4px);border-color:var(--line2)}
+.sw.big{width:40px;height:40px;margin:0;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.18),inset 0 -6px 10px rgba(0,0,0,.12),inset 0 5px 8px rgba(255,255,255,.35)}
+.sw.big.none{display:inline-flex;align-items:center;justify-content:center;background:var(--card2);border:2px dashed var(--line2);box-shadow:none}.sw.big.none::after{content:"?";color:var(--muted);font-weight:700}
+.swin{width:34px;height:34px;padding:0;border:2px solid var(--line2);border-radius:50%;overflow:hidden;cursor:pointer;vertical-align:middle;background:none}
+.swin::-webkit-color-swatch-wrapper{padding:0}.swin::-webkit-color-swatch{border:none;border-radius:50%}.swin::-moz-color-swatch{border:none;border-radius:50%}
+.swin.none{opacity:.45;border-style:dashed}
+.pcard>.psw{overflow:visible;padding:2px}
+html[data-glass="1"] .pcard{box-shadow:0 1px 3px rgba(0,0,0,.06);-webkit-backdrop-filter:none;backdrop-filter:none}
 .ok{color:var(--good);font-weight:600}
 .short{color:var(--bad);font-weight:700}
 .note{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn-line);border-radius:8px;padding:9px 13px;margin:8px 0;font-size:.87rem}
@@ -316,11 +323,11 @@ nav.tabs{display:none!important}
 .act .aic{flex:none;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--tc-soft);color:var(--tc)}.act .aic .ico{width:26px;height:26px}
 .act .atx{display:flex;flex-direction:column;gap:2px;flex:1}.act .atx b{font-size:1.08rem}.act .atx small{color:var(--muted)}
 .act .ago{color:var(--muted)}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
-@media (max-width:480px){.pgrid{grid-template-columns:1fr 1fr}}
-.pcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);border-radius:12px;padding:9px 11px;background:var(--field);color:inherit;font:inherit;cursor:pointer;text-align:right;min-width:0}
-.pcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcard .psw .sw{width:22px;height:22px;border-radius:6px;margin:0}
-.pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
+.pgrid{display:flex;flex-direction:column;gap:6px;max-height:440px;overflow:auto;padding:2px 4px 2px 2px}
+
+.pcard{display:flex;flex-direction:row;align-items:center;gap:12px;flex:none;width:100%;border:1px solid var(--line2);border-radius:12px;padding:9px 11px;background:var(--field);color:inherit;font:inherit;cursor:pointer;text-align:right;min-width:0}
+.pcard>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcard .psw{flex:none;display:flex}.pcard .pinfo{flex:1;display:flex;flex-direction:column;align-items:flex-start;min-width:0}.pcard .pinfo b{font-size:1.02rem}.pcard .qv{flex:none;font-size:1rem}.pcard{padding:8px 12px;transition:background .12s,border-color .12s}.pcard:hover{border-color:var(--accent)}.pcard.on{background:var(--accent-soft)}
+.pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{font-weight:700;color:var(--good)}
 .bigsel{width:100%;min-height:48px;font-size:1.05rem;padding:8px 12px;border-radius:12px}
 .card.cust.off{opacity:.6;border-style:dashed}
 .pbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px}.pbar .pbl{display:flex;align-items:center;gap:6px;font-weight:700}
@@ -517,9 +524,15 @@ const ICONS={
   auto:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'
 };
-const RAL={'1013':'#E3D9C6','1015':'#E6D2B5','1018':'#F8F32B','3000':'#AF2B1E','3020':'#CC0605','5010':'#0E294B','5015':'#2271B3','6005':'#2F4538','7015':'#434750','7016':'#383E42','7021':'#23282B','7022':'#332F2C','7024':'#474A51','7035':'#D7D7D7','7039':'#6C6960','8014':'#382C1E','8017':'#45322E','8019':'#403A3A','8007':'#6F4A2F','8011':'#5B3A29','9001':'#FDF4E3','9002':'#E7EBDA','9003':'#F4F4F4','9005':'#0A0A0A','9006':'#A5A5A5','9007':'#8F8F8F','9010':'#FFFFFF','9011':'#1C1C1C','9016':'#F6F6F6'};
+const RAL={"1000": "#CDBA88", "1001": "#D0B084", "1002": "#D2AA6D", "1003": "#F9A900", "1004": "#E49E00", "1005": "#CB8F00", "1006": "#E19000", "1007": "#E88C00", "1011": "#AF8050", "1012": "#DDAF28", "1013": "#E3D9C7", "1014": "#DDC49B", "1015": "#E6D2B5", "1016": "#F1DD39", "1017": "#F6A951", "1018": "#FACA31", "1019": "#A48F7A", "1020": "#A08F65", "1021": "#F6B600", "1023": "#F7B500", "1024": "#BA8F4C", "1026": "#FFFF00", "1027": "#A77F0F", "1028": "#FF9C00", "1032": "#E2A300", "1033": "#F99A1D", "1034": "#EB9C52", "1035": "#8F8370", "1036": "#806440", "1037": "#F09200", "2000": "#DA6E00", "2001": "#BA481C", "2002": "#BF3922", "2003": "#F67829", "2004": "#E25304", "2005": "#FF4D08", "2007": "#FFB200", "2008": "#EC6B22", "2009": "#DE5308", "2010": "#D05D29", "2011": "#E26E0F", "2012": "#D5654E", "2013": "#923E25", "2017": "#FC5500", "3000": "#A72920", "3001": "#9B2423", "3002": "#9B2321", "3003": "#861A22", "3004": "#6B1C23", "3005": "#59191F", "3007": "#3E2022", "3009": "#6D342D", "3011": "#782423", "3012": "#C5856D", "3013": "#972E25", "3014": "#CB7375", "3015": "#D8A0A6", "3016": "#A63D30", "3017": "#CA555D", "3018": "#C63F4A", "3020": "#BB1F11", "3022": "#CF6955", "3024": "#FF2D21", "3026": "#FF2A1C", "3027": "#AB273C", "3028": "#CC2C24", "3031": "#A63437", "3032": "#701D24", "3033": "#A53A2E", "4001": "#816183", "4002": "#8D3C4B", "4003": "#C4618C", "4004": "#651E38", "4005": "#76689A", "4006": "#903373", "4007": "#47243C", "4008": "#844C82", "4009": "#9D8692", "4010": "#BB4077", "4011": "#6E6387", "4012": "#6A6B7F", "5000": "#304F6E", "5001": "#0E4C64", "5002": "#00387A", "5003": "#1F3855", "5004": "#191E28", "5005": "#005387", "5007": "#376B8C", "5008": "#2B3A44", "5009": "#215F78", "5010": "#004F7C", "5011": "#1A2B3C", "5012": "#0089B6", "5013": "#193153", "5014": "#637D96", "5015": "#007CAF", "5017": "#005B8C", "5018": "#048B8C", "5019": "#005E83", "5020": "#00414B", "5021": "#007577", "5022": "#222D5A", "5023": "#41698C", "5024": "#6093AC", "5025": "#20697C", "5026": "#0F3052", "6000": "#3C7460", "6001": "#366735", "6002": "#325928", "6003": "#50533C", "6004": "#024442", "6005": "#114232", "6006": "#3C392E", "6007": "#2C3222", "6008": "#36342A", "6009": "#27352A", "6010": "#4D6F39", "6011": "#6B7C59", "6012": "#2F3D3A", "6013": "#7C765A", "6014": "#474135", "6015": "#3D3D36", "6016": "#00694C", "6017": "#587F40", "6018": "#60993B", "6019": "#B9CEAC", "6020": "#37422F", "6021": "#8A9977", "6022": "#3A3327", "6024": "#008351", "6025": "#5E6E3B", "6026": "#005F4E", "6027": "#7EBAB5", "6028": "#315442", "6029": "#006F3D", "6032": "#237F52", "6033": "#45877F", "6034": "#7AADAC", "6035": "#194D25", "6036": "#04574B", "6037": "#008B29", "6038": "#00B51B", "6039": "#B3C43E", "7000": "#7A888E", "7001": "#8C979C", "7002": "#817863", "7003": "#797669", "7004": "#9A9B9B", "7005": "#6B6E6B", "7006": "#766A5E", "7008": "#745F3D", "7009": "#5D6058", "7010": "#585C56", "7011": "#52595D", "7012": "#575D5E", "7013": "#575044", "7015": "#4F5358", "7016": "#383E42", "7021": "#2F3234", "7022": "#4C4A44", "7023": "#808076", "7024": "#45494E", "7026": "#374345", "7030": "#928E85", "7031": "#5B686D", "7032": "#B5B0A1", "7033": "#7F8274", "7034": "#92886F", "7035": "#C5C7C4", "7036": "#979392", "7037": "#7A7B7A", "7038": "#B0B0A9", "7039": "#6B665E", "7040": "#989EA1", "7042": "#8E9291", "7043": "#4F5250", "7044": "#B7B3A8", "7045": "#8D9295", "7046": "#7E868A", "7047": "#C8C8C7", "7048": "#817B73", "8000": "#89693F", "8001": "#9D622B", "8002": "#794D3E", "8003": "#7E4B27", "8004": "#8D4931", "8007": "#70462B", "8008": "#724A25", "8011": "#5A3827", "8012": "#66332B", "8014": "#4A3526", "8015": "#5E2F26", "8016": "#4C2B20", "8017": "#442F29", "8019": "#3D3635", "8022": "#1A1719", "8023": "#A45729", "8024": "#795038", "8025": "#755847", "8028": "#513A2A", "8029": "#7F4031", "9001": "#E9E0D2", "9002": "#D6D5CB", "9003": "#ECECE7", "9004": "#2B2B2C", "9005": "#0E0E10", "9006": "#A1A1A0", "9007": "#868581", "9010": "#F1EDE1", "9011": "#27292B", "9012": "#F8F2E1", "9016": "#F1F1EA", "9017": "#29292A", "9018": "#C8CBC4", "9022": "#858583", "9023": "#787B7A"};
 function ralHex(name){const m=String(name||'').match(/(^|\D)([1-9]\d{3})(?!\d)/);return m&&RAL[m[2]]||null}
-const sw=name=>{const c=ralHex(name);return c?`<span class="sw" style="background:${c}" title="RAL ${String(name).match(/\d{4}/)[0]}"></span>`:'<span class="sw none"></span>'};
+const METAL=[[/GOLD|ALTIN|ZER/i,'linear-gradient(135deg,#fff3b0 0%,#e2b93b 35%,#9c7514 60%,#f3d46b 100%)','#c9a227'],[/SILVER|GÜMÜŞ|GUMUS|ZIV/i,'linear-gradient(135deg,#fafafa 0%,#bfc3c7 40%,#7d848a 62%,#e6e8ea 100%)','#b8bcc0'],
+  [/BRONZ/i,'linear-gradient(135deg,#f3c79a 0%,#b0703a 45%,#6e4020 70%,#d49a63 100%)','#a0652f'],[/COPPER|BAKIR/i,'linear-gradient(135deg,#ffd0b0 0%,#c8693a 45%,#7c3516 70%,#e8946a 100%)','#b8622f'],
+  [/INOX|STEEL|ANOD/i,'linear-gradient(135deg,#f0f2f4 0%,#a9b0b6 50%,#d9dde0 100%)','#a9b0b6'],[/WOOD|AHŞAP|AHSAP|OAK|WALNUT|CEVIZ|MESE/i,'repeating-linear-gradient(100deg,#8a5a2b 0 3px,#a8743e 3px 6px,#734a22 6px 8px)','#8a5a2b']];
+function paintHex(x){const d=typeof x==='string'?paintDef(norm(x)):x;const nm=typeof x==='string'?x:(x&&x.name)||'';if(d&&d.hex)return d.hex;const r=ralHex(nm);if(r)return r;const m=METAL.find(z=>z[0].test(nm));return m?m[2]:null}
+const sw=(name,big)=>{const d=paintDef(norm(name));const cls='sw'+(big?' big':'');if(d&&d.hex)return `<span class="${cls}" style="background:${d.hex}" title="${esc(d.hex)}"></span>`;
+  const c=ralHex(name);if(c)return `<span class="${cls}" style="background:${c}" title="RAL ${String(name).match(/\d{4}/)[0]}"></span>`;
+  const m=METAL.find(z=>z[0].test(name));if(m)return `<span class="${cls} metal" style="background:${m[1]}"></span>`;return `<span class="${cls} none" title="ڕەنگ نەهاتیە دانان"></span>`};
 const I=(n,cls='')=>`<svg class="ico ${cls}" viewBox="0 0 24 24">${ICONS[n]||''}</svg>`;
 
 /* ======================= State ======================= */
@@ -743,7 +756,7 @@ async function initDb(){
     if(!f1&&!s.metadata.fromCache){f1=true;done()}else if(S.loaded)softRender();
   },onErr);
   db.doc('cfg/paints').onSnapshot(s=>{
-    if(!dirty['cfg/paints']&&!writing['cfg/paints']&&s.exists){S.paints=(s.data().list||[]).map(p=>({name:String(p.name),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||'')}))}
+    if(!dirty['cfg/paints']&&!writing['cfg/paints']&&s.exists){S.paints=(s.data().list||[]).map(p=>({name:String(p.name),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||''),...(/^#[0-9a-f]{6}$/i.test(p.hex||'')?{hex:p.hex}:{})}))}
     if(!f2&&!s.metadata.fromCache){f2=true;done()}else if(S.loaded)softRender();
   },onErr);
   db.doc('cfg/profiles').onSnapshot(s=>{
@@ -1805,7 +1818,7 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
    <div class="tstep"><div class="lb">١. سبغێ هەلبژێرە <span class="muted" style="font-weight:400">(${list.length} جۆر ل مەخزەنێ هەنە)</span></div>
      <input type="search" id="pfSearch" placeholder="🔍 لێگەڕیان: 7016، Mat، ..." style="width:100%;margin-bottom:8px">
      <div class="pgrid" id="pfGrid">${list.length?list.map(x=>`<button type="button" class="pcard${x.kk===k?' on':''}" data-act="txSet" data-dir="${dir}" data-f="paint" data-v="${esc(x.p.name)}" data-n="${esc(normQ(x.p.name+' '+(x.p.pul||'')+' '+(x.p.co||'')))}">
-        <span class="psw">${sw(x.p.name)}</span><b dir="ltr">${esc(x.p.name)}</b><span class="muted" style="font-size:.74rem">${x.p.type==='P'?'Rough':'Normal'}${x.p.co?' · '+esc(x.p.co):''}</span><span class="qv">${fmt(x.kg,0)} کیلۆ</span></button>`).join('')
+        <span class="psw">${sw(x.p.name,1)}</span><span class="pinfo"><b dir="ltr">${esc(x.p.name)}</b><span class="muted" style="font-size:.76rem">${x.p.type==='P'?'Rough':'Normal'}${x.p.co?' · '+esc(x.p.co):''}${x.p.pul?' · <span dir="ltr">'+esc(x.p.pul)+'</span>':''}</span></span><span class="qv">${fmt(x.kg,0)} کیلۆ</span></button>`).join('')
        :'<div class="muted">مەخزەنا سبغێ ڤالایە.</div>'}</div>
      <div class="muted" id="pfNone" style="display:none;padding:8px">چ سبغ نەهاتە دیتن.</div></div>
    ${def?`<div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
@@ -2292,8 +2305,8 @@ function viewPaints(){
     <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap"><span class="muted">⏳ چەند ڕۆژان دڤێت دا بگەهیت:</span>${(S.settings.paintCos||[]).map(x=>`<label class="muted"><span class="ltr">${esc(x)}</span> <input class="num" data-lead="${esc(x)}" inputmode="numeric" value="${toNum((S.settings.lead||{})[norm(x)])||''}" placeholder="0" style="width:60px"> ڕۆژ</label>`).join('')}</div>
     ${S.paints.some(c=>!c.co)?`<div class="muted" style="margin-top:6px">⚠️ ${S.paints.filter(c=>!c.co).length} سبغ کۆمپانیا وان نەهاتیە دیارکرن.</div>`:''}</div>
   <div class="row" style="margin:10px 0"><span class="grow"></span><button class="btn" data-act="addPaint">+ سبغەک</button></div>
-  <div class="tbl-scroll"><table><thead><tr><th>ناڤێ سبغێ</th><th>کۆدێ پولڤەری <span class="ltr">(Puler Code)</span></th><th>جۆر</th><th>کۆمپانی (بۆ داخوازیێ)</th><th class="n">کیلۆ بۆ کارتۆنەکێ</th><th></th></tr></thead><tbody>
-  ${S.paints.map((c,i)=>`<tr><td style="white-space:nowrap">${sw(c.name)}<input class="paint" data-c="${i}" data-f="name" value="${esc(c.name)}" style="width:170px"></td>
+  <div class="tbl-scroll"><table><thead><tr><th>ڕەنگ · ناڤێ سبغێ</th><th>کۆدێ پولڤەری <span class="ltr">(Puler Code)</span></th><th>جۆر</th><th>کۆمپانی (بۆ داخوازیێ)</th><th class="n">کیلۆ بۆ کارتۆنەکێ</th><th></th></tr></thead><tbody>
+  ${S.paints.map((c,i)=>`<tr><td style="white-space:nowrap"><input type="color" class="swin${c.hex||paintHex(c)?'':' none'}" data-c="${i}" data-f="hex" value="${paintHex(c)||'#cccccc'}" title="ڕەنگ">${c.hex?`<button class="x" data-act="hexClr" data-i="${i}" title="ڤەگەڕاندن بۆ RAL">↺</button>`:''} <input class="paint" data-c="${i}" data-f="name" value="${esc(c.name)}" style="width:170px"></td>
     <td><input class="code" data-c="${i}" data-f="pul" value="${esc(c.pul||'')}" style="width:130px"></td>
     <td><select data-c="${i}" data-f="type"><option value="N" ${c.type==='N'?'selected':''}>Normal (عادی)</option><option value="P" ${c.type==='P'?'selected':''}>Rough (زڤر)</option></select></td>
     <td><select data-c="${i}" data-f="co"><option value="">—</option>${(S.settings.paintCos||[]).map(x=>`<option value="${esc(x)}" ${c.co===x?'selected':''}>${esc(x)}</option>`).join('')}${c.co&&!(S.settings.paintCos||[]).includes(c.co)?`<option value="${esc(c.co)}" selected>${esc(c.co)}</option>`:''}</select></td>
@@ -2464,7 +2477,7 @@ function bind(){
   const pf=$('#profFilter');if(pf)pf.oninput=()=>{profFilter=pf.value;const pos=pf.selectionStart;render();const n=$('#profFilter');n.focus();n.setSelectionRange(pos,pos)};
   const pff=$('#profFile');if(pff)pff.onchange=async()=>{const f=pff.files[0];if(!f)return;try{importProfiles(parseProfiles(await readFileRows(f)))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   // paints
-  m.querySelectorAll('[data-c]').forEach(el=>{const h=()=>{const x=S.paints[+el.dataset.c];const f=el.dataset.f;x[f]=(f==='name'||f==='pul')?el.value.trim():f==='kgc'?(toNum(el.value)||25):el.value;save('cfg/paints',1200)};el.oninput=h;el.onchange=h});
+  m.querySelectorAll('[data-c]').forEach(el=>{const h=()=>{const x=S.paints[+el.dataset.c];const f=el.dataset.f;x[f]=(f==='name'||f==='pul')?el.value.trim():f==='kgc'?(toNum(el.value)||25):el.value;if(f==='hex')el.classList.remove('none');save('cfg/paints',1200)};el.oninput=h;el.onchange=h});
   const cff=$('#paintFile');if(cff)cff.onchange=async()=>{const f=cff.files[0];if(!f)return;try{importPaints(parsePaints(await readFileRows(f)))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   // settings
   m.querySelectorAll('[data-co]').forEach(el=>el.oninput=()=>{S.settings.co={...S.settings.co,[el.dataset.co]:el.value};save('cfg/settings',1200)});
@@ -2559,7 +2572,7 @@ function exportData(){return {app:'band-order',version:1,exportedAt:new Date().t
 async function importAll(D){
   const old=Object.keys(S.periods);
   if(D.settings)S.settings={...S.settings,...D.settings};
-  S.paints=(D.paints||[]).map(p=>({name:String(p.name||''),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||'')}));
+  S.paints=(D.paints||[]).map(p=>({name:String(p.name||''),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||''),...(/^#[0-9a-f]{6}$/i.test(p.hex||'')?{hex:p.hex}:{})}));
   S.profiles=(D.profiles||[]).map(p=>({code:String(p.code||''),b1:toNum(p.b1),b2:toNum(p.b2),s1:toNum(p.s1)===2?2:1,s2:toNum(p.s2)===2?2:1,w:toNum(p.w),wrap:!!p.wrap,per:toNum(p.per)}));
   const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o),cno:String(o.cno||'')})),stock:normStock(v.stock),cancel:Array.isArray(v.cancel)?v.cancel.map(String):[],ptype:v.ptype&&typeof v.ptype==='object'?{...v.ptype}:{},note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
   S.periods=np;S.cur=null;
@@ -2765,6 +2778,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='addProf'){S.profiles.unshift({code:'',b1:0,b2:0,s1:1,s2:1,w:0});profFilter='';save('cfg/profiles');render();const i=$('#main').querySelector('input[data-p="0"]');if(i)i.focus()}
   else if(act==='delProf'){const x=S.profiles[+t.dataset.i];dialog(`<p>پڕۆفایلێ <b class="ltr">${esc(x.code)}</b> ژێببە؟</p>`,()=>{S.profiles.splice(+t.dataset.i,1);save('cfg/profiles',100);render()},'ژێببە')}
   else if(act==='paintPaste'){importPaints(parsePaints(parseText($('#paintPaste').value)))}
+  else if(act==='hexClr'){const x=S.paints[+t0.dataset.i];if(x){delete x.hex;save('cfg/paints',100);render()}}
   else if(act==='addPaint'){S.paints.push({name:'',type:'N',kgc:25,co:'',pul:''});save('cfg/paints');render();const ins=$('#main').querySelectorAll('input[data-c]');if(ins.length)ins[ins.length-1].focus()}
   else if(act==='delPaint'){S.paints.splice(+t.dataset.i,1);save('cfg/paints',100);render()}
   else if(act==='copyRes'&&p){
