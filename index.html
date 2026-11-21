@@ -617,7 +617,7 @@ async function initDb(){
       const path='periods/'+d.id;
       if(dirty[path]||writing[path])return;
       const v=d.data();
-      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkgm:toNum(o.wkgm)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
+      S.periods[d.id]={id:d.id,name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''};
     });
     Object.keys(S.periods).forEach(id=>{const path='periods/'+id;if(!seen.has(id)&&!dirty[path]&&!writing[path]&&!q.metadata.hasPendingWrites&&!q.metadata.fromCache)delete S.periods[id]});
     if(!q.metadata.fromCache)resolvePer();
@@ -837,6 +837,11 @@ async function fillNames(){let els=[...document.querySelectorAll('[data-uid]')];
   if(!userNs){els.forEach(e=>e.textContent='بکارهێنەر');return}
   const ids=[...new Set(els.map(e=>e.dataset.uid))];let ps={};try{ps=await userNs.profiles(ids)}catch(e){}
   els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||'کەسەک'})}
+const owk=o=>toNum(o.wkg!=null?o.wkg:o.wkgm);
+function fixLearnedW(){if(!(isAdmin||can('master')||can('m_profiles')))return;const {prof}=maps();let n=0;
+  Object.values(S.periods).forEach(pr=>(pr.orders||[]).forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];if(!(wk>0)||!x||!(x.w>0))return;
+    const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);if(m>0&&Math.abs(x.w-wk)<1e-9&&m>1.0001){x.w=+(wk/m).toFixed(4);n++}}));
+  if(n){save('cfg/profiles',300);toast(`🔧 کێشا ${n} پڕۆفایلان هاتە ڕاستکرن (ژ کێشا هەمی بۆ kg/m)`)}return n}
 function compute(period){
   period=effP(period);
   const {prof,paint}=maps();
@@ -855,8 +860,8 @@ function compute(period){
     const pk=c?norm(c.name):norm(o.paint)||'(بێ ناڤ)';
     pnt[pk]=pnt[pk]||{name:c?c.name:(o.paint||'(بێ ناڤ)'),type:t,bars:0,profKg:0,noW:0};
     pnt[pk].bars+=qty;
-    const kgm=(p&&p.w>0)?p.w:toNum(o.wkgm);
-    if(kgm>0){pnt[pk].profKg+=kgm*meters;totalProfKg+=kgm*meters}
+    const wk=owk(o),kgm=(p&&p.w>0)?p.w:0;const kgRow=wk>0?wk:kgm*meters;
+    if(kgRow>0){pnt[pk].profKg+=kgRow;totalProfKg+=kgRow}
     else{pnt[pk].noW+=qty;if(p)missW[norm(p.code)]=(missW[norm(p.code)]||0)+qty}
     if(!p){missProf[norm(o.code)||'(بێ کۆد)']=(missProf[norm(o.code)||'(بێ کۆد)']||0)+qty;return}
     const bk=brandKey(o.ord);bandDisp[bk]=bandDisp[bk]||(String(o.ord||'').trim()||bk);
@@ -937,7 +942,7 @@ function parseOrders(rows,unit){
   const out=[];
   if(h){
     for(let i=h.row+1;i<rows.length;i++){const r=rows[i];const code=String(r[h.idx.code]??'').trim();const qty=toNum(r[h.idx.qty]);if(!code||qty<=0)continue;
-      out.push({ord:h.idx.ord!==undefined?String(r[h.idx.ord]??'').trim():'',code,paint:h.idx.paint!==undefined?String(r[h.idx.paint]??'').trim():'',qty,unit,len:(h.idx.len!==undefined&&unit!=='m')?toNum(r[h.idx.len]):0,wkgm:h.idx.w!==undefined?toNum(r[h.idx.w]):0})}
+      out.push({ord:h.idx.ord!==undefined?String(r[h.idx.ord]??'').trim():'',code,paint:h.idx.paint!==undefined?String(r[h.idx.paint]??'').trim():'',qty,unit,len:(h.idx.len!==undefined&&unit!=='m')?toNum(r[h.idx.len]):0,wkg:h.idx.w!==undefined?toNum(r[h.idx.w]):0})}
     return out;
   }
   for(const r0 of rows){
@@ -980,6 +985,7 @@ function render(){
   const m=$('#main');
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
   const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
+  if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
   closePick();m.innerHTML=v();
   bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
 }
@@ -1148,7 +1154,7 @@ function viewOrders(p){
     <button class="btn" data-act="addRow">+ ڕیزەک</button>${rows.length?'<button class="btn danger" data-act="clearOrders">هەمیان ژێببە</button>':''}</div>
   <datalist id="dlCodes">${S.profiles.map(x=>`<option value="${esc(x.code)}">`).join('')}</datalist>
   <datalist id="dlPaints">${S.paints.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>
-  <div class="tbl-scroll"><table><thead><tr><th>#</th><th>Band</th><th>کۆدێ پڕۆفایلی</th><th>سبغ</th><th class="n">ژمار</th><th>یەکە</th><th>جۆر</th><th></th></tr></thead><tbody>
+  <div class="tbl-scroll"><table><thead><tr><th>#</th><th>Band</th><th>کۆدێ پڕۆفایلی</th><th>سبغ</th><th class="n">ژمار</th><th>یەکە</th><th class="n">کێشا هەمی (kg)</th><th>جۆر</th><th></th></tr></thead><tbody>
   ${rows.map((o,i)=>{const pp=prof[norm(o.code)],cc=paint[norm(o.paint)];
     return `<tr><td class="muted">${i+1}</td>
     <td><input class="code" data-o="${i}" data-f="ord" value="${esc(o.ord)}"></td>
@@ -1156,6 +1162,7 @@ function viewOrders(p){
     <td><input class="paint" list="dlPaints" data-o="${i}" data-f="paint" value="${esc(o.paint)}" style="${o.paint&&!cc?'border-color:var(--bad)':''}"></td>
     <td class="n"><input class="num" inputmode="decimal" data-o="${i}" data-f="qty" value="${o.qty||''}"></td>
     <td><select data-o="${i}" data-f="unit"><option value="bar" ${o.unit!=='m'?'selected':''}>قەد</option><option value="m" ${o.unit==='m'?'selected':''}>مەتر</option></select></td>
+    <td class="n"><input class="num" inputmode="decimal" data-o="${i}" data-f="wkg" value="${owk(o)||''}" placeholder="${(()=>{const mm=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);return pp&&pp.w>0&&mm>0?'≈'+fmt(pp.w*mm,1):''})()}" title="کێشا هەمی ڤێ ڕیزێ ب کیلۆ. ئەگەر ڤالا بیت: kg/m یا پڕۆفایلی × مەتر"></td>
     <td>${cc?pill(cc.type):(o.paint?pill('?'):'')}</td>
     <td><button class="x" data-act="delRow" data-i="${i}" title="ژێبرن">✕</button></td></tr>`}).join('')}
   </tbody></table></div>
@@ -1395,7 +1402,7 @@ function viewResPaint(p){
   <div class="tbl-scroll"><table><thead><tr><th>داخواز</th><th>سبغ</th><th>جۆر</th><th class="n">قەد</th><th class="n">کێشا پڕۆفایلان (تۆن)</th><th class="n">سبغا پێتڤی (کیلۆ)</th><th class="n">پێتڤی × ${fmt(S.settings.sfP,2)}</th><th class="n">ل مەخزەنێ (کیلۆ)</th><th class="n">ل ڕێیە (کیلۆ)</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
   ${r.paintRows.map(x=>`<tr${p.sel.paint.includes(x.key)?' style="background:var(--accent-soft)"':''}><td style="text-align:center"><input type="checkbox" data-sel="paint" data-k="${esc(x.key)}" ${p.sel.paint.includes(x.key)?'checked':''}></td><td class="ltr" style="text-align:right">${sw(x.name)}<b>${esc(x.name)}</b>${paintCoOf(x.key)?`<div class="muted" style="font-size:.75rem">${esc(paintCoOf(x.key))}</div>`:''}</td><td>${pill(x.type)}</td><td class="n">${fmt(x.bars,1)}${x.noW?` <span class="muted" title="بێ کێش">(${fmt(x.noW,0)} بێ کێش)</span>`:''}</td><td class="n">${fmtT(x.profKg)}</td><td class="n muted">${fmt(x.needRaw,1)}</td><td class="n"><b>${fmt(x.need,1)}</b></td><td class="n">${fmt(x.stock,1)}${x.cart?` <span class="muted">(${fmt(x.cart,0)} کارتۆن)</span>`:''}</td><td class="n">${x.inc?fmt(x.inc,1):''}</td>${diffCell(x.diff,'کیلۆ',1)}<td class="n ${x.orderCart?'short':''}">${x.orderCart||''}</td></tr>`).join('')||'<tr><td colspan="11" class="muted">هێشتا چ نینە.</td></tr>'}
   </tbody></table></div>
-  <p class="muted">حیسابێ کێشێ: kg/m × مەترێن پڕۆفایلی. حیسابێ سبغێ: کێشا پڕۆفایلان ÷ ${fmt(S.settings.ratio)} × ${fmt(S.settings.sfP,2)} (Safety factor).</p>
+  <p class="muted">حیسابێ کێشێ: کێشا هەمی یا ڕیزێ ژ ئۆردەرێ (ستوینا Wight)؛ ئەگەر نەبیت: kg/m یا پڕۆفایلی × مەتر. حیسابێ سبغێ: کێشا پڕۆفایلان ÷ ${fmt(S.settings.ratio)} × ${fmt(S.settings.sfP,2)} (Safety factor).</p>
   ${noteBox(p)}`;
 }
 
@@ -2056,9 +2063,9 @@ function bind(){
     const note=$('#pNote');if(note)note.oninput=()=>{p.note=note.value;save('periods/'+p.id,1500)};
     m.querySelectorAll('select[data-o]').forEach(el=>el.onchange=()=>{p.orders[+el.dataset.o].unit=el.value;save('periods/'+p.id)});
     m.querySelectorAll('input[data-o]').forEach(el=>el.oninput=()=>{
-      const o=p.orders[+el.dataset.o];const f=el.dataset.f;o[f]=f==='qty'?toNum(el.value):el.value;save('periods/'+p.id);
+      const o=p.orders[+el.dataset.o];const f=el.dataset.f;o[f]=(f==='qty'||f==='wkg')?toNum(el.value):el.value;if(f==='wkg')delete o.wkgm;save('periods/'+p.id);
       if(f==='code'||f==='paint'){const {prof,paint}=maps();const ok=f==='code'?prof[norm(el.value)]:paint[norm(el.value)];el.style.borderColor=el.value&&!ok?'var(--bad)':'';
-        if(f==='paint'){const td=el.closest('tr').children[6];td.innerHTML=ok?pill(ok.type):(el.value?pill('?'):'')}}
+        if(f==='paint'){const td=el.closest('tr').children[7];td.innerHTML=ok?pill(ok.type):(el.value?pill('?'):'')}}
     });
     m.querySelectorAll('input[data-st]').forEach(el=>el.oninput=()=>{
       const kind=el.dataset.st,k=el.dataset.k;
@@ -2157,7 +2164,8 @@ function importOrders(p,list){
   if($('#ordReplace')&&$('#ordReplace').checked)p.orders=[];
   p.orders.push(...list);save('periods/'+p.id,200);
   const {prof}=maps();let learned=0;
-  list.forEach(o=>{const w=toNum(o.wkgm);const x=prof[norm(o.code)];if(w>0&&x&&x.w!==w){x.w=w;learned++}});
+  list.forEach(o=>{const wk=owk(o);const x=prof[norm(o.code)];const m=o.unit==='m'?toNum(o.qty):toNum(o.qty)*(toNum(o.len)||S.settings.bar);
+    if(wk>0&&m>0&&x){const kgm=+(wk/m).toFixed(4);if(Math.abs((x.w||0)-kgm)>1e-4){x.w=kgm;learned++}}});
   if(learned)save('cfg/profiles',300);
   toast(`✓ ${fmt(list.length,0)} ڕیز هاتنە زێدەکرن`+(learned?` · کێشا ${learned} پڕۆفایلان (kg/m) هاتە پاشەکەفتکرن`:''));render();
 }
@@ -2213,7 +2221,7 @@ async function importAll(D){
   if(D.settings)S.settings={...S.settings,...D.settings};
   S.paints=(D.paints||[]).map(p=>({name:String(p.name||''),type:p.type==='P'?'P':'N',kgc:toNum(p.kgc)||25,co:String(p.co||''),pul:String(p.pul||'')}));
   S.profiles=(D.profiles||[]).map(p=>({code:String(p.code||''),b1:toNum(p.b1),b2:toNum(p.b2),s1:toNum(p.s1)===2?2:1,s2:toNum(p.s2)===2?2:1,w:toNum(p.w),wrap:!!p.wrap,per:toNum(p.per)}));
-  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkgm:toNum(o.wkgm)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
+  const np={};Object.values(D.periods||{}).forEach(v=>{if(!v||!v.id)return;np[v.id]={id:String(v.id),name:v.name||'',start:v.start||'',end:v.end||'',orders:(v.orders||[]).map(o=>({ord:o.ord||'',code:o.code||'',paint:o.paint||'',qty:toNum(o.qty),unit:o.unit==='m'?'m':'bar',len:toNum(o.len),wkg:owk(o)})),stock:normStock(v.stock),note:v.note||'',createdAt:v.createdAt||'',sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock),lockedAt:v.lockedAt||''}});
   S.periods=np;S.cur=null;
   if(Array.isArray(D.appUsers)&&D.appUsers.length){S.appUsers=D.appUsers;if(D.recovery)S.recovery=D.recovery}
   if(D.inv){S.invBase=normStock(D.inv);const now=new Date().toISOString();S.invMeta={};INV_SECS.forEach(sec=>Object.keys(S.invBase[sec]||{}).forEach(k=>S.invMeta[sec+':'+k]={u:me.id||null,at:now}));recomputeInv()}
