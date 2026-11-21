@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <title>حیسابێ سبغ و لسقێ</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#22302f">
@@ -329,6 +331,37 @@ nav.tabs{display:none!important}
   .home .grp-t{text-align:center}
   .home .tiles{grid-template-columns:repeat(auto-fit,minmax(230px,250px));justify-content:center}
   .home .note{text-align:center}
+}
+
+/* ===== Professional print layout (all PDF/print reports) ===== */
+@media print{
+ @page{size:A4;margin:12mm 11mm 14mm;@bottom-center{content:"لاپەڕ " counter(page) " / " counter(pages);font:8pt 'Noto Sans Arabic',Tahoma,sans-serif;color:#777}}
+ html,body{background:#fff!important}
+ #printArea{font-family:'Noto Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif!important;font-size:8.6pt!important;line-height:1.45;color:#1d2327!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #printArea .ltr,#printArea [dir=ltr]{font-family:'Inter','Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}
+ #printArea h1{font-size:14pt!important;font-weight:700;color:#0e5f63!important;margin:0 0 2px!important;letter-spacing:.2px}
+ #printArea h2{font-size:10pt!important;font-weight:700;margin:12px 0 5px!important;padding:4px 9px;background:#eef4f4;border-right:3px solid #0e7478;border-radius:3px;color:#123}
+ #printArea h2 small{font-weight:400;color:#4a5a5c;font-size:8.4pt}
+ #printArea h2.tsec{background:#0e7478!important;color:#fff!important;border:none}
+ #printArea h3{font-size:9.4pt!important;margin:9px 0 4px!important}
+ #printArea .arhd{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:7px!important;margin-bottom:9px!important;border-bottom:2px solid #0e7478!important}
+ #printArea .arco{font-size:11.5pt!important;font-weight:700;color:#1d2327}
+ #printArea .armut{color:#5c6b6e!important;font-size:7.8pt!important}
+ #printArea .arsum{display:flex;gap:7px!important;margin:7px 0 10px!important}
+ #printArea .arsum>div{flex:1;border:1px solid #d5dfe0!important;border-right:3px solid #0e7478!important;border-radius:5px!important;padding:5px 9px!important;background:#f7fafa}
+ #printArea .arsum span{font-size:7.4pt!important;color:#5c6b6e!important;text-transform:none}
+ #printArea .arsum b{font-size:11pt!important;color:#123;display:block}
+ #printArea .arsum small{font-size:7.4pt!important;color:#6a777a!important}
+ #printArea table{width:100%;border-collapse:collapse!important;margin:0 0 8px!important;font-size:8.2pt!important;page-break-inside:auto}
+ #printArea thead{display:table-header-group}
+ #printArea th{background:#0e7478!important;color:#fff!important;font-weight:600;font-size:7.8pt!important;padding:4px 6px!important;border:none!important;border-left:1px solid rgba(255,255,255,.25)!important;text-align:right;white-space:nowrap}
+ #printArea td{padding:3.5px 6px!important;border:none!important;border-bottom:1px solid #e3e9ea!important;vertical-align:middle}
+ #printArea tbody tr:nth-child(even) td{background:#f6f9f9}
+ #printArea tr.shr td{background:#fdf0f0!important}
+ #printArea tr.tot td{background:#e6f0f0!important;font-weight:700;border-top:1.5px solid #0e7478!important;border-bottom:none!important}
+ #printArea td.c{font-size:12pt!important}
+ #printArea tr{break-inside:avoid}
+ #printArea .arsig div{border-top:1px solid #9aa!important;font-size:8pt}
 }
 </style>
 </head>
@@ -1945,7 +1978,7 @@ function printOutLog(view){const K=S.invKind,isP=K==='paint',f=olF();view=view||
   const kg=rows.reduce((s,r)=>s+(r.kg||0),0),q=rows.reduce((s,r)=>s+r.qty,0),m2=rows.reduce((s,r)=>s+(r.tp?r.tp.m2:0),0);
   const html=`<div class="arhd"><div><div class="arco">${esc((S.settings.co||{}).name||'')}</div><div class="armut">دروستکرن: ${dmy(today())} ${hm(new Date().toISOString())}${u?' · ژ لایێ: '+esc(u.name||u.username):''}</div></div>
     <div style="text-align:left"><h1>تۆمارێن دەرئێخستنا ${isP?'سبغێ':'لسقێ'}</h1><div class="armut">${olVLbl(view,isP)}</div></div></div>
-  <div class="arsum"><div><span>ماوە</span><b>${dmy(f.from)||'—'} → ${dmy(f.to)||'—'}</b>${f.u?`<small>کێ: ${esc(uName(f.u))}</small>`:''}</div>
+  <div class="arsum"><div><span>ماوە</span><b dir="ltr" style="display:block;text-align:right">${dmy(f.from)||'—'} → ${dmy(f.to)||'—'}</b>${f.u?`<small>کێ: ${esc(uName(f.u))}</small>`:''}</div>
     ${isP?`<div><span>کۆم</span><b>${fmt(kg,1)} کیلۆ</b><small>${fmt(q,1)} کارتۆن</small></div>`:`<div><span>کۆم</span><b>${fmt(q,1)} کارتۆن</b><small>${fmt(m2,1)} م²</small></div>`}
     <div><span>جار</span><b>${rows.length}</b><small>${new Set(rows.map(r=>r.who)).size} کەس</small></div></div>
   ${!rows.length?'<p>چ دەرئێخستن نینن.</p>':view==='all'?olTable(rows,isP,null,true)
@@ -1984,9 +2017,9 @@ function arPoHtml(p,kind){const isP=isPaintKind(kind);const po=getPo(p,kind);con
   ${po.note?`<h2>ملاحظات</h2><p>${esc(po.note)}</p>`:''}
   <div class="arsig"><div>أعدّه</div><div>وافق عليه</div></div>`}
 function printHtml(inner,title){let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
-  pa.innerHTML=inner;const old=document.title;if(title)document.title=title;
+  pa.innerHTML=inner;pa.querySelectorAll('table').forEach(t=>{if(t.tHead)return;const r=t.rows[0];if(r&&r.cells.length&&[...r.cells].every(c=>c.tagName==='TH')){const th=t.createTHead();th.appendChild(r)}});const old=document.title;if(title)document.title=title;
   const done=()=>{document.title=old;pa.innerHTML='';window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
-  setTimeout(()=>window.print(),50)}
+  const go=()=>setTimeout(()=>window.print(),60);try{(document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(go)}catch(e){go()}}
 function invMiniStats(K){if(!can('inv_view')&&!can('inv_count'))return '';const r=reportData();
   return K==='paint'?`<div class="mstats"><div><b>${fmt(r.totKg,0)}</b><span>کیلۆ</span></div><div><b>${fmt(r.totCart,1)}</b><span>کارتۆن</span></div><div><b>${r.paints.length}</b><span>جۆر</span></div></div>`
    :`<div class="mstats"><div><b>${fmt(r.totM2,0)}</b><span>م²</span></div><div><b>${fmt(r.totBoxes,1)}</b><span>کارتۆن</span></div><div><b>${r.tapes.length}</b><span>جۆر</span></div></div>`}
