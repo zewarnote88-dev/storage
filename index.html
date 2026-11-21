@@ -2728,7 +2728,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='unlockP'&&p){dialog('<p>ڤەکرنا قفلێ: ئەنجامێن ڤێ ماوەیێ دێ دیسا ب مەخزەنا زیندی هێنە حیسابکرن.</p>',()=>{p.locked=false;p.lockedAt='';save('periods/'+p.id,100);render()},'ڤەکرن')}
   else if(act==='selShort'&&p){ensP(p);const ks=JSON.parse(t.dataset.keys);const a=p.sel[t.dataset.kind];ks.forEach(k=>{if(!a.includes(k))a.push(k)});save('periods/'+p.id,300);render()}
   else if(act==='selClear'&&p){ensP(p);p.sel[t.dataset.kind]=[];save('periods/'+p.id,300);render()}
-  else if(act==='unsel'&&p){ensP(p);const a=p.sel[t.dataset.kind];const i=a.indexOf(t.dataset.k);if(i>=0)a.splice(i,1);save('periods/'+p.id,300);render()}
+  else if(act==='unsel'&&p){ensP(p);const a=p.sel[isPaintKind(t.dataset.kind)?'paint':'tape']||[];const i=a.indexOf(t.dataset.k);if(i>=0)a.splice(i,1);save('periods/'+p.id,300);render()}
   else if(act==='pdf'&&p){
     if(!downloads){toast('⚠️ داگرتن ل ڤێرە بەردەست نینە');return}
     const kind=t.dataset.kind;const po=getPo(p,kind);const d=poDefaults(p,kind);po.no=po.no||d.no;po.date=po.date||d.date;po.supplier=po.supplier||d.supplier;
