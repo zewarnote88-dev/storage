@@ -275,6 +275,9 @@ nav.tabs{display:none!important}
 .accgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 .accsw{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:2px solid var(--line);border-radius:12px;background:var(--field);color:inherit;font:inherit;font-size:.85rem;cursor:pointer}
 .accsw span{width:56px;height:56px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.25)}.accsw.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+.dcheck{border:1px solid var(--warn-line);background:var(--warn-soft);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.dch{margin-bottom:8px;color:var(--warn)}.dci{background:var(--card);border-radius:10px;padding:10px 12px;margin-top:8px}
+.dcl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.dctag{background:var(--field);border:1px solid var(--line2);border-radius:8px;padding:3px 8px;font-weight:600;font-size:.86rem}.dctag small{color:var(--muted);font-weight:400}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -979,19 +982,21 @@ function compute(period){
       else missPer[norm(p.code)]=(missPer[norm(p.code)]||0)+qty;
     } else [[p.b1,p.s1||1],[p.b2,p.s2||1]].forEach(([w,sd])=>{if(w>0)addT(w,meters*sd)});
   });
+  // tape on the way (open tape POs, remaining m²)
+  const tInc={},tIncB={};if(!period.locked&&!period.__inv){try{openPos('tape').forEach(o=>{if(o.done)return;o.items.forEach(i=>{if(!(i.rem>0))return;const tp=tapeItemParts(o,i.key);const k=tp.w+'|'+tp.t;tInc[k]=(tInc[k]||0)+i.rem;const kb=tp.bk+'|'+k;tIncB[kb]=(tIncB[kb]||0)+i.rem})})}catch(e){}}
   // tape rows
   const bd=periodBrands(period);
   const agg={};
   Object.keys(period.stock.box).forEach(k=>{const n=toNum(period.stock.box[k]);if(!(n>0))return;const [b,w,t]=k.split('|');const kk=w+'|'+t;agg[kk]=agg[kk]||{boxes:0,m2:0,by:[]};agg[kk].boxes+=n;const m=boxM2(period,k);agg[kk].m2+=m;agg[kk].by.push({brand:(bd[b]||b)+(k.split('|')[3]?' '+k.split('|')[3]+'m':''),boxes:n,m2:m})});
-  const tk=new Set([...Object.keys(tape),...Object.keys(agg)]);
-  const tapeRows=[...tk].map(k=>{const [w,t]=k.split('|');const W=toNum(w);const needRaw=tape[k]||0;const need=needRaw*(S.settings.sfT||1);const a=agg[k]||{boxes:0,m2:0,by:[]};const diff=a.m2-need;
-      return {key:k,w:W,t,need,needRaw,boxes:a.boxes,stock:a.m2,by:a.by,diff,orderBoxes:diff<-0.0005?Math.ceil(-diff/m2PerBox(W)-1e-9):0}})
+  const tk=new Set([...Object.keys(tape),...Object.keys(agg),...Object.keys(tInc)]);
+  const tapeRows=[...tk].map(k=>{const [w,t]=k.split('|');const W=toNum(w);const needRaw=tape[k]||0;const need=needRaw*(S.settings.sfT||1);const a=agg[k]||{boxes:0,m2:0,by:[]};const inc=tInc[k]||0;const diff=a.m2+inc-need;
+      return {key:k,w:W,t,need,needRaw,boxes:a.boxes,stock:a.m2,inc,by:a.by,diff,orderBoxes:diff<-0.0005?Math.ceil(-diff/m2PerBox(W)-1e-9):0}})
     .sort((a,b)=>a.w-b.w||(a.t>b.t?1:-1));
   const bdAll={...bandDisp,...periodBrands(period)};
   const bAgg={};Object.keys(period.stock.box).forEach(k=>{const n=toNum(period.stock.box[k]);if(!(n>0))return;const k3=k.split('|').slice(0,3).join('|');bAgg[k3]=bAgg[k3]||{boxes:0,m2:0,lens:[]};bAgg[k3].boxes+=n;bAgg[k3].m2+=boxM2(period,k);bAgg[k3].lens.push(n+'×'+boxLen(k)+'m')});
-  const bk2=new Set([...Object.keys(tapeB),...Object.keys(bAgg)]);
-  const brandRows=[...bk2].map(k=>{const [b,w,t]=k.split('|');const W=toNum(w);const needRaw=tapeB[k]||0;const need=needRaw*(S.settings.sfT||1);const ba=bAgg[k]||{boxes:0,m2:0,lens:[]};const boxes=ba.boxes;const stv=ba.m2;const diff=stv-need;
-      return {key:k,bk:b,brand:bdAll[b]||b,known:!!brandObj(b),w:W,t,needRaw,need,boxes,lens:ba.lens,stock:stv,diff,orderBoxes:diff<-0.0005?Math.ceil(-diff/m2PerBox(W)-1e-9):0}})
+  const bk2=new Set([...Object.keys(tapeB),...Object.keys(bAgg),...Object.keys(tIncB)]);
+  const brandRows=[...bk2].map(k=>{const [b,w,t]=k.split('|');const W=toNum(w);const needRaw=tapeB[k]||0;const need=needRaw*(S.settings.sfT||1);const ba=bAgg[k]||{boxes:0,m2:0,lens:[]};const boxes=ba.boxes;const stv=ba.m2;const inc=tIncB[k]||0;const diff=stv+inc-need;
+      return {key:k,bk:b,brand:bdAll[b]||((brandObj(b)||{}).name)||b,known:!!brandObj(b),w:W,t,needRaw,need,boxes,lens:ba.lens,stock:stv,inc,diff,orderBoxes:diff<-0.0005?Math.ceil(-diff/m2PerBox(W)-1e-9):0}})
     .sort((a,b)=>a.brand.localeCompare(b.brand)||a.w-b.w||(a.t>b.t?1:-1));
   // paint rows: all paints with need or stock
   const allP={...pnt};
@@ -1234,7 +1239,7 @@ function viewPeriods(){
   const p=S.periods[S.cur];
   if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','cust','resPaint','resTape','po'].includes(S.sub))S.sub='orders';
   ensP(p);const nSel=p.sel.paint.length+p.sel.tape.length;
-  const subs=[['orders','ئۆردەر','clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
+  const nIss=dataIssues(p).reduce((s,x)=>s+x.list.length,0);const subs=[['orders','ئۆردەر'+(nIss?' ⚠️'+nIss:''),'clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
   let body='';
   body={orders:viewOrders,cust:viewCust,resPaint:viewResPaint,resTape:viewResTape,po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
   return warn+pbar+`<div class="card">
@@ -1246,10 +1251,43 @@ function viewPeriods(){
     ${body}</div>`;
 }
 
+/* ======================= Data check: what's missing for the orders ======================= */
+function dataIssues(p){const r=compute(p);const {prof}=maps();const used={};
+  (p.orders||[]).forEach(o=>{const k=norm(o.code);if(!k||toNum(o.qty)<=0)return;const bars=o.unit==='m'?toNum(o.qty)/(S.settings.bar||6):toNum(o.qty);used[k]=(used[k]||0)+bars});
+  const noTape=Object.keys(used).filter(k=>{const x=prof[k];return x&&!x.wrap&&!(x.b1>0)&&!(x.b2>0)}).map(k=>[prof[k].code,used[k]]);
+  const I=[];
+  const mp=Object.entries(r.missProf);if(mp.length)I.push({k:'prof',t:'پڕۆفایل د لیستێ دا نینن',d:'لسق و کێش بۆ وان نەهاتنە حیسابکرن',list:mp,fix:'addProf'});
+  if(noTape.length)I.push({k:'tape',t:'پڕۆفایل بێ زانیاریێن لسقێ',d:'پانیا لسقێ (mm) نەهاتیە نڤیسین — لسقا وان نەهاتە حیسابکرن',list:noTape,fix:'editProf'});
+  const mpe=Object.entries(r.missPer);if(mpe.length)I.push({k:'per',t:'پڕۆفایلێن ب پێچان بێ دەور',d:'دەور (mm) نەهاتیە نڤیسین',list:mpe,fix:'editProf'});
+  const mw=Object.entries(r.missW);if(mw.length)I.push({k:'w',t:'بێ کێش',d:'نە د ئۆردەرێ دا کێش هەیە (Wight) و نە د پڕۆفایلی دا — سبغا وان نەهاتە حیسابکرن',list:mw,fix:'editProf'});
+  const mc=Object.entries(r.missPaint);if(mc.length)I.push({k:'paint',t:'سبغ د لیستا جۆرێن سبغێ دا نینن',d:'وەک Rough دهێنە حیسابکرن — ل «ئەنجاما لسقێ» دشێی بگوهۆڕی',list:mc,go:'paints'});
+  const mwd=Object.keys(r.missWidth);if(mwd.length)I.push({k:'wd',t:'پانیێن لسقێ د لیستا جۆرێن لسقێ دا نینن',d:'ل «جۆرێن لسقێ» زێدە بکە',list:mwd.map(w=>[w+' mm',0]),go:'tapes'});
+  return I}
+function dataCheckBox(p){const I=dataIssues(p);const canP=can('master')||can('m_profiles');
+  if(!I.length)return (p.orders||[]).length?`<div class="info" style="background:var(--good-soft);color:var(--good)">✓ هەمی زانیاری بۆ ئۆردەران تەمامن — هەمی پڕۆفایل، کێش، لسق و سبغ دیارن.</div>`:'';
+  return `<div class="dcheck"><div class="dch"><b>⚠️ هندەک زانیاری کێمن</b> <span class="muted">— حیسابێ سبغ و لسقێ بۆ ڤان تەمام نینە</span></div>
+   ${I.map(x=>`<div class="dci"><div class="row" style="align-items:center;gap:8px"><div class="grow"><b>${x.t}</b> <span class="pill Q">${x.list.length}</span><div class="muted" style="font-size:.8rem">${x.d}</div></div>
+     ${x.fix&&canP?`<button class="btn pri" data-act="dcFix" data-k="${x.k}">${x.fix==='addProf'?'➕ زێدەکرن':'✎ تەمامکرن'}</button>`:''}${x.go&&TAB_PERM[x.go]&&TAB_PERM[x.go]()?`<button class="btn" data-go="${x.go}">بچە ←</button>`:''}</div>
+     <div class="dcl">${x.list.slice(0,60).map(([c,q])=>`<span class="dctag" dir="ltr">${esc(c)}${q?` <small>${fmt(q,0)} قەد</small>`:''}</span>`).join('')}${x.list.length>60?` <span class="muted">+${x.list.length-60}</span>`:''}</div></div>`).join('')}</div>`}
+function dcFix(p,k){const I=dataIssues(p).find(x=>x.k===k);if(!I)return;const {prof}=maps();
+  const rows=I.list.slice(0,40).map(([c])=>{const x=prof[norm(c)]||{code:c,b1:0,b2:0,s1:1,s2:1,w:0,wrap:false,per:0};return x});
+  dialog(`<h3 style="margin-top:0">${k==='prof'?'➕ زێدەکرنا پڕۆفایلان':'✎ تەمامکرنا زانیاریێن پڕۆفایلان'}</h3>
+   <p class="muted">لسقا ئێکێ و دووێ ب <b>mm</b> (بۆ نموونە 40). ×2 = لسق ل هەردوو لایان. ئەگەر ب پێچانە، «پێچان» نیشان بکە و دەورێ (mm) بنڤیسە. کێش (kg/m) نە پێتڤییە ئەگەر د ئۆردەرێ دا Wight هەبیت.</p>
+   <div class="tbl-scroll" data-nosrch style="max-height:55vh"><table><thead><tr><th>کۆد</th><th class="n">لسقا ئێکێ</th><th>×2</th><th class="n">لسقا دووێ</th><th>×2</th><th>پێچان</th><th class="n">دەور</th><th class="n">kg/m</th></tr></thead><tbody>
+   ${rows.map((x,i)=>`<tr data-dcr="${i}" data-code="${esc(x.code)}"><td dir="ltr"><b>${esc(x.code)}</b></td>
+     <td><input class="num" data-f="b1" inputmode="numeric" value="${x.b1||''}" style="width:64px"></td><td><input type="checkbox" data-f="s1" ${x.s1===2?'checked':''}></td>
+     <td><input class="num" data-f="b2" inputmode="numeric" value="${x.b2||''}" style="width:64px"></td><td><input type="checkbox" data-f="s2" ${x.s2===2?'checked':''}></td>
+     <td><input type="checkbox" data-f="wrap" ${x.wrap?'checked':''}></td><td><input class="num" data-f="per" inputmode="numeric" value="${x.per||''}" style="width:64px"></td>
+     <td><input class="num" data-f="w" inputmode="decimal" value="${x.w||''}" style="width:64px"></td></tr>`).join('')}</tbody></table></div>`,
+  ()=>{let n=0;document.querySelectorAll('[data-dcr]').forEach(tr=>{const g=f=>tr.querySelector(`[data-f="${f}"]`);const code=tr.dataset.code;
+      const v={code,b1:toNum(g('b1').value),s1:g('s1').checked?2:1,b2:toNum(g('b2').value),s2:g('s2').checked?2:1,wrap:g('wrap').checked,per:toNum(g('per').value),w:toNum(g('w').value)};
+      if(!(v.b1>0||v.b2>0||v.wrap||v.w>0))return;const i=S.profiles.findIndex(x=>norm(x.code)===norm(code));
+      if(i>=0)S.profiles[i]={...S.profiles[i],...v,w:v.w||S.profiles[i].w};else S.profiles.push(v);n++});
+    if(n){save('cfg/profiles',200);toast(`✓ ${n} پڕۆفایل هاتنە پاشەکەفتکرن`);render()}},'پاشەکەفتکرن')}
 function viewOrders(p){
   const rows=p.orders;
   const {prof,paint}=maps();
-  return `<div class="info">هەمی ئۆردەرێن ڤان ١٥ ڕۆژان ل ڤێرە بنڤیسە. ژمار دشێت ب قەد بیت (هەر قەدەک ${fmt(S.settings.bar)} مەترە) یان ب مەتر — بۆ هەر ڕیزەکێ هەلبژێرە.</div>
+  return `${dataCheckBox(p)}<div class="info">هەمی ئۆردەرێن ڤان ١٥ ڕۆژان ل ڤێرە بنڤیسە. ژمار دشێت ب قەد بیت (هەر قەدەک ${fmt(S.settings.bar)} مەترە) یان ب مەتر — بۆ هەر ڕیزەکێ هەلبژێرە.</div>
   <div style="border:2px dashed var(--accent);border-radius:12px;padding:12px;margin:10px 0">
     <b>پەیستکرن ژ ئێکسلێ</b>
     <p class="muted" style="margin:4px 0">د ئێکسلێدا هەمی تابلۆیێ هەلبژێرە <b>دگەل سەرناڤان</b> (<span class="ltr">Profile name · Length · Wight · Quantity · Color Code · Band</span>)، <span class="ltr">Ctrl+C</span> بکە، پاشی ل ڤێرە <span class="ltr">Ctrl+V</span> بکە.</p>
@@ -1349,13 +1387,13 @@ function resPrintHtml(p,what){const r=compute(p);const isP=what==='paint';const 
   const box2='<span class="cb">☐</span>';const dtxt=d=>Math.abs(d)<0.0005?'0':(d<0?'−':'+')+fmt(Math.abs(d),1);
   const sect=t=>{const L=r.brandRows.filter(x=>(x.t==='P'?'P':'N')===t);if(!L.length)return '';const G={};L.forEach(x=>{(G[x.brand]=G[x.brand]||[]).push(x)});
     return `<h2 class="tsec">${t==='P'?'Rough (زڤر)':'Normal (عادی)'}</h2>`+Object.keys(G).sort((a,b)=>a.localeCompare(b)).map(bn=>{const rows=G[bn].sort((a,b)=>a.w-b.w);const tn=rows.reduce((s,x)=>s+x.need,0),ts=rows.reduce((s,x)=>s+x.stock,0),tb=rows.reduce((s,x)=>s+(x.orderBoxes||0),0);
-      return `<h3 style="margin:12px 0 4px;border-right:4px solid #0e7478;padding-right:8px">🏷️ <span class="ltr">${esc(bn)}</span></h3><table><tr><th>داخواز</th><th>پانی</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th><th>تێبینی</th></tr>
-      ${rows.map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="c">${box2}</td><td class="ltr" style="text-align:right"><b>${x.w} mm</b></td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td class="ltr" style="text-align:right"><b>${dtxt(x.diff)}</b></td><td>${x.orderBoxes||''}</td><td class="wr"></td></tr>`).join('')}
-      <tr class="tot"><td colspan="2">کۆم</td><td>${fmt(tn,1)}</td><td>${fmt(ts,1)}</td><td></td><td>${tb||''}</td><td></td></tr></table>`}).join('')};
+      return `<h3 style="margin:12px 0 4px;border-right:4px solid #0e7478;padding-right:8px">🏷️ <span class="ltr">${esc(bn)}</span></h3><table><tr><th>داخواز</th><th>پانی</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ل ڕێیە (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th><th>تێبینی</th></tr>
+      ${rows.map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="c">${box2}</td><td class="ltr" style="text-align:right"><b>${x.w} mm</b></td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td>${x.inc?fmt(x.inc,1):'—'}</td><td class="ltr" style="text-align:right"><b>${dtxt(x.diff)}</b></td><td>${x.orderBoxes||''}</td><td class="wr"></td></tr>`).join('')}
+      <tr class="tot"><td colspan="2">کۆم</td><td>${fmt(tn,1)}</td><td>${fmt(ts,1)}</td><td>${fmt(rows.reduce((s,x)=>s+(x.inc||0),0),1)}</td><td></td><td>${tb||''}</td><td></td></tr></table>`}).join('')};
   return head+`<div class="arsum"><div><span>قەد</span><b>${fmt(r.totalBars,1)}</b><small>${fmt(r.totalMeters,0)} مەتر</small></div><div><span>لسقا پێتڤی × ${fmt(S.settings.sfT,2)}</span><b>${fmt(r.tapeNeed,0)} م²</b><small>Normal ${fmt(r.tapeNeedNR.N,0)} · Rough ${fmt(r.tapeNeedNR.P,0)}</small></div><div><span>کێمی</span><b>${fmt(r.tapeShort,0)} م²</b><small>${r.tapeShortN} ژ ${r.tapeUsedN} جۆر</small></div></div>
   ${sect('N')}${sect('P')}
-  <h2>کۆما هەمی براندان</h2><table><tr><th>پانی</th><th>جۆر</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th></tr>
-  ${[...r.tapeRows].sort((a,b)=>((a.t==='P')-(b.t==='P'))||a.w-b.w).map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="ltr">${x.w} mm</td><td>${x.t==='P'?'Rough':'Normal'}</td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td class="ltr" style="text-align:right"><b>${Math.abs(x.diff)<0.0005?'0':(x.diff<0?'−':'+')+fmt(Math.abs(x.diff),1)}</b></td><td>${x.orderBoxes||''}</td></tr>`).join('')}</table>`}
+  <h2>کۆما هەمی براندان</h2><table><tr><th>پانی</th><th>جۆر</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ل ڕێیە (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th></tr>
+  ${[...r.tapeRows].sort((a,b)=>((a.t==='P')-(b.t==='P'))||a.w-b.w).map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="ltr">${x.w} mm</td><td>${x.t==='P'?'Rough':'Normal'}</td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td>${x.inc?fmt(x.inc,1):'—'}</td><td class="ltr" style="text-align:right"><b>${Math.abs(x.diff)<0.0005?'0':(x.diff<0?'−':'+')+fmt(Math.abs(x.diff),1)}</b></td><td>${x.orderBoxes||''}</td></tr>`).join('')}</table>`}
 function resTools(what){return `<button class="btn pri" data-act="resPdf" data-what="${what}">${I('file','sm')} PDF بۆ چاپێ</button>${downloads?`<button class="btn" data-act="export">${I('down','sm')} Excel</button>`:''}<button class="btn" data-act="copyRes" data-what="${what}">${I('copy','sm')} کۆپیکرن</button>`}
 function noteBox(p){return `<h3>تێبینی بۆ ڤێ ماوەیێ</h3>
   <textarea id="pNote" style="direction:rtl;text-align:right;font-family:inherit;min-height:80px" placeholder="بۆ نموونە: ٢ تۆن سبغا 7016 Mat هاتە کڕین، ٥٠٠ م² لسقا ٤٠mm ...">${esc(p.note)}</textarea>`}
@@ -1515,14 +1553,14 @@ function viewResTape(p){
   ${selBar(p,'tape',r.brandRows.filter(x=>x.orderBoxes>0).map(x=>x.key))}
   ${(()=>{const groups={};r.brandRows.forEach(x=>{(groups[x.bk]=groups[x.bk]||[]).push(x)});const ks=Object.keys(groups);
     if(!ks.length)return '<p class="muted">هێشتا چ نینە.</p>';
-    return `<div class="tbl-scroll"><table><thead><tr><th>داخواز</th><th>براند</th><th>پانی</th><th>جۆر</th><th class="n">پێتڤی × ${fmt(S.settings.sfT,2)} (م²)</th><th class="n">ل مەخزەنێ (م²)</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
+    return `<div class="tbl-scroll"><table><thead><tr><th>داخواز</th><th>براند</th><th>پانی</th><th>جۆر</th><th class="n">پێتڤی × ${fmt(S.settings.sfT,2)} (م²)</th><th class="n">ل مەخزەنێ (م²)</th><th class="n">ل ڕێیە (م²)</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
     ${ks.map(b=>{const rows=groups[b];const tn=rows.reduce((s,x)=>s+x.need,0);
-      return `<tr><td colspan="8" style="background:var(--card2)"><b class="ltr">${esc(rows[0].brand)}</b> ${rows[0].known?'':'<span class="pill Q">نە د لیستا کۆمپانیێن لسقێ دا</span>'} <span class="muted">— هەمی پێتڤی: <span class="ltr">${fmt(tn)}</span> م²</span></td></tr>`+
-      rows.map(x=>`<tr${p.sel.tape.includes(x.key)?' style="background:var(--accent-soft)"':''}><td style="text-align:center"><input type="checkbox" data-sel="tape" data-k="${esc(x.key)}" ${p.sel.tape.includes(x.key)?'checked':''}></td><td class="ltr muted" style="text-align:right">${esc(x.brand)}</td><td><b class="ltr">${x.w} mm</b></td><td>${pill(x.t)}</td><td class="n"><b>${fmt(x.need)}</b></td><td class="n">${fmt(x.stock)}${x.boxes?` <span class="muted">(${x.lens.join(' + ')})</span>`:''}</td>${diffCell(x.diff,'م²')}<td class="n ${x.orderBoxes?'short':''}">${x.orderBoxes||''}</td></tr>`).join('')}).join('')}
+      return `<tr><td colspan="9" style="background:var(--card2)"><b class="ltr">${esc(rows[0].brand)}</b> ${rows[0].known?'':'<span class="pill Q">نە د لیستا کۆمپانیێن لسقێ دا</span>'} <span class="muted">— هەمی پێتڤی: <span class="ltr">${fmt(tn)}</span> م²</span></td></tr>`+
+      rows.map(x=>`<tr${p.sel.tape.includes(x.key)?' style="background:var(--accent-soft)"':''}><td style="text-align:center"><input type="checkbox" data-sel="tape" data-k="${esc(x.key)}" ${p.sel.tape.includes(x.key)?'checked':''}></td><td class="ltr muted" style="text-align:right">${esc(x.brand)}</td><td><b class="ltr">${x.w} mm</b></td><td>${pill(x.t)}</td><td class="n"><b>${fmt(x.need)}</b></td><td class="n">${fmt(x.stock)}${x.boxes?` <span class="muted">(${x.lens.join(' + ')})</span>`:''}</td><td class="n">${x.inc?fmt(x.inc):'<span class="muted">—</span>'}</td>${diffCell(x.diff,'م²')}<td class="n ${x.orderBoxes?'short':''}">${x.orderBoxes||''}</td></tr>`).join('')}).join('')}
     </tbody></table></div>`})()}
   <h3>${I('chart','sm')} کۆما هەمی براندان</h3>
-  <div class="tbl-scroll"><table><thead><tr><th>پانی</th><th>جۆر</th><th class="n">پێتڤی (م²)</th><th class="n">پێتڤی × ${fmt(S.settings.sfT,2)}</th><th class="n">ل مەخزەنێ (م²) — هەمی کۆمپانی</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
-  ${r.tapeRows.map(x=>`<tr><td><b class="ltr">${x.w} mm</b></td><td>${pill(x.t)}</td><td class="n muted">${fmt(x.needRaw)}</td><td class="n"><b>${fmt(x.need)}</b></td><td class="n">${fmt(x.stock)}${x.boxes?` <span class="muted">(${fmt(x.boxes,1)} کارتۆن)</span>`:''}${x.by.length>1?`<div class="muted" style="font-size:.78rem">${x.by.map(b=>esc(b.brand)+': '+fmt(b.boxes,1)).join(' · ')}</div>`:(x.by.length?`<div class="muted" style="font-size:.78rem">${esc(x.by[0].brand)}</div>`:'')}</td>${diffCell(x.diff,'م²')}<td class="n ${x.orderBoxes?'short':''}">${x.orderBoxes||''}</td></tr>`).join('')||'<tr><td colspan="8" class="muted">هێشتا چ نینە.</td></tr>'}
+  <div class="tbl-scroll"><table><thead><tr><th>پانی</th><th>جۆر</th><th class="n">پێتڤی (م²)</th><th class="n">پێتڤی × ${fmt(S.settings.sfT,2)}</th><th class="n">ل مەخزەنێ (م²) — هەمی کۆمپانی</th><th class="n">ل ڕێیە (م²)</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
+  ${r.tapeRows.map(x=>`<tr><td><b class="ltr">${x.w} mm</b></td><td>${pill(x.t)}</td><td class="n muted">${fmt(x.needRaw)}</td><td class="n"><b>${fmt(x.need)}</b></td><td class="n">${fmt(x.stock)}${x.boxes?` <span class="muted">(${fmt(x.boxes,1)} کارتۆن)</span>`:''}${x.by.length>1?`<div class="muted" style="font-size:.78rem">${x.by.map(b=>esc(b.brand)+': '+fmt(b.boxes,1)).join(' · ')}</div>`:(x.by.length?`<div class="muted" style="font-size:.78rem">${esc(x.by[0].brand)}</div>`:'')}</td><td class="n">${x.inc?fmt(x.inc):'<span class="muted">—</span>'}</td>${diffCell(x.diff,'م²')}<td class="n ${x.orderBoxes?'short':''}">${x.orderBoxes||''}</td></tr>`).join('')||'<tr><td colspan="8" class="muted">هێشتا چ نینە.</td></tr>'}
   </tbody></table></div>
   <p class="muted">Safety factor یێ لسقێ: × ${fmt(S.settings.sfT,2)} (ل تابا «ڕێکخستن» دهێتە گوهۆڕین). حیسابێ لسقێ: (پانی ÷ ١٠٠٠) × مەترێن پڕۆفایلی. پڕۆفایلێن ب پێچان: (${fmt(S.settings.wWidth)} ÷ ١٠٠٠) × (دەور ÷ ١٠٠٠) × ${fmt(S.settings.wTurns)} جار × ${fmt(S.settings.wSpots)} جه × ژمارا قەدان. جۆرێ لسقێ (Normal / Rough) ل دویڤ جۆرێ سبغێ یە.</p>
   ${(()=>{const L=tapeByProfile(p);if(!L.length)return '';const tot=L.reduce((s,x)=>s+x.m2,0);
@@ -2525,6 +2563,7 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='myProfile'){myProfile()}
+  else if(act==='dcFix'&&p){dcFix(p,t0.dataset.k)}
   else if(act==='ptype'&&p){p.ptype=p.ptype||{};p.ptype[t0.dataset.k]=t0.dataset.v;save('periods/'+p.id,100);render()}
   else if(act==='poEarly'&&isAdmin){const id=t0.dataset.id;const o=openPos().find(x=>x.p.id+'~'+x.kind===id);if(!o)return;o.po.early=true;save('periods/'+o.p.id,100);render();toast('✅ نوکە دشێی داخل بکەی')}
   else if(act==='rcvUndo'&&isAdmin){const id=t0.dataset.id;const t=(S.tx.in||[]).find(x=>x.id===id);if(!t)return;
