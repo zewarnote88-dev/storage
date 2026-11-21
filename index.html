@@ -249,6 +249,7 @@ nav.tabs{display:none!important}
 .rcard .rstats>div{background:var(--field);border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;line-height:1.25}
 .rcard .rstats span{color:var(--muted);font-size:.72rem}.rcard .rstats b{font-size:1rem}.rcard .rstats small{color:var(--muted);font-size:.7rem}
 .rcard .rstats .rord{background:var(--bad-soft);color:var(--bad)}.rcard .rstats .rord span,.rcard .rstats .rord small{color:var(--bad)}
+@media (max-width:760px){input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px}}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -525,7 +526,8 @@ function sbDb(token){
     if(L.lim)ds=ds.slice(0,L.lim);return {docs:ds.map(x=>({id:x.id,data:()=>clone(x.d)})),metadata:meta}};
   const emit=p=>{(docL.get(p)||[]).forEach(fn=>{try{fn(snapDoc(p))}catch(e){console.error(e)}});colL.forEach(L=>{if(L.col===colOf(p)){try{L.fn(snapCol(L))}catch(e){console.error(e)}}})};
   const call=async(n,a)=>{try{return await rpc(n,{p_token:token,...(a||{})})}catch(e){if(e.code==='auth')sessionExpired();throw e}};
-  const put=(p,d)=>{if(JSON.stringify(rows.get(p))!==JSON.stringify(d)){rows.set(p,d);emit(p)}};
+  const stab=x=>x===undefined?'u':JSON.stringify(x,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.keys(v).sort().reduce((o,kk)=>(o[kk]=v[kk],o),{}):v);
+  const put=(p,d)=>{if(stab(rows.get(p))!==stab(d)){rows.set(p,d);emit(p)}};
   async function loadAll(){const t0=Date.now();const r=await call('docs_all');since=r.now;const seen=new Set();
     (r.rows||[]).forEach(x=>{seen.add(x.path);if(fresh(x.path,t0))put(x.path,x.data)});[...rows.keys()].forEach(p=>{if(!seen.has(p)&&fresh(p,t0)&&rows.delete(p))emit(p)})}
   async function poll(){if(!since)return;const t0=Date.now();const from=new Date(new Date(since).getTime()-15000).toISOString();const r=await call('docs_since',{p_since:from});since=r.now;
@@ -804,7 +806,7 @@ function recalcAdmin(){const u=curApp();isAdmin=!!(u&&u.status==='active'&&(u.pe
 function applyRole(){recalcAdmin();showMe();
   document.querySelectorAll('#tabs button').forEach(b=>{const f=TAB_PERM[b.dataset.tab];b.style.display=(f&&f())?'':'none'});
   const f=TAB_PERM[S.tab];if(!(f&&f())){const t=firstTab();if(t)S.tab=t}
-  if(S.loaded)render();
+  if(S.loaded)softRender();
   seedPaints();
 }
 function gateView(){const st=myStatus();if(st==='none'){if(!S.appUsers.some(u=>u.status!=='blocked'&&(u.perms||{}).admin))return claudeAdmin?setupView():'<div class="card" style="max-width:460px;margin:50px auto;text-align:center"><h2 style="justify-content:center">چاڤەڕێ بە</h2><p>هێشتا بەرپرسێ پڕۆگرامی هەژمارا خۆ دروست نەکریە.</p></div>';return loginView()}
