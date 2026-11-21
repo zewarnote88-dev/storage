@@ -304,6 +304,7 @@ nav.tabs{display:none!important}
  #printArea .arco{font-size:15pt;font-weight:700}#printArea .armut{color:#555;font-size:9.5pt}
  #printArea .arsum{display:flex;gap:10px;margin:10px 0 14px}#printArea .arsum>div{flex:1;border:1px solid #bbb;border-right:4px solid #0e7478;border-radius:6px;padding:6px 10px}
  #printArea .arsum span{display:block;color:#555;font-size:9pt}#printArea .arsum b{font-size:13pt}#printArea .arsum small{display:block;color:#666}
+ #printArea tr.shr td{background:#fdecec}#printArea td.c{text-align:center;font-size:15pt;line-height:1}#printArea td.wr{min-width:28mm}
  #printArea tr.tot td{font-weight:700;background:#eef4f4;border-top:2px solid #0e7478}
  #printArea .arsig{display:flex;justify-content:space-between;margin-top:60px}#printArea .arsig div{width:40%;border-top:1px solid #888;padding-top:4px;color:#555;text-align:center}
  #printArea .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}#printArea tr{break-inside:avoid}@page{margin:12mm}}
@@ -1276,7 +1277,21 @@ function commonWarns(r){
   return warns;
 }
 const warnHtml=ws=>ws.map(w=>`<div class="note">⚠️ ${w}</div>`).join('');
-function resTools(what){return `${downloads?`<button class="btn" data-act="export">${I('down','sm')} Excel</button>`:''}<button class="btn" data-act="copyRes" data-what="${what}">${I('copy','sm')} کۆپیکرن</button>`}
+/* ---- Results PDF (print) for deciding what to order ---- */
+function resPrintHtml(p,what){const r=compute(p);const isP=what==='paint';const u=curApp();const box='<span class="cb">☐</span>';
+  const head=`<div class="arhd"><div><div class="arco">${esc((S.settings.co||{}).name||'')}</div><div class="armut">دروستکرن: ${dmy(today())} ${hm(new Date().toISOString())}${u?' · ژ لایێ: '+esc(u.name||u.username):''}</div></div>
+    <div style="text-align:left"><h1>ئەنجاما ${isP?'سبغێ':'لسقێ'}</h1><div class="armut">ماوە: ${esc(p.name)} · <span class="ltr">${dmy(p.start)} → ${dmy(p.end)}</span></div></div></div>`;
+  if(isP){const rows=[...r.paintRows].sort((a,b)=>a.diff-b.diff);
+    return head+`<div class="arsum"><div><span>پڕۆفایل</span><b>${fmtT(r.totalProfKg)} تۆن</b><small>${fmt(r.totalBars,1)} قەد</small></div><div><span>سبغا پێتڤی × ${fmt(S.settings.sfP,2)}</span><b>${fmtT(r.paintNeed)} تۆن</b></div><div><span>کێمی</span><b>${fmtT(r.paintShort)} تۆن</b><small>${r.paintShortN} ژ ${r.paintUsedN} جۆر</small></div></div>
+    <table><tr><th>داخواز</th><th>#</th><th>سبغ</th><th>کۆمپانی</th><th>جۆر</th><th>قەد</th><th>پێتڤی (کیلۆ)</th><th>ل مەخزەنێ (کیلۆ)</th><th>ل ڕێیە (کیلۆ)</th><th>ئەنجام (کیلۆ)</th><th>کارتۆن</th><th>تێبینی</th></tr>
+    ${rows.map((x,i)=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="c">${box}</td><td>${i+1}</td><td class="ltr"><b>${esc(x.name)}</b></td><td class="ltr">${esc(paintCoOf(x.key)||'')}</td><td>${x.type==='P'?'Rough':'Normal'}</td><td>${fmt(x.bars,0)}</td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td>${x.inc?fmt(x.inc,1):'—'}</td><td class="ltr" style="text-align:right"><b>${Math.abs(x.diff)<0.0005?'0':(x.diff<0?'−':'+')+fmt(Math.abs(x.diff),1)}</b></td><td>${x.orderCart||''}</td><td class="wr"></td></tr>`).join('')}</table>`}
+  const groups={};r.brandRows.forEach(x=>{(groups[x.bk]=groups[x.bk]||[]).push(x)});
+  return head+`<div class="arsum"><div><span>قەد</span><b>${fmt(r.totalBars,1)}</b><small>${fmt(r.totalMeters,0)} مەتر</small></div><div><span>لسقا پێتڤی × ${fmt(S.settings.sfT,2)}</span><b>${fmt(r.tapeNeed,0)} م²</b><small>Normal ${fmt(r.tapeNeedNR.N,0)} · Rough ${fmt(r.tapeNeedNR.P,0)}</small></div><div><span>کێمی</span><b>${fmt(r.tapeShort,0)} م²</b><small>${r.tapeShortN} ژ ${r.tapeUsedN} جۆر</small></div></div>
+  <h2>ل دویڤ براند و پانیێ</h2><table><tr><th>داخواز</th><th>براند</th><th>پانی</th><th>جۆر</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th><th>تێبینی</th></tr>
+  ${Object.keys(groups).map(b=>groups[b].map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="c">${box}</td><td class="ltr"><b>${esc(x.brand)}</b></td><td class="ltr">${x.w} mm</td><td>${x.t==='P'?'Rough':'Normal'}</td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td class="ltr" style="text-align:right"><b>${Math.abs(x.diff)<0.0005?'0':(x.diff<0?'−':'+')+fmt(Math.abs(x.diff),1)}</b></td><td>${x.orderBoxes||''}</td><td class="wr"></td></tr>`).join('')).join('')||'<tr><td colspan="9">—</td></tr>'}</table>
+  <h2>کۆما هەمی براندان</h2><table><tr><th>پانی</th><th>جۆر</th><th>پێتڤی (م²)</th><th>ل مەخزەنێ (م²)</th><th>ئەنجام (م²)</th><th>کارتۆن</th></tr>
+  ${r.tapeRows.map(x=>`<tr class="${x.diff<-0.0005?'shr':''}"><td class="ltr">${x.w} mm</td><td>${x.t==='P'?'Rough':'Normal'}</td><td><b>${fmt(x.need,1)}</b></td><td>${fmt(x.stock,1)}</td><td class="ltr" style="text-align:right"><b>${Math.abs(x.diff)<0.0005?'0':(x.diff<0?'−':'+')+fmt(Math.abs(x.diff),1)}</b></td><td>${x.orderBoxes||''}</td></tr>`).join('')}</table>`}
+function resTools(what){return `<button class="btn pri" data-act="resPdf" data-what="${what}">${I('file','sm')} PDF بۆ چاپێ</button>${downloads?`<button class="btn" data-act="export">${I('down','sm')} Excel</button>`:''}<button class="btn" data-act="copyRes" data-what="${what}">${I('copy','sm')} کۆپیکرن</button>`}
 function noteBox(p){return `<h3>تێبینی بۆ ڤێ ماوەیێ</h3>
   <textarea id="pNote" style="direction:rtl;text-align:right;font-family:inherit;min-height:80px" placeholder="بۆ نموونە: ٢ تۆن سبغا 7016 Mat هاتە کڕین، ٥٠٠ م² لسقا ٤٠mm ...">${esc(p.note)}</textarea>`}
 function selBar(p,kind,shortKeys){ensP(p);const n=p.sel[kind].length;
@@ -2410,6 +2425,7 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='myProfile'){myProfile()}
+  else if(act==='resPdf'&&p){printHtml(resPrintHtml(p,t0.dataset.what),`results-${t0.dataset.what}-${p.start}_${p.end}`)}
   else if(act==='custCancel'&&p){const k=t0.dataset.k;p.cancel=p.cancel||[];const on=p.cancel.includes(k);
     const doIt=()=>{p.cancel=on?p.cancel.filter(x=>x!==k):[...p.cancel,k];save('periods/'+p.id,100);render();toast(on?`↩️ داخوازی ${k} زڤڕی د حیسابێ دا`:`❌ داخوازی ${k} هاتە بەتالکرن — ژ حیسابێ سبغ و لسقێ دەرکەفت`)};
     if(on)doIt();else dialog(`<p>داخوازیا <b dir="ltr">${esc(k)}</b> بەتال بکە؟ ئۆردەرێن وێ ژ حیسابێ ماوەیێ (سبغ و لسق) دەردکەڤن، لێ ژێ نابن — دشێی پاشی ڤەگەڕینی.</p>`,doIt,'بەتالکرن')}
