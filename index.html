@@ -234,6 +234,17 @@ nav.tabs{display:none!important}
 .pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
 .bigsel{width:100%;min-height:48px;font-size:1.05rem;padding:8px 12px;border-radius:12px}
 .card.cust.off{opacity:.6;border-style:dashed}
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px;margin:8px 0}
+@media (max-width:480px){.rcards{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))!important;gap:8px}.kpis .kpi{padding:10px}.kpis .kpi .v{font-size:1.25rem}.kpis .kpi .l{font-size:.72rem}}
+.rcard{display:block;background:var(--card);border:1px solid var(--line);border-inline-start:5px solid var(--good);border-radius:14px;padding:12px 14px;cursor:pointer}
+.rcard.sh{border-inline-start-color:var(--bad)}.rcard.on{background:var(--accent-soft);border-color:var(--accent)}
+.rcard .rtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.rcard .rtop input{width:20px;height:20px;flex:none}
+.rcard .rname{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.rcard .rname b{font-size:1.05rem}
+.rcard .rres{font-weight:700;white-space:nowrap;padding:3px 10px;border-radius:10px}.rcard .rres.short{background:var(--bad-soft);color:var(--bad)}.rcard .rres.ok{background:var(--good-soft);color:var(--good)}
+.rcard .rstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px;margin-top:10px}
+.rcard .rstats>div{background:var(--field);border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;line-height:1.25}
+.rcard .rstats span{color:var(--muted);font-size:.72rem}.rcard .rstats b{font-size:1rem}.rcard .rstats small{color:var(--muted);font-size:.7rem}
+.rcard .rstats .rord{background:var(--bad-soft);color:var(--bad)}.rcard .rstats .rord span,.rcard .rstats .rord small{color:var(--bad)}
 .isubs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:4px 0 12px;scrollbar-width:none}.isubs::-webkit-scrollbar{display:none}
 .isubs button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--field);color:var(--ink);border-radius:999px;padding:9px 15px;font:inherit;font-size:.9rem;cursor:pointer}
 .isubs button .ico{color:var(--tc)}.isubs button.on{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}.isubs button.on .ico{color:#fff}
@@ -1429,9 +1440,19 @@ function viewResPaint(p){
   <div class="row"><h3 class="grow">ئەنجاما سبغێ — ئەرێ بەسە بۆ هەمی ئۆردەران؟</h3>${resTools('paint')}</div>
   ${r.paintUsedN?(r.paintShortN?`<div class="note" style="background:var(--bad-soft);color:var(--bad)"><b>نەخێر:</b> ${r.paintShortN} ژ ${r.paintUsedN} جۆرێن سبغێ بەس نینن. هەمی کێمی: <b class="ltr">${fmtT(r.paintShort)}</b> تۆن.</div>`:`<div class="info" style="background:var(--good-soft);color:var(--good)"><b>بەلێ ✓</b> سبغا مەخزەنێ و یا ل ڕێیە بەسە بۆ هەمی ${r.paintUsedN} جۆرێن سبغێ د ئۆردەراندا.</div>`):''}
   ${selBar(p,'paint',r.paintRows.filter(x=>x.orderCart>0).map(x=>x.key))}
-  <div class="tbl-scroll"><table><thead><tr><th>داخواز</th><th>سبغ</th><th>جۆر</th><th class="n">قەد</th><th class="n">کێشا پڕۆفایلان (تۆن)</th><th class="n">سبغا پێتڤی (کیلۆ)</th><th class="n">پێتڤی × ${fmt(S.settings.sfP,2)}</th><th class="n">ل مەخزەنێ (کیلۆ)</th><th class="n">ل ڕێیە (کیلۆ)</th><th class="n">ئەنجام</th><th class="n">کارتۆن داخواز بکە</th></tr></thead><tbody>
-  ${r.paintRows.map(x=>`<tr${p.sel.paint.includes(x.key)?' style="background:var(--accent-soft)"':''}><td style="text-align:center"><input type="checkbox" data-sel="paint" data-k="${esc(x.key)}" ${p.sel.paint.includes(x.key)?'checked':''}></td><td class="ltr" style="text-align:right">${sw(x.name)}<b>${esc(x.name)}</b>${paintCoOf(x.key)?`<div class="muted" style="font-size:.75rem">${esc(paintCoOf(x.key))}</div>`:''}</td><td>${pill(x.type)}</td><td class="n">${fmt(x.bars,1)}${x.noW?` <span class="muted" title="بێ کێش">(${fmt(x.noW,0)} بێ کێش)</span>`:''}</td><td class="n">${fmtT(x.profKg)}</td><td class="n muted">${fmt(x.needRaw,1)}</td><td class="n"><b>${fmt(x.need,1)}</b></td><td class="n">${fmt(x.stock,1)}${x.cart?` <span class="muted">(${fmt(x.cart,0)} کارتۆن)</span>`:''}</td><td class="n">${x.inc?fmt(x.inc,1):''}</td>${diffCell(x.diff,'کیلۆ',1)}<td class="n ${x.orderCart?'short':''}">${x.orderCart||''}</td></tr>`).join('')||'<tr><td colspan="11" class="muted">هێشتا چ نینە.</td></tr>'}
-  </tbody></table></div>
+  ${r.paintRows.length?`<div class="rcards">${r.paintRows.map(x=>{const on=p.sel.paint.includes(x.key);const sh=x.diff<-0.0005,eq=Math.abs(x.diff)<0.0005;
+    return `<label class="rcard${on?' on':''}${sh?' sh':''}">
+     <div class="rtop"><input type="checkbox" data-sel="paint" data-k="${esc(x.key)}" ${on?'checked':''}>
+       <span class="rname">${sw(x.name)}<b dir="ltr">${esc(x.name)}</b> ${pill(x.type)}${paintCoOf(x.key)?`<small class="muted"> · ${esc(paintCoOf(x.key))}</small>`:''}</span>
+       <span class="rres ${eq?'ok':sh?'short':'ok'}">${eq?'0':sh?`کێمە <b>${fmt(-x.diff,1)}</b> کیلۆ`:`+${fmt(x.diff,1)} کیلۆ`}</span></div>
+     <div class="rstats">
+       <div><span>قەد</span><b>${fmt(x.bars,1)}</b>${x.noW?`<small class="short">${fmt(x.noW,0)} بێ کێش</small>`:''}</div>
+       <div><span>پڕۆفایل</span><b>${fmtT(x.profKg)}</b><small>تۆن</small></div>
+       <div><span>پێتڤی × ${fmt(S.settings.sfP,2)}</span><b>${fmt(x.need,1)}</b><small>کیلۆ (${fmt(x.needRaw,1)})</small></div>
+       <div><span>ل مەخزەنێ</span><b>${fmt(x.stock,1)}</b><small>کیلۆ${x.cart?' · '+fmt(x.cart,0)+' کارتۆن':''}</small></div>
+       ${x.inc?`<div><span>ل ڕێیە</span><b>${fmt(x.inc,1)}</b><small>کیلۆ</small></div>`:''}
+       ${x.orderCart?`<div class="rord"><span>داخواز بکە</span><b>${x.orderCart}</b><small>کارتۆن</small></div>`:''}
+     </div></label>`}).join('')}</div>`:'<p class="muted">هێشتا چ نینە.</p>'}
   <p class="muted">حیسابێ کێشێ: کێشا هەمی یا ڕیزێ ژ ئۆردەرێ (ستوینا Wight)؛ ئەگەر نەبیت: kg/m یا پڕۆفایلی × مەتر. حیسابێ سبغێ: کێشا پڕۆفایلان ÷ ${fmt(S.settings.ratio)} × ${fmt(S.settings.sfP,2)} (Safety factor).</p>
   ${noteBox(p)}`;
 }
