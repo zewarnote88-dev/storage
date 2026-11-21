@@ -234,6 +234,10 @@ nav.tabs{display:none!important}
 .pcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}.pcard .qv{margin-top:3px;font-weight:700;color:var(--good)}
 .bigsel{width:100%;min-height:48px;font-size:1.05rem;padding:8px 12px;border-radius:12px}
 .card.cust.off{opacity:.6;border-style:dashed}
+.pbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px}.pbar .pbl{display:flex;align-items:center;gap:6px;font-weight:700}
+.pbar select{min-width:220px;min-height:42px;font-size:1rem}
+.only-narrow{display:none!important}@media (max-width:900px){.only-wide{display:none!important}.only-narrow{display:grid!important}}
+.restbl th{white-space:normal;font-size:.78rem;line-height:1.2}.restbl td,.restbl th{padding:8px 7px}
 .rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px;margin:8px 0}
 @media (max-width:480px){.rcards{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))!important;gap:8px}.kpis .kpi{padding:10px}.kpis .kpi .v{font-size:1.25rem}.kpis .kpi .l{font-size:.72rem}}
 .rcard{display:block;background:var(--card);border:1px solid var(--line);border-inline-start:5px solid var(--good);border-radius:14px;padding:12px 14px;cursor:pointer}
@@ -1160,20 +1164,23 @@ function viewPeriods(){
   const left=`<div class="card"><div class="row" style="margin-bottom:12px"><h2 class="grow" style="margin:0">${I('calendar')} ماوە</h2><button class="btn pri" data-act="newPeriod">${I('plus','sm')} نوو</button></div>
     <div class="plist">${list.length?list.map(p=>{const r=compute(p);const bad=r.tapeShort>0.0001||r.paintShort>0.0001;
       return `<div class="pitem ${p.id===S.cur?'on':''}" data-act="pick" data-id="${p.id}"><div class="pi">${I('calendar','sm')}</div><div class="grow"><b>${esc(p.name)}</b><div class="muted ltr pdate" style="text-align:right">${esc(p.start)} → ${esc(p.end)}</div></div>${bad?'<span class="pill Q">کێمی</span>':`<span class="muted" style="font-size:.78rem">${fmt(p.orders.length,0)} ڕیز</span>`}</div>`}).join(''):'<div class="muted">هێشتا چ ماوە نینن. «ماوەیەکا نوو» بکە.</div>'}</div></div>`;
-  if(!S.cur)return warn+`<div class="layout"><aside>${left}</aside><section><div class="card muted">ماوەیەکێ هەلبژێرە یان یا نوو دروست بکە.</div></section></div>`;
+  if(!S.cur)return warn+left;
+  const pbar=`<div class="pbar card"><span class="pbl">${I('calendar')} ماوە</span>
+    <select id="pPick" class="grow">${list.map(x=>{const r=compute(x);const bad=r.tapeShort>0.0001||r.paintShort>0.0001;return `<option value="${x.id}" ${x.id===S.cur?'selected':''}>${esc(x.name)} · ${esc(x.start)} → ${esc(x.end)}${bad?' · ⚠️ کێمی':''}</option>`}).join('')}</select>
+    <button class="btn pri" data-act="newPeriod">${I('plus','sm')} ماوەیا نوو</button></div>`;
   const p=S.periods[S.cur];
   if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','cust','resPaint','resTape','po'].includes(S.sub))S.sub='orders';
   ensP(p);const nSel=p.sel.paint.length+p.sel.tape.length;
   const subs=[['orders','ئۆردەر','clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
   let body='';
   body={orders:viewOrders,cust:viewCust,resPaint:viewResPaint,resTape:viewResTape,po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
-  return warn+`<div class="layout"><aside>${left}</aside><section><div class="card">
+  return warn+pbar+`<div class="card">
     <div class="ptitle"><input id="pName" class="grow" value="${esc(p.name)}">
       <label class="muted">ژ <input type="date" id="pStart" value="${esc(p.start)}"></label>
       <label class="muted">تا <input type="date" id="pEnd" value="${esc(p.end)}"></label>
       <button class="btn danger" data-act="delPeriod">${I('trash','sm')} ژێبرن</button></div>
     <div class="sub">${subs.map(s=>s==='|'?'<span class="sep"></span>':`<button data-sub="${s[0]}" class="${S.sub===s[0]?'on':''}">${I(s[2],'sm')} ${s[1]}</button>`).join('')}</div>
-    ${body}</div></section></div>`;
+    ${body}</div>`;
 }
 
 function viewOrders(p){
@@ -1440,7 +1447,10 @@ function viewResPaint(p){
   <div class="row"><h3 class="grow">ئەنجاما سبغێ — ئەرێ بەسە بۆ هەمی ئۆردەران؟</h3>${resTools('paint')}</div>
   ${r.paintUsedN?(r.paintShortN?`<div class="note" style="background:var(--bad-soft);color:var(--bad)"><b>نەخێر:</b> ${r.paintShortN} ژ ${r.paintUsedN} جۆرێن سبغێ بەس نینن. هەمی کێمی: <b class="ltr">${fmtT(r.paintShort)}</b> تۆن.</div>`:`<div class="info" style="background:var(--good-soft);color:var(--good)"><b>بەلێ ✓</b> سبغا مەخزەنێ و یا ل ڕێیە بەسە بۆ هەمی ${r.paintUsedN} جۆرێن سبغێ د ئۆردەراندا.</div>`):''}
   ${selBar(p,'paint',r.paintRows.filter(x=>x.orderCart>0).map(x=>x.key))}
-  ${r.paintRows.length?`<div class="rcards">${r.paintRows.map(x=>{const on=p.sel.paint.includes(x.key);const sh=x.diff<-0.0005,eq=Math.abs(x.diff)<0.0005;
+  <div class="tbl-scroll only-wide" data-nosrch><table class="restbl"><thead><tr><th></th><th>سبغ</th><th>جۆر</th><th class="n">قەد</th><th class="n">پڕۆفایل (تۆن)</th><th class="n">پێتڤی (کیلۆ)</th><th class="n">× ${fmt(S.settings.sfP,2)}</th><th class="n">ل مەخزەنێ (کیلۆ)</th><th class="n">ل ڕێیە (کیلۆ)</th><th class="n">ئەنجام</th><th class="n">داخواز (کارتۆن)</th></tr></thead><tbody>
+  ${r.paintRows.map(x=>`<tr${p.sel.paint.includes(x.key)?' style="background:var(--accent-soft)"':''}><td style="text-align:center"><input type="checkbox" data-sel="paint" data-k="${esc(x.key)}" ${p.sel.paint.includes(x.key)?'checked':''}></td><td dir="ltr" style="text-align:right">${sw(x.name)}<b>${esc(x.name)}</b>${paintCoOf(x.key)?`<div class="muted" style="font-size:.72rem">${esc(paintCoOf(x.key))}</div>`:''}</td><td>${pill(x.type)}</td><td class="n">${fmt(x.bars,1)}${x.noW?`<div class="short" style="font-size:.7rem">${fmt(x.noW,0)} بێ کێش</div>`:''}</td><td class="n">${fmtT(x.profKg)}</td><td class="n muted">${fmt(x.needRaw,1)}</td><td class="n"><b>${fmt(x.need,1)}</b></td><td class="n">${fmt(x.stock,1)}${x.cart?`<div class="muted" style="font-size:.72rem">${fmt(x.cart,0)} کارتۆن</div>`:''}</td><td class="n">${x.inc?fmt(x.inc,1):'<span class="muted">—</span>'}</td>${diffCell(x.diff,'کیلۆ',1)}<td class="n ${x.orderCart?'short':''}"><b>${x.orderCart||''}</b></td></tr>`).join('')||'<tr><td colspan="11" class="muted">هێشتا چ نینە.</td></tr>'}
+  </tbody></table></div>
+  ${r.paintRows.length?`<div class="rcards only-narrow">${r.paintRows.map(x=>{const on=p.sel.paint.includes(x.key);const sh=x.diff<-0.0005,eq=Math.abs(x.diff)<0.0005;
     return `<label class="rcard${on?' on':''}${sh?' sh':''}">
      <div class="rtop"><input type="checkbox" data-sel="paint" data-k="${esc(x.key)}" ${on?'checked':''}>
        <span class="rname">${sw(x.name)}<b dir="ltr">${esc(x.name)}</b> ${pill(x.type)}${paintCoOf(x.key)?`<small class="muted"> · ${esc(paintCoOf(x.key))}</small>`:''}</span>
@@ -1450,7 +1460,7 @@ function viewResPaint(p){
        <div><span>پڕۆفایل</span><b>${fmtT(x.profKg)}</b><small>تۆن</small></div>
        <div><span>پێتڤی × ${fmt(S.settings.sfP,2)}</span><b>${fmt(x.need,1)}</b><small>کیلۆ (${fmt(x.needRaw,1)})</small></div>
        <div><span>ل مەخزەنێ</span><b>${fmt(x.stock,1)}</b><small>کیلۆ${x.cart?' · '+fmt(x.cart,0)+' کارتۆن':''}</small></div>
-       ${x.inc?`<div><span>ل ڕێیە</span><b>${fmt(x.inc,1)}</b><small>کیلۆ</small></div>`:''}
+       <div><span>ل ڕێیە</span><b>${x.inc?fmt(x.inc,1):'—'}</b><small>کیلۆ</small></div>
        ${x.orderCart?`<div class="rord"><span>داخواز بکە</span><b>${x.orderCart}</b><small>کارتۆن</small></div>`:''}
      </div></label>`}).join('')}</div>`:'<p class="muted">هێشتا چ نینە.</p>'}
   <p class="muted">حیسابێ کێشێ: کێشا هەمی یا ڕیزێ ژ ئۆردەرێ (ستوینا Wight)؛ ئەگەر نەبیت: kg/m یا پڕۆفایلی × مەتر. حیسابێ سبغێ: کێشا پڕۆفایلان ÷ ${fmt(S.settings.ratio)} × ${fmt(S.settings.sfP,2)} (Safety factor).</p>
@@ -2144,6 +2154,7 @@ function bind(){
     m.querySelectorAll('[data-binunit]').forEach(el=>el.onchange=()=>{binF().unit=el.value;render()});
     {const ps=m.querySelector('#pfSearch');if(ps)ps.oninput=()=>{const qs=normQ(ps.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#pfGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#pfNone');if(z)z.style.display=n?'none':''}}
     {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
+    {const pp=m.querySelector('#pPick');if(pp)pp.onchange=()=>{S.cur=pp.value;render();window.scrollTo({top:0})}}
     m.querySelectorAll('[data-olf]').forEach(el=>el.onchange=()=>{olF()[el.dataset.olf]=el.value;render()});
     m.querySelectorAll('[data-binf]').forEach(el=>el.oninput=()=>{binF()[el.dataset.binf]=el.value});
     m.querySelectorAll('[data-bin]').forEach(el=>{const h=()=>{const f=binF();const r=f.rows[+el.dataset.bin];if(!r)return;r[el.dataset.f]=el.value;
