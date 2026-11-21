@@ -388,7 +388,7 @@ const I=(n,cls='')=>`<svg class="ico ${cls}" viewBox="0 0 24 24">${ICONS[n]||''}
 /* ======================= State ======================= */
 const DEFAULT_WIDTHS=[40,56,75,100];
 const S={
-  settings:{noBrand:{name:'Alko',factor:0.5,normal:true},lenUnit:'mm',ratio:16,bar:6,wSpots:4,wTurns:3.5,wWidth:40,co:{name:'',addr:'',phone:''},rollLens:[300,400,500],sfP:1.1,sfT:1.1,paintCos:['Pulver','IBA'],rollLen:300,rpb:{40:11,56:8,75:6,100:4},tapes:[{w:40,rpb:11,on:true,sub:0},{w:56,rpb:8,on:true,sub:0},{w:75,rpb:6,on:true,sub:0},{w:100,rpb:4,on:true,sub:0}],brands:[]},
+  settings:{lead:{PULVER:15,IBA:12},noBrand:{name:'Alko',factor:0.5,normal:true},lenUnit:'mm',ratio:16,bar:6,wSpots:4,wTurns:3.5,wWidth:40,co:{name:'',addr:'',phone:''},rollLens:[300,400,500],sfP:1.1,sfT:1.1,paintCos:['Pulver','IBA'],rollLen:300,rpb:{40:11,56:8,75:6,100:4},tapes:[{w:40,rpb:11,on:true,sub:0},{w:56,rpb:8,on:true,sub:0},{w:75,rpb:6,on:true,sub:0},{w:100,rpb:4,on:true,sub:0}],brands:[]},
   paints:[],      // {name,type:'N'|'P'}
   profiles:[],    // {code,b1,b2,w,wrap,per}  w = kg per meter, per = perimeter mm
   periods:{},     // id -> {id,name,start,end,orders:[{ord,code,paint,qty,unit}],stock:{tape:{},paint:{}},note,createdAt}
@@ -424,7 +424,7 @@ function maps(){
   return {prof,paint};
 }
 function normSel(s){s=s||{};return {paint:Array.isArray(s.paint)?s.paint.map(String):[],tape:Array.isArray(s.tape)?s.tape.map(String):[]}}
-function poOne(x){x=x||{};return {no:x.no||'',date:x.date||'',supplier:x.supplier||'',note:x.note||'',qty:{...(x.qty||{})},sent:x.sent||'',closed:x.closed||'',
+function poOne(x){x=x||{};return {no:x.no||'',date:x.date||'',supplier:x.supplier||'',note:x.note||'',qty:{...(x.qty||{})},sent:x.sent||'',closed:x.closed||'',early:!!x.early,
   items:Array.isArray(x.items)?x.items.map(i=>({key:String(i.key||''),name:String(i.name||''),type:i.type||'?',w:toNum(i.w),qty:toNum(i.qty),unit:String(i.unit||'')})):[]}}
 function normPo(o){o=o||{};const r={};Object.keys(o).forEach(k=>r[k]=poOne(o[k]));if(!r.tape)r.tape=poOne();return r}
 function getPo(p,kind){ensP(p);if(!p.po[kind])p.po[kind]=poOne();return p.po[kind]}
@@ -599,7 +599,7 @@ async function initDb(){
   const onErr=e=>{clearTimeout(timeout);setStatus('⚠️ کێشە د خواندنا داتایێ دا: '+(e&&e.code||''),true);if(!S.loaded){S.loaded=true;render()}};
   let f1=false,f2=false,f3=false,f4=false;
   db.doc('cfg/settings').onSnapshot(s=>{
-    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={noBrand:d.noBrand&&typeof d.noBrand==='object'?{name:String(d.noBrand.name??''),factor:toNum(d.noBrand.factor)||1,normal:d.noBrand.normal!==false}:{name:'Alko',factor:0.5,normal:true},lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[]};
+    if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={lead:d.lead&&typeof d.lead==='object'?Object.fromEntries(Object.entries(d.lead).map(([k,v])=>[norm(k),toNum(v)])):{PULVER:15,IBA:12},noBrand:d.noBrand&&typeof d.noBrand==='object'?{name:String(d.noBrand.name??''),factor:toNum(d.noBrand.factor)||1,normal:d.noBrand.normal!==false}:{name:'Alko',factor:0.5,normal:true},lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[]};
       S.settings.tapes=Array.isArray(d.tapes)&&d.tapes.length?d.tapes.map(t=>({w:toNum(t.w),rpb:toNum(t.rpb)||1,on:t.on!==false,sub:toNum(t.sub)})):Object.entries(S.settings.rpb).map(([w,r])=>({w:toNum(w),rpb:toNum(r),on:true,sub:0})).sort((a,b)=>a.w-b.w)}
     if(!f1&&!s.metadata.fromCache){f1=true;done()}else if(S.loaded)softRender();
   },onErr);
@@ -1035,7 +1035,7 @@ function render(){
   const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
   if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
   closePick();m.innerHTML=v();
-  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
+  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
 }
 /* ======================= Search (all lists) ======================= */
 const tblQ={};
@@ -1654,7 +1654,7 @@ function poRcvCard(o){const id=o.p.id+'~'+o.kind;const f=rcvF(id);const isP=isPa
      <label class="grow">تێبینی / ژمارا فاتورێ<br><input data-rcvf="${esc(id)}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: فاتورە 123، ترۆمبێلا ئێکێ"></label>
      <button class="btn" data-act="rcvAll" data-id="${esc(id)}">هەمی یێن مایی</button>
      <button class="btn pri" data-act="rcvSave" data-id="${esc(id)}">${I('check','sm')} تۆمارکرن ← مەخزەن</button></div>`}
-   <div class="row" style="margin-top:8px"><span class="grow muted">${recs.length?'گەهشتن: '+recs.slice(0,8).map(t=>`<span class="ltr">${esc(t.rdate||(t.at||'').slice(0,10))}</span> (${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'} ${esc(txLabel(t.sec,t.key))})`).join(' · '):'هێشتا چ نەگەهشتیە.'}</span>
+   <div class="row" style="margin-top:8px"><span class="grow muted">${recs.length?'گەهشتن: '+recs.slice(0,8).map(t=>`<span class="ltr">${esc(t.rdate||(t.at||'').slice(0,10))}</span> (${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'} ${esc(txLabel(t.sec,t.key))}${t.u?' · '+esc(uName(t.u)):''})${isAdmin?` <button class="x" data-act="rcvUndo" data-id="${esc(t.id)}" title="نەگەهشتیە — ژێببە">↩️</button>`:''}`).join(' · '):'هێشتا چ نەگەهشتیە.'}</span>
      ${o.po.closed?`<button class="btn" data-act="poReopen" data-id="${esc(id)}">ڤەکرنەڤە</button>`:(o.done?'':`<button class="btn" data-act="poClose" data-id="${esc(id)}" title="ئەگەر یێ مایی نائێت">داخستن (یێ مایی نائێت)</button>`)}</div>
   </div>`}
 function binNew(){return S.invKind==='paint'?{paint:'',qty:''}:{brand:(S.settings.brands[0]||{}).name||'',w:tapeWidths()[0]||40,t:'N',len:S.settings.rollLen||300,qty:''}}
@@ -1680,10 +1680,19 @@ function batchIn(){const f=binF();const isP=S.invKind==='paint';const brands=S.s
      <label>ڕۆژا گەهشتنێ<br><input type="date" data-binf="date" value="${esc(f.date)}"></label>
      <label class="grow">تێبینی (بۆ هەمی ڕیزان)<br><input data-binf="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: ژ کۆمپانیا Pulver، فاتورە 123"></label>
      <button class="btn pri" data-act="binSave">${I('check','sm')} تۆمارکرنا هەمیان</button></div></div>`}
-function viewIn(){const K=S.invKind;const ops=openPos(K);const open=ops.filter(o=>!o.done),done=ops.filter(o=>o.done);
+function poCoName(o){return isPaintKind(o.kind)?(o.kind.slice(6)||o.po.supplier||''):(o.po.supplier||tapeBrandName(o.p,o.kind.slice(5))||'')}
+function leadOf(o){return toNum((S.settings.lead||{})[norm(poCoName(o))])}
+function etaOf(o){const t=Date.parse(o.po.sent||'');return isNaN(t)?0:t+leadOf(o)*86400000}
+function poDue(o){return o.po.early||!leadOf(o)||Date.now()>=etaOf(o)-12*3600000}
+function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(o=>!o.done),done=ops.filter(o=>o.done);const open=open0.filter(poDue),wait=open0.filter(o=>!poDue(o));
   return `<h3 style="margin-top:4px">📦 ل ڕێیە — داخوازیێن هاتینە هنارتن (${open.length})</h3>
   <p class="muted" style="margin-top:-4px">دەمێ تشت دگەهن، چەندا هاتی بنڤیسە (سبغ ب کیلۆ یان تۆن — ب کێشا ڕاستەقینە، لسق ب کارتۆن). پڕۆگرام دێ وان ل سەر مەخزەنێ زێدە کەت و نیشا دەت کا چەند مایە و هێشتا نەگەهشتینە.</p>
-  ${open.length?open.map(poRcvCard).join(''):`<div class="muted" style="margin-bottom:12px">چ داخوازی ل ڕێ نینن. ل «ماوە ← داخوازی» پشتی PDF، دوگمەیا «📦 هاتە هنارتن» بکە دا ل ڤێرە دیار ببن.</div>`}
+  ${open.length?open.map(poRcvCard).join(''):`<div class="muted" style="margin-bottom:12px">${wait.length?'هێشتا دەمێ گەهشتنا چ داخوازیان نەهاتیە.':'چ داخوازی ل ڕێ نینن. ل «ماوە ← داخوازی» پشتی PDF، دوگمەیا «📦 هاتە هنارتن» بکە دا ل ڤێرە دیار ببن.'}</div>`}
+  ${wait.length?`<div class="card" style="background:var(--bg)"><b>⏳ هێشتا د ڕێ دانە (${wait.length})</b> <span class="muted">— دێ ل ڤێرە بۆ داخلکرنێ دیار ببن دەمێ ڕۆژا گەهشتنێ دهێت.</span>
+    ${wait.map(o=>{const eta=new Date(etaOf(o));const days=Math.ceil((etaOf(o)-Date.now())/86400000);const tot=o.items.reduce((s,i)=>s+i.rem,0);
+      return `<div class="row" style="align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span class="grow"><b class="ltr">${esc(o.po.no||'PO')}</b> · <b class="ltr">${esc(poCoName(o))}</b> · ${fmt(tot,isPaintKind(o.kind)?3:0)} ${isPaintKind(o.kind)?'تۆن':'م²'}
+        <div class="muted" style="font-size:.82rem">هنارتن: <span class="ltr">${dmy((o.po.sent||'').slice(0,10))}</span> · گەهشتن: <b class="ltr">${dmy(ymdLocal(eta))}</b> (پشتی ${days} ڕۆژان · ${leadOf(o)} ڕۆژ)</div></span>
+        ${isAdmin?`<button class="btn" data-act="poEarly" data-id="${esc(o.p.id+'~'+o.kind)}">✅ زوو گەهشت</button>`:''}</div>`}).join('')}</div>`:''}
   ${batchIn()}
   ${done.length?`<details style="margin:8px 0"><summary>داخوازیێن تەمام بووین (${done.length})</summary>${done.map(poRcvCard).join('')}</details>`:''}
   ${isAdmin?txList('in'):''}`}
@@ -2058,6 +2067,7 @@ function viewPaints(){
   <div class="card" style="background:var(--bg);margin-top:10px"><b>کۆمپانیێن سبغێ</b> <span class="muted">— هەر کۆمپانیەکێ داخوازیەکا جودا (PDF) هەیە.</span>
     <div class="row" style="margin-top:6px;gap:8px">${(S.settings.paintCos||[]).map((x,i)=>`<span class="pill N" style="font-size:.95rem;padding:4px 10px"><span class="ltr">${esc(x)}</span> (${S.paints.filter(c=>c.co===x).length}) <button class="x" data-act="delPco" data-i="${i}">✕</button></span>`).join('')}
     <input id="newPco" class="ltr" placeholder="ناڤێ کۆمپانیێ" style="width:140px;text-align:left"><button class="btn" data-act="addPco">+ کۆمپانی</button></div>
+    <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap"><span class="muted">⏳ چەند ڕۆژان دڤێت دا بگەهیت:</span>${(S.settings.paintCos||[]).map(x=>`<label class="muted"><span class="ltr">${esc(x)}</span> <input class="num" data-lead="${esc(x)}" inputmode="numeric" value="${toNum((S.settings.lead||{})[norm(x)])||''}" placeholder="0" style="width:60px"> ڕۆژ</label>`).join('')}</div>
     ${S.paints.some(c=>!c.co)?`<div class="muted" style="margin-top:6px">⚠️ ${S.paints.filter(c=>!c.co).length} سبغ کۆمپانیا وان نەهاتیە دیارکرن.</div>`:''}</div>
   <div class="row" style="margin:10px 0"><span class="grow"></span><button class="btn" data-act="addPaint">+ سبغەک</button></div>
   <div class="tbl-scroll"><table><thead><tr><th>ناڤێ سبغێ</th><th>کۆدێ پولڤەری <span class="ltr">(Puler Code)</span></th><th>جۆر</th><th>کۆمپانی (بۆ داخوازیێ)</th><th class="n">کیلۆ بۆ کارتۆنەکێ</th><th></th></tr></thead><tbody>
@@ -2438,6 +2448,10 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
   else if(act==='myProfile'){myProfile()}
+  else if(act==='poEarly'&&isAdmin){const id=t0.dataset.id;const o=openPos().find(x=>x.p.id+'~'+x.kind===id);if(!o)return;o.po.early=true;save('periods/'+o.p.id,100);render();toast('✅ نوکە دشێی داخل بکەی')}
+  else if(act==='rcvUndo'&&isAdmin){const id=t0.dataset.id;const t=(S.tx.in||[]).find(x=>x.id===id);if(!t)return;
+    dialog(`<p>ئەڤ گەهشتنە ژێببە؟ (<b>${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'}</b> ${esc(txLabel(t.sec,t.key))})</p><p class="muted">دێ ژ مەخزەنێ کێم بیت و دیسا وەک «ل ڕێیە / هێشتا نەگەهشتیە» دیار بیت.</p>`,async()=>{
+      if(!db){S.tx.in=S.tx.in.filter(x=>x.id!==id);recomputeInv();localSave();render();return}try{await db.doc('invin/'+id).delete();toast('↩️ هاتە ژێبرن — هێشتا نەگەهشتیە')}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
   else if(act==='resPdf'&&p){printHtml(resPrintHtml(p,t0.dataset.what),`results-${t0.dataset.what}-${p.start}_${p.end}`)}
   else if(act==='custCancel'&&p){const k=t0.dataset.k;p.cancel=p.cancel||[];const on=p.cancel.includes(k);
     const doIt=()=>{p.cancel=on?p.cancel.filter(x=>x!==k):[...p.cancel,k];save('periods/'+p.id,100);render();toast(on?`↩️ داخوازی ${k} زڤڕی د حیسابێ دا`:`❌ داخوازی ${k} هاتە بەتالکرن — ژ حیسابێ سبغ و لسقێ دەرکەفت`)};
@@ -2486,6 +2500,7 @@ $('#main').addEventListener('click',async e=>{
     try{const {buf,name}=await makePdf(p,kind);await downloads.save({filename:name,data:new Uint8Array(buf)});toast('✓ PDF هاتە دروستکرن')}
     catch(err){if(!err||err.code!=='declined')toast('⚠️ PDF دروست نەبوو'+(err&&err.code?' ('+err.code+')':(err&&err.message?' ('+err.message+')':'')))}})
   }
+  else if(act==='__none'){}
   else if(act==='addPco'){const v=$('#newPco').value.trim();if(v&&!S.settings.paintCos.some(x=>norm(x)===norm(v))){S.settings.paintCos.push(v);save('cfg/settings',200)}render()}
   else if(act==='delPco'){const x=S.settings.paintCos[+t0.dataset.i];dialog(`<p>کۆمپانیا <b class="ltr">${esc(x)}</b> ژێببە؟</p>`,()=>{S.settings.paintCos.splice(+t0.dataset.i,1);S.paints.forEach(c=>{if(c.co===x)c.co=''});save('cfg/settings',100);save('cfg/paints',100);render()},'ژێببە')}
   else if(act==='profPdf'){
