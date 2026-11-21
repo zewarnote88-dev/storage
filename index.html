@@ -1722,7 +1722,7 @@ function invPeriod(){const cur=S.cur&&S.periods[S.cur];if(!S.inv)recomputeInv();
 function txLabel(sec,key){key=String(key||'');
   if(sec==='box'){const [b,w,t,l]=key.split('|');const bo=brandObj(b);return `${bo?bo.name:b} · ${w} mm · ${t==='P'?'Rough':'Normal'}${l?' · '+l+'m':''}`}
   const d=paintDef(key);return d?d.name:key}
-function txF(dir){const fk=dir+'-'+S.invKind;if(!S.txf[fk])S.txf[fk]={unit:'kg',kind:'paint',paint:'',qty:'',note:'',brand:(S.settings.brands[0]||{}).name||'',w:tapeWidths()[0]||40,t:'N',len:S.settings.rollLen||300};S.txf[fk].kind=S.invKind;return S.txf[fk]}
+function txF(dir){const fk=dir+'-'+S.invKind;if(!S.txf[fk])S.txf[fk]={unit:'kg',kind:'paint',paint:'',qty:'',note:'',brand:(S.settings.brands[0]||{}).name||'',w:tapeWidths()[0]||40,t:'N',len:S.settings.rollLen||300};S.txf[fk].kind=S.invKind;if(dir==='out'&&S.txf[fk].unit==='t')S.txf[fk].unit='kg';return S.txf[fk]}
 function paintCurTxt(k){const c=toNum(S.inv.cart[k]);return `${fmt(c*kgcOf({stock:S.inv},k),1)} کیلۆ (${fmt(c,1)} کارتۆن)`}
 function txUnitLbl(f){return f.kind!=='paint'||f.unit==='ctn'?'کارتۆن':f.unit==='t'?'تۆن':'کیلۆ'}
 /* ---- Tape OUT/IN form: tap-friendly (mobile) ---- */
@@ -1810,7 +1810,7 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
      <div class="muted" id="pfNone" style="display:none;padding:8px">چ سبغ نەهاتە دیتن.</div></div>
    ${def?`<div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
    <div class="tstep"><div class="lb">٢. چەند؟</div>
-     <div class="chips" style="margin-bottom:8px">${[['kg','کیلۆ'],['t','تۆن'],['ctn','کارتۆن']].map(([u,l])=>`<button type="button" class="chip${U===u?' on':''}" data-act="txSet" data-dir="${dir}" data-f="unit" data-v="${u}">${l}</button>`).join('')}</div>
+     <div class="chips" style="margin-bottom:8px">${(dir==='out'?[['kg','کیلۆ'],['ctn','کارتۆن']]:[['kg','کیلۆ'],['t','تۆن'],['ctn','کارتۆن']]).map(([u,l])=>`<button type="button" class="chip${U===u?' on':''}" data-act="txSet" data-dir="${dir}" data-f="unit" data-v="${u}">${l}</button>`).join('')}</div>
      <div class="stepper"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button>
        <input class="num" inputmode="decimal" data-txf="${dir}" data-f="qty" value="${esc(f.qty)}" placeholder="0" style="width:120px">
        <button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="1">+</button><span class="muted">${UL}</span></div>
@@ -1837,7 +1837,7 @@ function txForm(dir){const f=txF(dir);const isIn=dir==='in';
      <label>پانی<br><select data-txf="${dir}" data-f="w">${ws.map(w=>`<option value="${w}" ${w==f.w?'selected':''}>${w} mm</option>`).join('')}</select></label>
      <label>جۆر<br><select data-txf="${dir}" data-f="t"><option value="N" ${f.t==='N'?'selected':''}>Normal</option><option value="P" ${f.t==='P'?'selected':''}>Rough</option></select></label>
      <label>درێژیا ڕۆلی<br><select data-txf="${dir}" data-f="len">${rollLens().map(l=>`<option value="${l}" ${l==f.len?'selected':''}>${l}m</option>`).join('')}</select></label>`}
-   ${f.kind==='paint'?`<label>یەکە<br><select data-txf="${dir}" data-f="unit"><option value="kg" ${f.unit!=='t'&&f.unit!=='ctn'?'selected':''}>کیلۆ</option><option value="t" ${f.unit==='t'?'selected':''}>تۆن</option><option value="ctn" ${f.unit==='ctn'?'selected':''}>کارتۆن</option></select></label>`:''}
+   ${f.kind==='paint'?`<label>یەکە<br><select data-txf="${dir}" data-f="unit"><option value="kg" ${f.unit!=='t'&&f.unit!=='ctn'?'selected':''}>کیلۆ</option>${dir==='out'?'':`<option value="t" ${f.unit==='t'?'selected':''}>تۆن</option>`}<option value="ctn" ${f.unit==='ctn'?'selected':''}>کارتۆن</option></select></label>`:''}
    <label>${f.kind==='paint'?txUnitLbl(f):'ژمارا کارتۆنان'}<br><input class="num" inputmode="decimal" data-txf="${dir}" data-f="qty" value="${esc(f.qty)}"></label>
    <label class="grow">تێبینی<br><input data-txf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${isIn?'بۆ نموونە: ژ کۆمپانیا Pulver، فاتورە 123':'بۆ نموونە: بۆ خەتا سبغکرنێ 2'}"></label>
    <button class="btn pri" data-act="txAdd" data-dir="${dir}">${I('check','sm')} تۆمارکرن</button>
