@@ -1243,7 +1243,7 @@ function render(){
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
   const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
   if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
-  closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)window.scrollTo(0,__sy);S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
+  closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)window.scrollTo(0,__sy);if(S.goQty){S.goQty=0;const an=m.querySelector('#pfAnchor');if(an)setTimeout(()=>{const y=an.getBoundingClientRect().top+window.scrollY-(innerWidth<=640?10:80);window.scrollTo({top:y,behavior:'smooth'})},30)}S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
   bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
 }
 /* ======================= Search (all lists) ======================= */
@@ -1837,7 +1837,7 @@ function paintForm(dir,f){const P={stock:S.inv};const k=norm(f.paint);const def=
         <span class="psw">${sw(x.p.name,1)}</span><span class="pinfo"><b dir="ltr">${esc(x.p.name)}</b><span class="muted psub">${x.p.type==='P'?'Rough':'Normal'}${x.p.co?' · '+esc(x.p.co):''}</span>${x.p.pul?`<span class="muted ppul" dir="ltr">${esc(x.p.pul)}</span>`:''}</span><span class="qv">${fmt(x.kg,0)} کیلۆ</span></button>`).join('')
        :'<div class="muted">مەخزەنا سبغێ ڤالایە.</div>'}</div>
      <div class="muted" id="pfNone" style="display:none;padding:8px">چ سبغ نەهاتە دیتن.</div></div>
-   ${def?`<div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
+   ${def?`<div id="pfAnchor"></div><div class="stockbox${c<=0?' empty':''}"><span style="display:flex;align-items:center;gap:8px">${sw(def.name)}<span>ل مەخزەنێ نوکە<div dir="ltr" style="text-align:right;font-weight:700">${esc(def.name)}</div></span></span><span class="v">${fmt(kg,1)} <small>کیلۆ</small><div class="muted" style="font-size:.78rem;font-weight:400;text-align:left">${fmt(c,2)} کارتۆن · ${fmt(kgc)} کیلۆ/کارتۆن</div></span></div>
    <div class="tstep"><div class="lb">٢. چەند؟</div>
      <div class="chips" style="margin-bottom:8px">${(dir==='out'?[['kg','کیلۆ'],['ctn','کارتۆن']]:[['kg','کیلۆ'],['t','تۆن'],['ctn','کارتۆن']]).map(([u,l])=>`<button type="button" class="chip${U===u?' on':''}" data-act="txSet" data-dir="${dir}" data-f="unit" data-v="${u}">${l}</button>`).join('')}</div>
      <div class="stepper"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button>
@@ -2738,7 +2738,7 @@ $('#main').addEventListener('click',async e=>{
     const doIt=()=>{p.cancel=on?p.cancel.filter(x=>x!==k):[...p.cancel,k];save('periods/'+p.id,100);render();toast(on?`↩️ داخوازی ${k} زڤڕی د حیسابێ دا`:`❌ داخوازی ${k} هاتە بەتالکرن — ژ حیسابێ سبغ و لسقێ دەرکەفت`)};
     if(on)doIt();else dialog(`<p>داخوازیا <b dir="ltr">${esc(k)}</b> بەتال بکە؟ ئۆردەرێن وێ ژ حیسابێ ماوەیێ (سبغ و لسق) دەردکەڤن، لێ ژێ نابن — دشێی پاشی ڤەگەڕینی.</p>`,doIt,'بەتالکرن')}
   else if(act==='olPrint'){olPdfAsk()}
-  else if(act==='txSet'){const f=txF(t0.dataset.dir);if(t0.dataset.f==='paint'&&f.paint!==t0.dataset.v)f.qty='';if(t0.dataset.f==='unit'&&f.unit!==t0.dataset.v)f.qty='';f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
+  else if(act==='txSet'){const f=txF(t0.dataset.dir);if(t0.dataset.f==='paint'&&t0.closest('#pfGrid'))S.goQty=1;if(t0.dataset.f==='paint'&&f.paint!==t0.dataset.v)f.qty='';if(t0.dataset.f==='unit'&&f.unit!==t0.dataset.v)f.qty='';f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
   else if(act==='txPick'){const f=txF(t0.dataset.dir);const [b,w,tt,l]=t0.dataset.k.split('|');const bo=brandObj(b);f.brand=bo?bo.name:b;f.w=toNum(w);f.t=tt;f.len=toNum(l);render()}
   else if(act==='txStep'){const f=txF(t0.dataset.dir);const st=f.kind==='paint'?paintStep(f,norm(f.paint)):1;f.qty=String(+Math.max(0,toNum(f.qty)+toNum(t0.dataset.d)*st).toFixed(3));render()}
   else if(act==='olQuick'){const f=olF();f.to=today();f.from=t0.dataset.r==='today'?today():today().slice(0,8)+'01';render()}
