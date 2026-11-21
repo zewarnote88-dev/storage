@@ -513,7 +513,7 @@ let sbExpired=false;
 function sessionExpired(){if(sbExpired)return;sbExpired=true;setTok('');try{localStorage.removeItem('bandorder-session');sessionStorage.removeItem('bandorder-session')}catch(e){}
   toast('⚠️ دەمێ چوونا ژوور ب دوماهی هات — دیسا بچە ژوور.');setTimeout(()=>location.reload(),1500)}
 function sbDb(token){
-  const rows=new Map(),docL=new Map(),colL=[];let since=null;
+  const rows=new Map(),docL=new Map(),colL=[];let since=null;const lw=new Map();const fresh=(p,t0)=>!(lw.get(p)>t0);
   const clone=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
   const meta={fromCache:false,hasPendingWrites:false};
   const deep=(a,b)=>{if(!a||typeof a!=='object'||Array.isArray(a)||!b||typeof b!=='object'||Array.isArray(b))return b;const r={...a};Object.keys(b).forEach(k=>r[k]=deep(a[k],b[k]));return r};
@@ -525,15 +525,15 @@ function sbDb(token){
   const emit=p=>{(docL.get(p)||[]).forEach(fn=>{try{fn(snapDoc(p))}catch(e){console.error(e)}});colL.forEach(L=>{if(L.col===colOf(p)){try{L.fn(snapCol(L))}catch(e){console.error(e)}}})};
   const call=async(n,a)=>{try{return await rpc(n,{p_token:token,...(a||{})})}catch(e){if(e.code==='auth')sessionExpired();throw e}};
   const put=(p,d)=>{if(JSON.stringify(rows.get(p))!==JSON.stringify(d)){rows.set(p,d);emit(p)}};
-  async function loadAll(){const r=await call('docs_all');since=r.now;const seen=new Set();
-    (r.rows||[]).forEach(x=>{seen.add(x.path);put(x.path,x.data)});[...rows.keys()].forEach(p=>{if(!seen.has(p)&&rows.delete(p))emit(p)})}
-  async function poll(){if(!since)return;const from=new Date(new Date(since).getTime()-15000).toISOString();const r=await call('docs_since',{p_since:from});since=r.now;
-    (r.rows||[]).forEach(x=>{if(x.deleted){if(rows.delete(x.path))emit(x.path)}else put(x.path,x.data)})}
+  async function loadAll(){const t0=Date.now();const r=await call('docs_all');since=r.now;const seen=new Set();
+    (r.rows||[]).forEach(x=>{seen.add(x.path);if(fresh(x.path,t0))put(x.path,x.data)});[...rows.keys()].forEach(p=>{if(!seen.has(p)&&fresh(p,t0)&&rows.delete(p))emit(p)})}
+  async function poll(){if(!since)return;const t0=Date.now();const from=new Date(new Date(since).getTime()-15000).toISOString();const r=await call('docs_since',{p_since:from});since=r.now;
+    (r.rows||[]).forEach(x=>{if(!fresh(x.path,t0))return;if(x.deleted){if(rows.delete(x.path))emit(x.path)}else put(x.path,x.data)})}
   const docApi=p=>({
     async get(){return snapDoc(p)},
-    async set(data){const d=clone(data);await call('doc_set',{p_path:p,p_data:d});rows.set(p,d);emit(p)},
-    async update(patch){const ok=await call('doc_merge',{p_path:p,p_patch:clone(patch)});if(!ok){const e=new Error('not found');e.code='invalid_argument';throw e}rows.set(p,deep(rows.get(p)||{},clone(patch)));emit(p)},
-    async delete(){await call('doc_del',{p_path:p});if(rows.delete(p))emit(p)},
+    async set(data){const d=clone(data);lw.set(p,Date.now());rows.set(p,d);await call('doc_set',{p_path:p,p_data:d});lw.set(p,Date.now());emit(p)},
+    async update(patch){lw.set(p,Date.now());const ok=await call('doc_merge',{p_path:p,p_patch:clone(patch)});lw.set(p,Date.now());if(!ok){const e=new Error('not found');e.code='invalid_argument';throw e}rows.set(p,deep(rows.get(p)||{},clone(patch)));emit(p)},
+    async delete(){lw.set(p,Date.now());await call('doc_del',{p_path:p});lw.set(p,Date.now());if(rows.delete(p))emit(p)},
     onSnapshot(fn){if(!docL.has(p))docL.set(p,new Set());docL.get(p).add(fn);setTimeout(()=>fn(snapDoc(p)),0);return()=>docL.get(p).delete(fn)}});
   const colApi=(col,order,dir,lim)=>({
     orderBy(f,d){return colApi(col,f,d||'asc',lim)},limit(n){return colApi(col,order,dir,n)},
@@ -2437,7 +2437,7 @@ $('#main').addEventListener('click',async e=>{
     if(!downloads){toast('⚠️ داگرتن ل ڤێرە بەردەست نینە');return}
     const kind=t.dataset.kind;const po=getPo(p,kind);const d=poDefaults(p,kind);po.no=po.no||d.no;po.date=po.date||d.date;po.supplier=po.supplier||d.supplier;
     if(!poItems(p,kind).some(x=>x.qty>0)){toast('⚠️ چ ژمارەکا داخوازیێ نینە');return}
-    pickLang('PDF داخوازیێ (Purchase Order)',async lang=>{save('periods/'+p.id,200);if(lang==='ar'){printHtml(arPoHtml(p,kind),(d.no||'purchase-order')+'-ar');return}
+    pickLang('PDF داخوازیێ (Purchase Order)',async lang=>{const pth='periods/'+p.id;clearTimeout(timers[pth]);dirty[pth]=true;flush(pth);if(lang==='ar'){printHtml(arPoHtml(p,kind),(d.no||'purchase-order')+'-ar');return}
     try{const {buf,name}=await makePdf(p,kind);await downloads.save({filename:name,data:new Uint8Array(buf)});toast('✓ PDF هاتە دروستکرن')}
     catch(err){if(!err||err.code!=='declined')toast('⚠️ PDF دروست نەبوو'+(err&&err.code?' ('+err.code+')':(err&&err.message?' ('+err.message+')':'')))}})
   }
