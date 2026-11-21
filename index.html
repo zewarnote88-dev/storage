@@ -795,8 +795,37 @@ function gateView(){const st=myStatus();if(st==='none'){if(!S.appUsers.some(u=>u
   return `<div class="card" style="max-width:560px;margin:40px auto;text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px"><div class="logo" style="width:56px;height:56px"><svg class="ico" viewBox="0 0 24 24" style="width:28px;height:28px">${ICONS.users}</svg></div></div>
    <h2 style="justify-content:center">${esc((curApp()||{}).name||(me&&me.name)||'بکارهێنەر')}</h2>
    <p>${msg}</p>${st==='pending'&&me&&me.id?'<span class="pill Q">چاڤەڕێی ڕێدانێ</span>':''}${st==='blocked'?'<span class="pill Q" style="background:var(--bad-soft);color:var(--bad)">گرتی</span>':''}${curApp()?`<div style="margin-top:12px"><button class="btn" data-act="logout">دەرکەفتن</button></div>`:''}</div>`}
+/* ---- My profile: change own name / username / password ---- */
+function myProfile(){const u=curApp();if(!u)return;
+  dialog(`<h3 style="margin-top:0">👤 پرۆفایلا من</h3><div style="display:flex;flex-direction:column;gap:10px">
+    <label>ناڤ (یێ دیار دبیت)<br><input id="mpName" value="${esc(u.name||'')}" style="width:100%"></label>
+    <label>ناڤێ بکارهێنەری (بۆ چوونا ژوور)<br><input id="mpUser" class="ltr" value="${esc(u.username||'')}" autocomplete="username" style="width:100%;text-align:left"></label>
+    <hr style="border:none;border-top:1px solid var(--line);margin:4px 0">
+    <label>پەیڤا نهێنی یا نوو <span class="muted">(ئەگەر ناتڤێت بگوهۆڕی، ڤالا بهێلە)</span><br><input id="mpNew" type="password" autocomplete="new-password" style="width:100%"></label>
+    <label>دووبارەکرنا پەیڤا نهێنی یا نوو<br><input id="mpNew2" type="password" autocomplete="new-password" style="width:100%"></label>
+    <hr style="border:none;border-top:1px solid var(--line);margin:4px 0">
+    <label><b>پەیڤا نهێنی یا نوکە</b> (بۆ پشتڕاستکرنێ)<br><input id="mpCur" type="password" autocomplete="current-password" style="width:100%"></label>
+    <div id="mpErr" class="short"></div></div>`,
+  ()=>{const er=$('#mpErr');er.textContent='';const name=$('#mpName').value.trim(),un=$('#mpUser').value.trim(),np=$('#mpNew').value,np2=$('#mpNew2').value,cur=$('#mpCur').value;
+    if(!un){er.textContent='⚠️ ناڤێ بکارهێنەری نابیت ڤالا بیت.';return false}
+    if(np&&np.length<4){er.textContent='⚠️ پەیڤا نهێنی دڤێت ٤ پیت یان پتر بیت.';return false}
+    if(np!==np2){er.textContent='⚠️ هەردوو پەیڤێن نهێنی یێن نوو نە وەکی ئێکن.';return false}
+    if(!cur){er.textContent='⚠️ پەیڤا نهێنی یا نوکە بنڤیسە.';return false}
+    const btn=$('#dlgOk');if(btn)btn.disabled=true;
+    (async()=>{try{
+      const ns=np?rndHex(16):'',nh=np?await hashPw(np,ns):'';
+      if(SB_ON&&sb){const salt=await rpc('app_salt',{p_username:u.username});const oh=await hashPw(cur,salt);
+        const r=await rpc('app_update_self',{p_token:getTok(),p_old_hash:oh,p_name:name,p_username:un,p_new_salt:ns,p_new_hash:nh});
+        if(r&&r.error){er.textContent=r.error==='taken'?'⚠️ ئەڤ ناڤێ بکارهێنەری یێ کەسەکێ دییە.':'⚠️ پەیڤا نهێنی یا نوکە خەلەتە.';if(btn)btn.disabled=false;return}
+        u.name=name||u.name;u.username=un;if(np){u.salt=ns;u.hash=nh}if(db&&db.resync)db.resync()}
+      else{if(await hashPw(cur,u.salt)!==u.hash){er.textContent='⚠️ پەیڤا نهێنی یا نوکە خەلەتە.';if(btn)btn.disabled=false;return}
+        if(S.appUsers.some(x=>x.id!==u.id&&norm(x.username)===norm(un))){er.textContent='⚠️ ئەڤ ناڤێ بکارهێنەری یێ کەسەکێ دییە.';if(btn)btn.disabled=false;return}
+        u.name=name||u.name;u.username=un;if(np){u.salt=ns;u.hash=nh}await saveAppUsers()}
+      $('#dlg').innerHTML='';showMe();render();toast('✓ پرۆفایلا تە هاتە نووکرن'+(np?' — جارا بهێت ب پەیڤا نهێنی یا نوو بچە ژوور.':''))}
+    catch(x){er.textContent=(x&&x.code==='unavailable')?'ئینتەرنێت نینە.':'⚠️ کێشە: '+((x&&x.message)||x);if(btn)btn.disabled=false}})();
+    return false},'پاشەکەفتکرن')}
 function showMe(){const c=$('#meChip');if(!c)return;const au=curApp();
-  if(au){c.style.display='flex';c.innerHTML='';const sp=document.createElement('span');sp.textContent=au.name||au.username;const b=document.createElement('button');b.textContent='دەرکەفتن';b.style.cssText='border:none;background:rgba(255,255,255,.15);color:inherit;border-radius:999px;padding:1px 8px;cursor:pointer;font:inherit;font-size:.75rem';b.onclick=()=>{setSession(null);showMe();applyRole();render()};c.append(sp,b);return}
+  if(au){c.style.display='flex';c.innerHTML='';const sp=document.createElement('span');sp.textContent='👤 '+(au.name||au.username);sp.style.cursor='pointer';sp.title='پرۆفایلا من — گوهۆڕینا ناڤ و پەیڤا نهێنی';sp.onclick=myProfile;const b=document.createElement('button');b.textContent='دەرکەفتن';b.style.cssText='border:none;background:rgba(255,255,255,.15);color:inherit;border-radius:999px;padding:1px 8px;cursor:pointer;font:inherit;font-size:.75rem';b.onclick=()=>{setSession(null);showMe();applyRole();render()};c.append(sp,b);return}
   if(!me||!me.id){c.style.display='none';return}
   c.style.display='flex';c.innerHTML='';const img=document.createElement('img');img.src=me.avatarUrl||'';img.alt='';img.style.cssText='width:20px;height:20px;border-radius:50%';
   if(!me.avatarUrl)img.style.display='none';const sp=document.createElement('span');sp.textContent=me.name||'بکارهێنەر';c.append(img,sp);c.title='تو ب ڤی ناڤی هاتیە ژوور'}
@@ -1048,7 +1077,7 @@ function viewHome(){
   const u=curApp();const nm=(u&&(u.name||u.username))||(me&&me.name)||'';const d=new Date();
   const days=['یەکشەمب','دووشەمب','سێشەمب','چارشەمب','پێنجشەمب','ئەینی','شەمبی'];
   const G=visGroups();
-  return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div></div>
+  return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div>${u?`<button class="btn" data-act="myProfile" style="margin-inline-start:auto">👤 پرۆفایلا من</button>`:''}</div>
   <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="bigc" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
     ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
     <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
@@ -2293,6 +2322,7 @@ $('#main').addEventListener('click',async e=>{
     if(!docs.length){toast('⚠️ ژمارا کارتۆنێن هاتین بنڤیسە');return}
     if(await addTx('in',docs)){f.q={};f.note='';const o2=openPos().find(x=>x.p.id+'~'+x.kind===id);
       toast(`✓ ${docs.length} تشت هاتنە داخلکرن (${isP?fmt(docs.reduce((s,d)=>s+d.kg,0),1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`+(o2&&o2.done?' — داخوازی ب تەمامی گەهشت ✓':''));render()}}
+  else if(act==='myProfile'){myProfile()}
   else if(act==='olPrint'){olPdfAsk()}
   else if(act==='txSet'){const f=txF(t0.dataset.dir);if(t0.dataset.f==='paint'&&f.paint!==t0.dataset.v)f.qty='';if(t0.dataset.f==='unit'&&f.unit!==t0.dataset.v)f.qty='';f[t0.dataset.f]=t0.dataset.f==='w'||t0.dataset.f==='len'?toNum(t0.dataset.v):t0.dataset.v;render()}
   else if(act==='txPick'){const f=txF(t0.dataset.dir);const [b,w,tt,l]=t0.dataset.k.split('|');const bo=brandObj(b);f.brand=bo?bo.name:b;f.w=toNum(w);f.t=tt;f.len=toNum(l);render()}
