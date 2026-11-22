@@ -412,6 +412,19 @@ details.pocard:not([open]){padding-bottom:10px}
 .crnform .tstep{margin-bottom:10px}
 @media (max-width:640px){.pgrid.tiles{grid-template-columns:repeat(3,1fr);gap:6px}.ptile{padding:6px}.ptile b{font-size:.85rem}}
 
+.pogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:14px}
+.pocd{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);font:inherit;text-align:right;cursor:pointer;position:relative;overflow:hidden}
+.pocd::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:var(--tc)}
+.pocd:hover{border-color:var(--tc)}.pocd.on{border-color:var(--tc);box-shadow:0 0 0 3px color-mix(in srgb,var(--tc) 25%,transparent);background:color-mix(in srgb,var(--tc) 8%,var(--card))}
+.pocic{flex:none;width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--tc) 16%,transparent);color:var(--tc)}.pocic .ico{width:24px;height:24px}
+.pocb{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.pocb>b{font-size:1.15rem}
+.pocs{font-size:.8rem;color:var(--muted)}.pocs.bad{color:var(--bad);font-weight:700}.pocs.ok{color:var(--good);font-weight:600}.pocs.sent{color:var(--accent);font-weight:600}
+.poca{font-size:1rem;font-weight:800}
+.pocgo{flex:none;color:var(--muted);font-size:1.2rem}
+.pocd.need .pocic{animation:none}
+.podet{border-top:4px solid var(--tc)}
+@media (max-width:640px){.pogrid{grid-template-columns:1fr 1fr;gap:8px}.pocd{flex-direction:column;align-items:flex-start;gap:6px;padding:12px}.pocgo{display:none}.pocic{width:38px;height:38px}}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -1749,7 +1762,7 @@ function poItems(p,kind){const r=compute(p);const po=getPo(p,kind);
 const byNeed=(a,b)=>b.qty-a.qty||b.short-a.short;
 function tapeKeyBrand(k){const s=k.split('|');return s.length===3?s[0]:''}
 function tapeBrandName(p,bk){if(!bk)return '';const b=brandObj(bk);if(b)return b.name;const o=p.orders.find(o=>brandKey(o.ord)===bk);return o?String(o.ord).trim():bk}
-function viewPo(p){ensP(p);
+function viewPoParts(p,only){ensP(p);
   const sec=(kind)=>{const po=getPo(p,kind);const d=poDefaults(p,kind);const items=poItems(p,kind);const isP=isPaintKind(kind);const coN=isP?kind.slice(6):tapeBrandName(p,kind.slice(5));
     const title=isP?`داخوازیا سبغێ — <span class="ltr">${esc(coN||'(بێ کۆمپانی)')}</span> (ب تۆن)`:`داخوازیا لسقێ — <span class="ltr">${esc(coN||'(بێ براند)')}</span> (ب م²)`;
     if(!items.length)return `<div class="card" style="background:var(--bg)"><h2>${I(isP?'drop':'tape')} ${title}</h2><p class="muted">هێشتا چ نەهاتینە هەلبژارتن. ل «${isP?'ئەنجاما سبغێ':'ئەنجاما لسقێ'}» نیشان بکە.</p><button class="btn" data-sub="${isP?'resPaint':'resTape'}">بچە ${isP?'ئەنجاما سبغێ':'ئەنجاما لسقێ'} ←</button></div>`;
@@ -1778,10 +1791,36 @@ function viewPo(p){ensP(p);
   ${S.settings.co.name?'':'<div class="note">⚠️ ناڤێ کارگەهێ بۆ سەرێ PDF هێشتا نەهاتیە نڤیسین — ل تابا «ڕێکخستن».</div>'}
   ${(()=>{const cos=[...new Set(p.sel.paint.map(paintCoOf))];
     const noCo=cos.includes('');
+    if(only&&!only.startsWith('paint:'))return '';if(only){const c=only.slice(6);return cos.includes(c)?sec(only):sec(only)}
     const parts=cos.sort().map(c=>sec('paint:'+c)).join('');
     return (noCo?`<div class="note">⚠️ هندەک سبغێن هەلبژارتی کۆمپانیا وان (Pulver / IBA ...) نەهاتیە دیارکرن — ل تابا «جۆرێن سبغێ» دیار بکە.</div>`:'')+(parts||sec('paint:'))})()}
-  ${(()=>{const bs=[...new Set(p.sel.tape.map(tapeKeyBrand))].sort();return bs.length?bs.map(b=>sec('tape:'+b)).join(''):sec('tape:')})()}`;
+  ${(()=>{if(only&&only!=='tape')return '';const bs=[...new Set(p.sel.tape.map(tapeKeyBrand))].sort();return bs.length?bs.map(b=>sec('tape:'+b)).join(''):sec('tape:')})()}`;
 }
+
+function poCards(p){const r=compute(p);const C=[];
+  const cos=[...new Set([...(S.settings.paintCos||[]),...r.paintRows.filter(x=>x.orderCart>0).map(x=>paintCoOf(x.key)).filter(Boolean)])];
+  cos.forEach(co=>{const sh=r.paintRows.filter(x=>x.orderCart>0&&paintCoOf(x.key)===co);const t=sh.reduce((a,x)=>a+Math.max(0,-x.diff),0)/1000;const sel=p.sel.paint.filter(k=>paintCoOf(k)===co).length;const po=getPo(p,'paint:'+co);
+    C.push({k:'paint:'+co,t:co,ic:'drop',c:co.toUpperCase().includes('IBA')?'#7c3aed':'#0e7478',n:sh.length,amt:sh.length?fmt(t,3)+' تۆن':'',sel,sent:!!(po&&po.sent),keys:sh.map(x=>x.key),what:'سبغ'})});
+  {const sh=r.brandRows.filter(x=>x.orderBoxes>0);const m2=sh.reduce((a,x)=>a+Math.max(0,-x.diff),0);const bx=sh.reduce((a,x)=>a+x.orderBoxes,0);const bs=[...new Set(p.sel.tape.map(tapeKeyBrand))];
+    C.push({k:'tape',t:'لسق',ic:'tape',c:'#5d4495',n:sh.length,amt:sh.length?fmt(m2,0)+' م² · '+fmt(bx,0)+' کارتۆن':'',sel:p.sel.tape.length,sent:bs.length>0&&bs.every(b=>{const po=getPo(p,'tape:'+b);return po&&po.sent}),keys:sh.map(x=>x.key),what:'لسق'})}
+  if((S.crnItems||[]).some(x=>x.grp==='rub'||x.grp==='nyl')){const {rows}=crnRows(p);
+    [['rub','لاستیک','layers','#334155'],['nyl','نایلۆن','file','#9333ea']].forEach(([g,t,ic,c])=>{const sh=rows.filter(x=>x.x.grp===g&&x.diff<-0.0005);const rl=sh.reduce((a,x)=>a+x.rolls,0);
+      C.push({k:g,t,ic,c,n:sh.length,amt:sh.length?rl+' ڕۆل':'',sel:0,sent:false,what:'جۆر'})})}
+  return C}
+function viewPo(p){ensP(p);const C=poCards(p);const k=S.poSel&&C.some(c=>c.k===S.poSel)?S.poSel:'';
+  const card=c=>`<button type="button" class="pocd${k===c.k?' on':''}${c.n?' need':''}" style="--tc:${c.c}" data-act="poPick" data-k="${esc(c.k)}">
+    <span class="pocic">${I(c.ic)}</span><span class="pocb"><b class="ltr">${esc(c.t)}</b>
+    ${c.n?`<span class="pocs bad">⚠️ ${c.n} ${c.what} کێمن</span><span class="poca">${esc(c.amt)}</span>`:`<span class="pocs ok">✓ پێتڤی ب داخوازیێ نینە</span>`}
+    ${c.sent?'<span class="pocs sent">📦 هاتە هنارتن</span>':c.sel?`<span class="pocs">${c.sel} هاتنە هەلبژارتن</span>`:''}</span><span class="pocgo">${k===c.k?'▾':'‹'}</span></button>`;
+  let det='';
+  if(k){const c=C.find(x=>x.k===k);
+    if(k==='rub'||k==='nyl')det=viewResRub(p,k);
+    else{const notSel=(c.keys||[]).filter(x=>!p.sel[k==='tape'?'tape':'paint'].includes(x));
+      det=`<div class="card podet" style="--tc:${c.c}"><h2>${I(c.ic)} داخوازیا <span class="ltr">${esc(c.t)}</span></h2>
+        ${c.n?`<div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">⚠️ ب دویڤ ئۆردەرێن ڤێ ماوەیێ، <b>${c.n} ${c.what}</b> کێمن — پێتڤیە داخواز بکەی: <b>${esc(c.amt)}</b>.</span>${notSel.length?`<button class="btn pri" data-act="selShort" data-kind="${k==='tape'?'tape':'paint'}" data-keys="${esc(JSON.stringify(notSel))}">➕ هەمی یێن کێم زێدە بکە (${notSel.length})</button>`:''}</div>`:'<div class="info">✓ هەمی تشت هەیە — پێتڤی ب داخوازیێ نینە. ئەگەر بڤێت، دشێی ژ «ئەنجام» تشتان هەلبژێری.</div>'}
+        ${viewPoParts(p,k)}</div>`}}
+  return `<div class="pogrid">${C.map(card).join('')}</div>
+   ${k?`<div id="poDet">${det}</div>`:'<div class="muted" style="text-align:center;padding:16px">☝️ ل سەر ئێکێ لێ بدە دا ببینی چ پێتڤیە و داخوازیێ چێبکەی.</div>'}`}
 let jsPDFp=null;
 function loadPDF(){if(window.jspdf)return Promise.resolve(window.jspdf);if(jsPDFp)return jsPDFp;
   jsPDFp=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>res(window.jspdf);s.onerror=()=>{jsPDFp=null;rej(new Error('jspdf'))};document.head.appendChild(s)});return jsPDFp}
@@ -2773,7 +2812,7 @@ function crnReqOpen(id){let q=0;(S.crnReq||[]).forEach(r=>{if(r.status!=='sent'&
 function crnRows(period){const {need,noDef,noNy}=crnNeed(period);const L=(S.crnItems||[]).filter(x=>x.grp==='rub'||x.grp==='nyl');
   const rows=L.map(x=>{const k=x.ppr>0?x.ppr:1;const nd=need[x.id]||0;const st=xQty('crn',x.id)*k;const inc=crnReqOpen(x.id)*k;const diff=st+inc-nd;const per=x.ppr>0?x.ppr:x.roll;return {x,u:x.ppr>0?'پارچە':'m',need:nd,stock:st,inc,diff,rolls:diff<-0.0005&&per>0?Math.ceil(-diff/per-1e-9):0}}).filter(r=>r.need>0||r.stock>0||r.inc>0)
     .sort((a,b)=>(a.x.grp>b.x.grp?1:a.x.grp<b.x.grp?-1:0)||miSort(a.x,b.x));return {rows,noDef,noNy}}
-function viewResRub(p){const {rows,noDef,noNy}=crnRows(p);const nd=Object.keys(noDef);const nn=Object.keys(noNy);const nylP=S.paints.filter(x=>x.nyl).map(x=>x.name);const short=rows.filter(r=>r.diff<-0.0005);
+function viewResRub(p,only){let {rows,noDef,noNy}=crnRows(p);if(only){rows=rows.filter(r=>r.x.grp===only)}const nd=Object.keys(noDef);const nn=Object.keys(noNy);const nylP=S.paints.filter(x=>x.nyl).map(x=>x.name);const short=rows.filter(r=>r.diff<-0.0005);
   const sec=g=>{const R=rows.filter(r=>r.x.grp===g);if(!R.length)return '';return `<tr class="tsech"><td colspan="9">${CRN_G[g].ic} ${CRN_G[g].t}</td></tr>`+R.map(r=>`<tr${r.diff<-0.0005?' class="lowrow"':''}><td>${r.x.img?`<img src="${r.x.img}" class="rimg">`:''}</td><td><b>${esc(r.x.name)}</b></td><td class="ltr">${esc(r.x.code||'')}</td><td class="n">${fmt(r.need,0)} <small class="muted">${r.u}</small></td><td class="n">${fmt(r.stock,0)}</td><td class="n">${r.inc?fmt(r.inc,0):''}</td><td class="n"><b style="color:${r.diff<-0.0005?'var(--bad)':'var(--good)'}">${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td class="n">${r.x.ppr?fmt(r.x.ppr,0)+' پارچە':r.x.roll?fmt(r.x.roll,0)+' m':''}</td><td class="n"><b>${r.rolls||''}</b></td></tr>`).join('')};
   return `<div class="card"><h2>${I('layers')} ئەنجاما لاستیک و نایلۆنێ</h2>
    <div class="info"><b>لاستیک:</b> ئەگەر «چەند پارچە د ڕۆلەکێ دا» هاتبیتە دانان، پێتڤی = ژمارا قەدان × خەت (ب <b>پارچە</b>) و مەخزەن = ڕۆل × پارچە؛ ئەگەر نە، ب مەتر. <b>نایلۆن:</b> ژمارا قەدان × (درێژیا قەدی + <b>30 سم</b>) × خەت. «ل ڕێ» = داخوازیێن هێشتا نەگەهشتین.</div>
@@ -3401,6 +3440,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='delTape'){const t=S.settings.tapes[+t0.dataset.i];dialog(`<p>پانیا <b class="ltr">${t.w} mm</b> ژێببە؟</p>`,()=>{S.settings.tapes.splice(+t0.dataset.i,1);S.settings.tapes.forEach(x=>{if(x.sub===t.w)x.sub=0});save('cfg/settings',100);render()},'ژێببە')}
   else if(act==='profPaste'){importProfiles(parseProfiles(parseText($('#profPaste').value)))}
   else if(act==='addProf'){S.profiles.unshift({code:'',b1:0,b2:0,s1:1,s2:1,w:0});profFilter='';save('cfg/profiles');render();const i=$('#main').querySelector('input[data-p="0"]');if(i)i.focus()}
+  else if(act==='poPick'){S.poSel=S.poSel===t.dataset.k?'':t.dataset.k;render();if(S.poSel)setTimeout(()=>{const d=document.getElementById('poDet');if(d)d.scrollIntoView({behavior:'smooth',block:'start'})},60)}
   else if(act==='profCrn'){profCrnDialog(+t.dataset.i)}
   else if(act==='rubPdf'){rubPdf(p)}
   else if(act==='rubReq'){const g=t0.dataset.g||'rub';const {rows}=crnRows(p);const sh=rows.filter(r=>r.diff<-0.0005&&r.x.grp===g);S.invKind='crn';S.crnGrp=g;const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.ppr?z.rolls:z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.ppr?'':z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+p.name;S.mrqEdit=r;go(g==='nyl'?'invNyl':'invRub','mreq');window.scrollTo({top:0})}
