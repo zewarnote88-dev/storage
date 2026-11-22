@@ -2348,6 +2348,7 @@ function miUnitLbl(){const u=($('#msNUnit')||{}).value||'';document.querySelecto
 function msNewDialog(after){const ci=can('inv_in')&&canKind('misc');
   dialog(`<h3 style="margin-top:0">➕ کەرەستەیەکا نوو</h3>
   <div class="mi-head"><label>ناڤێ مادێ<input id="msNName" placeholder="بۆ نموونە: پێچ 4×20"></label><label>کۆدێ مادێ<input id="msNCode" class="ltr" placeholder="SCR-420" style="text-align:left"></label></div>
+  <div id="msNHint" class="info" style="display:none;margin:0 0 10px"></div>
   <div class="lb" style="font-weight:600;margin:4px 0 6px">یەکە — ئەڤ کەرەستە ب چ دهێتە ژمارتن؟</div>${miUnitPicker('msNUnit','دانە')}
   ${ci?`<div class="lb" style="font-weight:600;margin:14px 0 6px">چەند گەهشتیە؟ <span class="muted" style="font-weight:400">(ئەگەر نوکە هاتبیت — دێ ب خۆ وەک داخلکرن تۆمار بیت)</span></div>
    <div class="qin"><input id="msNQty" class="num" inputmode="decimal" placeholder="0"><span class="qu msNU">دانە</span></div>
@@ -2356,14 +2357,23 @@ function msNewDialog(after){const ci=can('inv_in')&&canKind('misc');
     const n=$('#msNName').value.trim(),c=$('#msNCode').value.trim(),u=$('#msNUnit').value.trim();
     if(!n){$('#msNErr').textContent='⚠️ ناڤی بنڤیسە';return false}
     if(!u){$('#msNErr').textContent='⚠️ یەکێ هەلبژێرە یان بنڤیسە';return false}
-    if(c&&(S.miscItems||[]).some(x=>x.code&&x.code.toLowerCase()===c.toLowerCase())){$('#msNErr').textContent='⚠️ ئەڤ کۆدە بەری نوکە هەیە';return false}
-    if((S.miscItems||[]).some(x=>x.name.toLowerCase()===n.toLowerCase()&&(x.code||'')===c)){$('#msNErr').textContent='⚠️ ئەڤ کەرەستە بەری نوکە هەیە';return false}
     const q=ci?toNum($('#msNQty').value):0;if(ci&&$('#msNQty').value.trim()&&!(q>0)){$('#msNErr').textContent='⚠️ ژمارە دروست نینە';return false}
     const note=ci?$('#msNNote').value.trim():'';
+    const ex=miFindExisting(c,n);
+    if(ex){if(after)after(ex);
+      if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:'misc',key:ex.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${ex.name}» بەری نوکە هەبوو — ${fmt(q,2)} ${ex.unit} ل سەر هاتنە زێدەکرن (نوکە ${fmt(miQty(ex.id),2)})`);render()}})}
+      else toast(`ℹ️ «${ex.name}» بەری نوکە هەیە — هاتە هەلبژارتن`);render();return}
     const x=miNew(n,c,u);if(after)after(x);
     if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:'misc',key:x.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${n}» هاتە زێدەکرن و ${fmt(q,2)} ${u} هاتنە داخلکرن`);render()}})}
     else toast('✓ «'+n+'» هاتە زێدەکرن');render()},'پاشەکەفتکرن','wide');
-  miUnitBind('msNUnit');setTimeout(()=>{const e=$('#msNName');if(e&&!$('#dlg').contains(document.activeElement))e.focus()},50)}
+  miUnitBind('msNUnit');['#msNCode','#msNName'].forEach(q=>{const e=$(q);if(e)e.addEventListener('input',miExHint)});setTimeout(()=>{const e=$('#msNName');if(e&&!$('#dlg').contains(document.activeElement))e.focus()},50)}
+function miFindExisting(c,n){const L=S.miscItems||[];c=String(c||'').trim().toLowerCase();n=String(n||'').trim().toLowerCase();
+  if(c)return L.find(x=>(x.code||'').toLowerCase()===c)||null;return n?L.find(x=>!x.code&&x.name.toLowerCase()===n)||null:null}
+function miExHint(){const c=$('#msNCode'),nm=$('#msNName');if(!c)return;const ex=miFindExisting(c.value,nm.value);const h=$('#msNHint');if(!h)return;
+  if(ex){h.innerHTML=`ℹ️ ئەڤ کۆدە بەری نوکە هەیە: <b>${esc(ex.name)}</b> — ل مەخزەنێ <b>${fmt(miQty(ex.id),2)} ${esc(ex.unit)}</b>. ژمارا تو دنڤیسی دێ <b>ل سەر وێ زێدە بیت</b>.`;h.style.display='';
+    const hu=$('#msNUnit');if(hu){hu.value=ex.unit;const g=document.querySelector('[data-ug="msNUnit"]');if(g){g.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b.dataset.ugv===ex.unit||(b.dataset.ugv==='__other'&&!MISC_UNITS.includes(ex.unit))));}miUnitLbl()}
+    $('#dlgOk').textContent='زێدەکرن ل سەر یا هەی'}
+  else{h.style.display='none';$('#dlgOk').textContent='پاشەکەفتکرن'}}
 function miMine(t){const me=myUid();return isAdmin||t.u===me||t.rec===me}
 function miTxEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;const x=miItem(t.key);const L=[...(S.miscItems||[])].sort(miSort);
   dialog(`<h3 style="margin-top:0">✏️ گوهۆڕینا تۆمارێ (${dir==='in'?'داخلکرن':'دەرئێخستن'})</h3>
