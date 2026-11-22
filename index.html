@@ -350,6 +350,11 @@ img.rimg{width:38px;height:38px;object-fit:cover;border-radius:8px;vertical-alig
 input.bigchk{width:24px;height:24px;cursor:pointer;accent-color:var(--accent)}
 tr.oldrow td{background:color-mix(in srgb,#64748b 12%,transparent)}
 
+.stkchk{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;font-weight:700;color:var(--muted);padding:4px 8px;border:1px solid var(--line);border-radius:10px;cursor:pointer;white-space:nowrap;user-select:none}
+.stkchk input{width:18px;height:18px;margin:0;accent-color:#64748b;cursor:pointer}
+.stkchk.on{background:#64748b;color:#fff;border-color:#64748b}
+.bxrow.isold input.num{background:color-mix(in srgb,#64748b 18%,var(--field))!important;border-color:#64748b!important}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -1087,7 +1092,7 @@ const SUBORDER=['out','in','stock','outlog','report','tstk','log'];
 const oldKey=k=>k.split('|').slice(0,3).join('|')+'|'+boxLen(k);
 const isOldTape=k=>(S.settings.stockTape||[]).includes(oldKey(k));
 function invSubList(){const ok=invSubs().filter(x=>x!=='|').map(x=>x[0]);return SUBORDER.filter(k=>ok.includes(k))}
-function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمارێن دەرئێخستنێ','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')],['tstk','لسقێن Stock','layers',S.invKind==='tape'&&(can('inv_view')||can('inv_count'))],['log','تۆمارا ژمارتنێ','clock',isAdmin]].filter(s=>s==='|'||s[3])}
+function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمارێن دەرئێخستنێ','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')],['log','تۆمارا ژمارتنێ','clock',isAdmin]].filter(s=>s==='|'||s[3])}
 function recalcAdmin(){const u=curApp();isAdmin=!!(u&&u.status==='active'&&(u.perms||{}).admin)}
 function applyRole(){recalcAdmin();showMe();loadUserAccent();
   document.querySelectorAll('#tabs button').forEach(b=>{const f=TAB_PERM[b.dataset.tab];b.style.display=(f&&f())?'':'none'});
@@ -1561,6 +1566,7 @@ function viewStockTape(p){const inv=!!p.__inv;
   return `${inv?'':`<div class="info">لسقا نوکە ل مەخزەنێ هەی بنڤیسە.</div>${copyBtn(p,'tape')}`}
   <h3>مەخزەنا لسقێ (کارتۆن) — ل دویڤ کۆمپانیێ</h3>
   <p class="muted">ژمارا کارتۆنان (Box in Stock) و درێژیا ڕۆلێن وان (300 / 400 / 500 مەتر) بۆ هەر کۆمپانیەکێ بنڤیسە. ئەگەر ژ هەمان لسقێ کارتۆنێن ب درێژیێن جودا هەبن، «+ درێژیەکا دی» بکە. م² = کارتۆن × ڕۆل بۆ کارتۆنێ × (پانی ÷ ١٠٠٠) × درێژیا ڕۆلی.</p>
+  ${inv?'<p class="muted" style="margin-top:-4px">🏷 <b>Stock</b>: نیشانێ بدە ئەو لسقێن ل مەخزەنێ هەین بەلێ <b>نائێنە بکارئینان</b> — د ڕاپۆرتێ دا ل دوماهیێ ب جودا دیار دبن (Normal ← Rough ← Stock Normal ← Stock Rough) و د ئەنجاما لسقێ دا ناهێنە حیسابکرن.</p>':''}
   ${(()=>{const bd=periodBrands(p);const ws=tapeWidths(p);
     const ks=Object.keys(bd);
     if(!ks.length)return '<p class="muted">هێشتا چ کۆمپانیێن لسقێ نینن. ل تابا «جۆرێن لسقێ» زێدە بکە.</p>';
@@ -1571,7 +1577,7 @@ function viewStockTape(p){const inv=!!p.__inv;
       if(!ok)return '<td class="n muted">—</td><td></td>';
       const lens=rollLens();
       return `<td class="n"><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">${es.map(k=>{const L=boxLen(k);const opts=[...new Set([...lens,L])].sort((a,b)=>a-b);
-        return `<div style="display:flex;gap:4px;align-items:center"><input class="num" inputmode="decimal" data-st="box" data-k="${esc(k)}" value="${p.stock.box[k]??''}" style="width:70px" title="کارتۆن"><select data-len data-k="${esc(k)}" title="درێژیا ڕۆلی" ${inv?'':'disabled'}>${opts.map(x=>`<option value="${x}" ${x===L?'selected':''}>${x}m</option>`).join('')}</select></div>`}).join('')}
+        const old=inv&&isOldTape(k);return `<div class="bxrow${old?' isold':''}" style="display:flex;gap:4px;align-items:center"><input class="num" inputmode="decimal" data-st="box" data-k="${esc(k)}" value="${p.stock.box[k]??''}" style="width:70px" title="کارتۆن"><select data-len data-k="${esc(k)}" title="درێژیا ڕۆلی" ${inv?'':'disabled'}>${opts.map(x=>`<option value="${x}" ${x===L?'selected':''}>${x}m</option>`).join('')}</select>${inv&&(toNum(p.stock.box[k])>0||old)?`<label class="stkchk${old?' on':''}" title="Stock — ئەڤ لسقە نائێتە بکارئینان"><input type="checkbox" data-tstk="${esc(oldKey(k))}" ${old?'checked':''}>Stock</label>`:''}</div>`}).join('')}
         ${inv&&es.length<lens.length?`<button class="x" data-act="addLen" data-base="${esc(base)}" title="درێژیەکا دی یا ڕۆلی" style="font-size:.8rem;color:var(--accent)">+ درێژیەکا دی</button>`:''}</div></td><td class="n muted" data-m2="${esc(base)}">${cellM2(base)?fmt(cellM2(base),1):''}</td>`};
     return ks.map(b=>{const o=bobj(b);const rows=ws.filter(w=>!o||offers(o,w,'N')||offers(o,w,'P')||Object.keys(p.stock.box).some(k=>k.startsWith(b+'|'+w+'|')&&toNum(p.stock.box[k])>0));
     if(!rows.length)return `<div style="margin-bottom:8px"><b class="ltr">${esc(bd[b])}</b> <span class="muted">— چ لسق بۆ ڤێ کۆمپانیێ نەهاتینە دیارکرن (تابا «جۆرێن لسقێ»)</span></div>`;
