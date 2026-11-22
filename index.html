@@ -754,7 +754,8 @@ async function undoDo(i){const e=UNDO[i];if(!e)return;undoing=true;
     else if(e.kind==='tx'){const t={...e.t};const id=t.id;delete t.id;delete t.dir;if(!db){S.tx[e.dir].push({...t,id});recomputeInv();localSave()}else await db.doc((e.dir==='in'?'invin/':'invout/')+id).set(t)}
     UNDO.splice(i,1);toast('↶ هاتە گەڕاندن: '+e.label)}catch(er){toast('⚠️ گەڕاندن نەبوو')}
   undoing=false;render();undoFab()}
-function undoFab(){let f=document.getElementById('undoFab');const n=UNDO.filter(e=>Date.now()-e.at<60*60000).length;if(db&&!curApp()){if(f)f.style.display='none';return}
+const UNDO_ON=false;
+function undoFab(){if(!UNDO_ON){const f0=document.getElementById('undoFab');if(f0)f0.remove();return}let f=document.getElementById('undoFab');const n=UNDO.filter(e=>Date.now()-e.at<60*60000).length;if(db&&!curApp()){if(f)f.style.display='none';return}
   if(!f){f=document.createElement('button');f.id='undoFab';f.type='button';f.onclick=undoPanel;document.body.appendChild(f)}
   f.innerHTML=`<span class="ui">↶</span><span class="ut">گەڕاندنەوە</span>${n?`<span class="un">${n}</span>`:''}`;f.style.display=n&&!document.body.classList.contains('auth')?'':'none';f.classList.remove('pulse');void f.offsetWidth;f.classList.add('pulse')}
 function undoPanel(){const L=UNDO.filter(e=>Date.now()-e.at<60*60000);if(!L.length){undoFab();return}
@@ -1653,7 +1654,7 @@ function viewStockTape(p){const inv=!!p.__inv;
         return `<div class="twrow"><div class="tw"><b class="ltr">${w}<small>mm</small></b><span class="muted">${fmt(rpbOf(w))} ڕۆل/کارتۆن</span>${m?`<span class="twho">${m.u?`<span data-uid="${esc(m.u)}">…</span>`:''} · <span class="ltr">${whenTxt(m.at)}</span></span>`:''}</div>${cell(b,w,'N')}${cell(b,w,'P')}</div>`}).join('')}</div></div>`}).join('');
   return `${inv?'':`<div class="info">لسقا نوکە ل مەخزەنێ هەی بنڤیسە.</div>${copyBtn(p,'tape')}`}
   <details class="thelp"><summary>ℹ️ چاوا بنڤیسم؟</summary><p class="muted">ژمارا کارتۆنان و درێژیا ڕۆلێن وان (300 / 400 / 500 مەتر) بنڤیسە. ئەگەر ژ هەمان لسقێ کارتۆنێن ب درێژیێن جودا هەبن، «+ درێژیەکا دی» بکە. م² = کارتۆن × ڕۆل بۆ کارتۆنێ × (پانی ÷ ١٠٠٠) × درێژیا ڕۆلی.</p>
-  ${inv?'<p class="muted">🏷 <b>Stock</b>: ئەو لسقێن ل مەخزەنێ هەین بەلێ نائێنە بکارئینان — ل دەرئێخستنێ دیار نابن، د ڕاپۆرتێ دا ل دوماهیێ دیار دبن و د ئەنجاما لسقێ دا ناهێنە حیسابکرن.</p><p class="muted">↶ ئەگەر ب خەلەتی تشتەک گوهۆڕی، دوگمەیا «گەڕاندنەوە» ل خوارێ بکە.</p>':''}</details>
+  ${inv?'<p class="muted">🏷 <b>Stock</b>: ئەو لسقێن ل مەخزەنێ هەین بەلێ نائێنە بکارئینان — ل دەرئێخستنێ دیار نابن، د ڕاپۆرتێ دا ل دوماهیێ دیار دبن و د ئەنجاما لسقێ دا ناهێنە حیسابکرن.</p>':''}</details>
   ${ks.length?`<div class="tbrands">${brands}</div>`:'<p class="muted">هێشتا چ کۆمپانیێن لسقێ نینن. ل تابا «جۆرێن لسقێ» زێدە بکە.</p>'}
   <p class="muted">بۆ زێدەکرنا کۆمپانیەکا نوو یا لسقێ، بچە تابا «جۆرێن لسقێ».</p>`;
 }
