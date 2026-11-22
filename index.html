@@ -120,7 +120,7 @@ td.n,th.n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums;white-
 td.ltr,td b.ltr{white-space:nowrap}
 .pdate{font-size:.76rem;white-space:nowrap}
 .ltr{direction:ltr;unicode-bidi:isolate}
-.tbl-scroll{overflow-x:auto;max-height:560px;overflow-y:auto;border-radius:8px}
+.tbl-scroll{overflow-x:auto;overflow-y:visible;max-height:none;border-radius:8px}
 .tbl-scroll thead th{position:sticky;top:0;z-index:1}
 .pill{flex:none;display:inline-flex;align-items:center;gap:4px;padding:1px 9px;border-radius:999px;font-size:.76rem;font-weight:600;white-space:nowrap}
 .pill.N{background:var(--normal-soft);color:var(--normal)}
@@ -1580,7 +1580,7 @@ function dcFix(p,k){const I=dataIssues(p).find(x=>x.k===k);if(!I)return;const {p
   const rows=I.list.slice(0,40).map(([c])=>{const x=prof[norm(c)]||{code:c,b1:0,b2:0,s1:1,s2:1,w:0,wrap:false,per:0};return x});
   dialog(`<h3 style="margin-top:0">${k==='prof'?'➕ زێدەکرنا پڕۆفایلان':'✎ تەمامکرنا زانیاریێن پڕۆفایلان'}</h3>
    <p class="muted">لسقا ئێکێ و دووێ ب <b>mm</b> (بۆ نموونە 40). ×2 = لسق ل هەردوو لایان. ئەگەر ب پێچانە، «پێچان» نیشان بکە و دەورێ (mm) بنڤیسە. کێش (kg/m) نە پێتڤییە ئەگەر د ئۆردەرێ دا Wight هەبیت.</p>
-   <div class="tbl-scroll" data-nosrch style="max-height:55vh"><table><thead><tr><th>کۆد</th><th class="n">لسقا ئێکێ</th><th>×2</th><th class="n">لسقا دووێ</th><th>×2</th><th>پێچان</th><th class="n">دەور</th><th class="n">kg/m</th></tr></thead><tbody>
+   <div class="tbl-scroll" data-nosrch><table><thead><tr><th>کۆد</th><th class="n">لسقا ئێکێ</th><th>×2</th><th class="n">لسقا دووێ</th><th>×2</th><th>پێچان</th><th class="n">دەور</th><th class="n">kg/m</th></tr></thead><tbody>
    ${rows.map((x,i)=>`<tr data-dcr="${i}" data-code="${esc(x.code)}"><td dir="ltr"><b>${esc(x.code)}</b></td>
      <td><input class="num" data-f="b1" inputmode="numeric" value="${x.b1||''}" style="width:64px"></td><td><input type="checkbox" data-f="s1" ${x.s1===2?'checked':''}></td>
      <td><input class="num" data-f="b2" inputmode="numeric" value="${x.b2||''}" style="width:64px"></td><td><input type="checkbox" data-f="s2" ${x.s2===2?'checked':''}></td>
