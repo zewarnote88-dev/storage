@@ -325,7 +325,7 @@ h3.dsec{margin:16px 0 6px;font-size:1rem}h3.dsec.in{color:var(--good)}h3.dsec.ou
 .mrqh{display:flex;gap:8px;align-items:center;margin-bottom:4px}.mrqh b{font-size:1.1rem}.mrqa{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.mrqa .btn{padding:6px 10px}
 .mrqrows{display:flex;flex-direction:column;gap:8px}
 .mrqrow{display:grid;grid-template-columns:28px 1.4fr 1fr 100px 90px 1fr 36px;gap:6px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.mrqrow input{width:100%!important;min-height:44px}.mrqn{font-weight:700;color:var(--muted);text-align:center}.mrqhave{grid-column:2/-1;font-size:.8rem}
+.mrqrow input,.mrqrow select{width:100%!important;min-height:44px}.mrqrow select.misel{font-size:1rem!important;padding:0 8px}.mrqn{font-weight:700;color:var(--muted);text-align:center}.mrqhave{grid-column:2/-1;font-size:.8rem}
 .mrqrow .x{border:none;background:none;font-size:1.4rem;color:var(--bad);cursor:pointer}
 .mrqrow input.mrqq{font-size:1.15rem!important;font-weight:700;text-align:center;padding:0 6px}
 @media (max-width:640px){.mrqrow{grid-template-columns:24px 1fr 1fr 36px}.mrqrow .mrqname{grid-column:2/4}.mrqrow .x{grid-row:1;grid-column:4}.mrqrow .mrqcode{grid-column:2/4}.mrqrow .mrqq{grid-column:2}.mrqrow .mrqu{grid-column:3}.mrqrow .mrqnote{grid-column:2/4}}
@@ -2475,7 +2475,7 @@ function viewMrqEdit(r){const L=[...(S.miscItems||[])].sort(miSort);
      <input class="mrqname" data-mrr="${i}" data-f="name" list="mrqItems" value="${esc(x.name)}" placeholder="ناڤێ مادێ">
      <input class="mrqcode ltr" data-mrr="${i}" data-f="code" list="mrqCodes" value="${esc(x.code)}" placeholder="کۆدێ مادێ">
      <input class="mrqq num" inputmode="decimal" data-mrr="${i}" data-f="qty" value="${esc(x.qty)}" placeholder="ژمارە">
-     <input class="mrqu" data-mrr="${i}" data-f="unit" list="mrqUnits" value="${esc(x.unit)}" placeholder="یەکە">
+     ${x.cu?`<input class="mrqu" data-mrr="${i}" data-f="unit" value="${esc(x.unit)}" placeholder="یەکا خۆ بنڤیسە">`:`<select class="mrqu misel" data-mrr="${i}" data-f="unit">${[...new Set([...MISC_UNITS,x.unit||'دانە'])].map(u=>`<option ${u===(x.unit||'دانە')?'selected':''}>${esc(u)}</option>`).join('')}<option value="__other">✏️ یا دی…</option></select>`}
      <input class="mrqnote" data-mrr="${i}" data-f="note" value="${esc(x.note)}" placeholder="تێبینی">
      <button type="button" class="x" data-act="mrqRowDel" data-i="${i}" title="ژێبرن">×</button>
      <span class="mrqhave muted" data-mrh="${i}">${mrqHave(x)}</span></div>`}).join('')}</div>
@@ -2762,7 +2762,8 @@ function bind(){
     {const e=m.querySelector('#msDay');if(e)e.onchange=()=>{if(e.value){S.msDay=e.value;render()}}}
     m.querySelectorAll('[data-mrq]').forEach(el=>{el.oninput=el.onchange=()=>{if(S.mrqEdit)S.mrqEdit[el.dataset.mrq]=el.value}});
     m.querySelectorAll('[data-mrr]').forEach(el=>{const h=ev=>{const r=S.mrqEdit;if(!r)return;const row=r.rows[+el.dataset.mrr];if(!row)return;const f=el.dataset.f;
-      if(f==='name'||f==='code'){const i=el.dataset.mrr;const v=el.value.trim();const L=S.miscItems||[];row[f]=v;const x=f==='code'?(v&&L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase())):(v&&L.find(z=>z.name===v));const p={x};row.item=x?x.id:(row.item&&miItem(row.item)&&miItem(row.item)[f]===v?row.item:'');if(x&&ev.type==='change'){row.name=x.name;row.code=x.code;const o=m.querySelector(`[data-mrr="${i}"][data-f="${f==='code'?'name':'code'}"]`);if(o)o.value=f==='code'?x.name:x.code}if(p.x){row.unit=p.x.unit;const u=m.querySelector(`[data-mrr="${i}"][data-f="unit"]`);if(u)u.value=p.x.unit;if(ev.type==='change'&&!row.qty&&miLow(p.x)){row.qty=String(mrqSugg(p.x));const q=m.querySelector(`[data-mrr="${i}"][data-f="qty"]`);if(q)q.value=row.qty}}const h=m.querySelector(`[data-mrh="${i}"]`);if(h)h.innerHTML=mrqHave(row)}
+      if(f==='name'||f==='code'){const i=el.dataset.mrr;const v=el.value.trim();const L=S.miscItems||[];row[f]=v;const x=f==='code'?(v&&L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase())):(v&&L.find(z=>z.name===v));const p={x};row.item=x?x.id:(row.item&&miItem(row.item)&&miItem(row.item)[f]===v?row.item:'');if(x&&ev.type==='change'){row.name=x.name;row.code=x.code;const o=m.querySelector(`[data-mrr="${i}"][data-f="${f==='code'?'name':'code'}"]`);if(o)o.value=f==='code'?x.name:x.code}if(p.x){row.unit=p.x.unit;row.cu=false;const u=m.querySelector(`[data-mrr="${i}"][data-f="unit"]`);if(u){if(u.tagName==='SELECT'&&![...u.options].some(o=>o.value===p.x.unit))u.insertAdjacentHTML('afterbegin',`<option>${esc(p.x.unit)}</option>`);u.value=p.x.unit}if(ev.type==='change'&&!row.qty&&miLow(p.x)){row.qty=String(mrqSugg(p.x));const q=m.querySelector(`[data-mrr="${i}"][data-f="qty"]`);if(q)q.value=row.qty}}const h=m.querySelector(`[data-mrh="${i}"]`);if(h)h.innerHTML=mrqHave(row)}
+      else if(f==='unit'&&el.value==='__other'){row.cu=true;row.unit='';render();const n=m.querySelector(`input[data-mrr="${el.dataset.mrr}"][data-f="unit"]`);if(n)n.focus()}
       else row[f]=el.value};el.oninput=h;el.onchange=h});
     {const ms=m.querySelector('#msSearch');if(ms)ms.oninput=()=>{const qs=normQ(ms.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#msGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#msNone');if(z)z.style.display=n?'none':''}}
     [['#msStockQ',v=>S.msStockQ=v],['#msLogQ',v=>{S.msLogF=S.msLogF||{};S.msLogF.q=v}]].forEach(([sel,set])=>{const e=m.querySelector(sel);if(!e)return;const flt=()=>{set(e.value);const qs=normQ(e.value).trim().split(' ').filter(Boolean);e.closest('.card').querySelectorAll('tbody tr').forEach(tr=>{const t=normQ(tr.textContent);tr.style.display=qs.every(x=>t.includes(x))?'':'none'})};e.oninput=flt;if(e.value)flt()});
@@ -3101,7 +3102,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='mrqAddLow'){const r=S.mrqEdit;const have=new Set(r.rows.map(x=>x.item).filter(Boolean));r.rows=r.rows.filter(x=>x.name);(S.miscItems||[]).filter(x=>miLow(x)&&!have.has(x.id)).sort(miSort).forEach(x=>r.rows.push(mrqRow(x,mrqSugg(x))));if(!r.rows.length)r.rows.push(mrqRow());render()}
   else if(act==='mrqSave'){const r=S.mrqEdit;const R=r.rows.filter(x=>x.name.trim());if(!R.length||!R.some(x=>toNum(x.qty)>0)){toast('⚠️ لانیکێم کەرەستەیەکێ ب ژمارە بنڤیسە');return}
     const bad=R.find(x=>!(toNum(x.qty)>0));if(bad){toast('⚠️ ژمارا «'+bad.name+'» بنڤیسە');return}
-    r.rows=R;if(r.status==='draft'||!r.status)r.status=t0.dataset.s;S.miscReq=S.miscReq||[];const i=S.miscReq.findIndex(x=>x.id===r.id);if(i>=0)S.miscReq[i]=r;else S.miscReq.push(r);save('inv/miscreq',100);S.mrqEdit=null;render();
+    R.forEach(x=>{delete x.cu;if(!x.unit)x.unit='دانە'});r.rows=R;if(r.status==='draft'||!r.status)r.status=t0.dataset.s;S.miscReq=S.miscReq||[];const i=S.miscReq.findIndex(x=>x.id===r.id);if(i>=0)S.miscReq[i]=r;else S.miscReq.push(r);save('inv/miscreq',100);S.mrqEdit=null;render();
     toast('✓ داخوازی #'+r.no+' هاتە پاشەکەفتکرن');if(t0.dataset.s==='sent')setTimeout(()=>mrqShare(r),150)}
   else if(act==='mrqPdf'){const r=(S.miscReq||[]).find(x=>x.id===t0.dataset.id);if(r)mrqPdf(r)}
   else if(act==='mrqShare'){const r=(S.miscReq||[]).find(x=>x.id===t0.dataset.id);if(r)mrqShare(r)}
