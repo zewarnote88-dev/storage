@@ -425,6 +425,12 @@ details.pocard:not([open]){padding-bottom:10px}
 .podet{border-top:4px solid var(--tc)}
 @media (max-width:640px){.pogrid{grid-template-columns:1fr 1fr;gap:8px}.pocd{flex-direction:column;align-items:flex-start;gap:6px;padding:12px}.pocgo{display:none}.pocic{width:38px;height:38px}}
 
+tr.crow{cursor:pointer}tr.crow:hover td{background:var(--row-hover)}
+tr.cdet>td{background:var(--card2)!important;padding:10px}
+.cbox{display:flex;flex-direction:column;gap:8px}.ctbl{font-size:.85rem}.ctbl th,.ctbl td{padding:5px 8px}
+.cform{font-size:.92rem;padding:8px 10px;border-radius:10px;background:var(--card);border:1px dashed var(--line2)}
+.cexp{display:flex;flex-direction:column;gap:4px;font-size:.88rem;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -1582,11 +1588,11 @@ function viewPeriods(){
     <select id="pPick" class="grow">${list.map(x=>{const r=compute(x);const bad=r.tapeShort>0.0001||r.paintShort>0.0001;return `<option value="${x.id}" ${x.id===S.cur?'selected':''}>${esc(x.name)} · ${esc(x.start)} → ${esc(x.end)}${bad?' · ⚠️ کێمی':''}</option>`}).join('')}</select>
     <button class="btn pri" data-act="newPeriod">${I('plus','sm')} ماوەیا نوو</button></div>`;
   const p=S.periods[S.cur];
-  if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','cust','resPaint','resTape','resRub','po'].includes(S.sub))S.sub='orders';
+  if(S.sub==='stockPaint')S.sub='resPaint';if(S.sub==='stockTape')S.sub='resTape';if(!['orders','cust','resPaint','resTape','resRub','resNyl','po'].includes(S.sub))S.sub='orders';
   ensP(p);const nSel=p.sel.paint.length+p.sel.tape.length;
-  const nIss=dataIssues(p).reduce((s,x)=>s+x.list.length,0);const subs=[['orders','ئۆردەر'+(nIss?' ⚠️'+nIss:''),'clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],['resRub','لاستیک و نایلۆن','layers'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
+  const nIss=dataIssues(p).reduce((s,x)=>s+x.list.length,0);const subs=[['orders','ئۆردەر'+(nIss?' ⚠️'+nIss:''),'clip'],['cust','داخوازیێن کڕیاران','users'],'|',['resPaint','ئەنجاما سبغێ','drop'],['resTape','ئەنجاما لسقێ','tape'],['resRub','لاستیک','layers'],['resNyl','نایلۆن','file'],'|',['po','داخوازی'+(nSel?' ('+nSel+')':''),'file']];
   let body='';
-  body={orders:viewOrders,cust:viewCust,resPaint:viewResPaint,resTape:viewResTape,resRub:viewResRub,po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
+  body={orders:viewOrders,cust:viewCust,resPaint:viewResPaint,resTape:viewResTape,resRub:p=>viewResRub(p,'rub'),resNyl:p=>viewResRub(p,'nyl'),po:viewPo}[S.sub](p);if(S.sub==='resPaint'||S.sub==='resTape')body=lockBar(p)+body;
   return warn+pbar+`<div class="card">
     <div class="ptitle"><input id="pName" class="grow" value="${esc(p.name)}">
       <label class="muted">ژ <input type="date" id="pStart" value="${esc(p.start)}"></label>
@@ -2805,30 +2811,52 @@ function profCrnDialog(i){const p=S.profiles[i];if(!p)return;const R=(S.crnItems
     save('cfg/profiles',100);render();toast('✓ هاتە پاشەکەفتکرن')},'پاشەکەفتکرن','wide');
   const img=(sid,box)=>{const f=()=>{const x=crnById($(sid).value);$(box).innerHTML=x&&x.img?`<img src="${x.img}">`:''};$(sid).onchange=f;f()};img('#pcR0','#pcRi0');img('#pcR1','#pcRi1');img('#pcR2','#pcRi2');img('#pcR3','#pcRi3');img('#pcN','#pcNi')}
 const NYL_EXTRA=0.3;
-function crnNeed(period){period=effP(period);const {prof}=maps();const bar=S.settings.bar||6;const need={},noDef={},noNy={};let profs=0;
+function crnNeed(period){period=effP(period);const {prof}=maps();const bar=S.settings.bar||6;const need={},noDef={},noNy={},det={};let profs=0;
   period.orders.forEach(o=>{const q0=toNum(o.qty);if(!o.code||q0<=0)return;if(o.cno&&(period.cancel||[]).includes(cnoKey(o)))return;
     const L0=lenM(o)||bar;const meters=o.unit==='m'?q0:q0*L0;const pcs=o.unit==='m'?q0/L0:q0;const p=prof[norm(o.code)];if(!p)return;const pd=paintDef(norm(o.paint||''));const wantN=!!(pd&&pd.nyl);
     if(wantN&&!(p.ny&&p.ny.t))noNy[p.code]=(noNy[p.code]||0)+meters;
     const L=[...(p.rb||[]),...(wantN&&p.ny&&p.ny.t?[p.ny]:[])];if(!L.length){if(!p.crnNone&&!(p.rb||[]).length&&!(p.ny&&p.ny.t)&&!wantN)noDef[p.code]=(noDef[p.code]||0)+meters;return}profs++;
-    L.forEach(r=>{const it=crnById(r.t);const n=toNum(r.n)||1;let q;if(it&&it.grp==='nyl')q=pcs*(L0+NYL_EXTRA)*n;else if(it&&it.plen>0){const PL=it.plen,full=Math.floor(L0/PL+1e-9),rem=L0-full*PL,cnt=pcs*n;q=cnt*full+(rem>1e-6?Math.ceil(cnt/Math.max(1,Math.floor(PL/rem+1e-9))-1e-9):0)}else if(it&&it.ppr>0)q=pcs*n;else q=meters*n;need[r.t]=(need[r.t]||0)+q})});
-  return {need,noDef,noNy}}
+    L.forEach(r=>{const it=crnById(r.t);const n=toNum(r.n)||1;const k=p.code+'|'+L0+(it&&it.grp==='nyl'?'|'+(o.paint||''):'');const D=(det[r.t]=det[r.t]||{});const e=(D[k]=D[k]||{code:p.code,L:L0,n,bars:0,paint:it&&it.grp==='nyl'?o.paint||'':''});e.bars+=pcs});
+  });
+  Object.entries(det).forEach(([id,D])=>{const it=crnById(id);Object.values(D).forEach(e=>{const cnt=e.bars*e.n;let q,how;
+    if(it&&it.grp==='nyl'){q=e.bars*(e.L+NYL_EXTRA)*e.n;how=`${fmt(e.bars,0)} قەد × (${fmt(e.L,2)} + 0.3) م × ${e.n} خەت`}
+    else if(it&&it.plen>0){const PL=it.plen,full=Math.floor(e.L/PL+1e-9),rem=+(e.L-full*PL).toFixed(4);const per=rem>1e-6?Math.max(1,Math.floor(PL/rem+1e-9)):0;const extra=rem>1e-6?Math.ceil(cnt/per-1e-9):0;q=cnt*full+extra;
+      how=`${fmt(e.bars,0)} قەد × ${e.n} خەت = ${fmt(cnt,0)} پارچە`+(full?` → ${fmt(cnt*full,0)} دانەیێن تەمام`:'')+(rem>1e-6?`${full?' + ':' → '}${fmt(cnt,0)} پارچەیێن ${fmt(rem,2)}م (${per} ژ هەر دانەیەکا ${fmt(PL,1)}م) = ${extra} دانە`:'')}
+    else if(it&&it.ppr>0){q=cnt;how=`${fmt(e.bars,0)} قەد × ${e.n} خەت`}
+    else{q=e.bars*e.L*e.n;how=`${fmt(e.bars,0)} قەد × ${fmt(e.L,2)} م × ${e.n} خەت`}
+    e.q=q;e.how=how;need[id]=(need[id]||0)+q})});
+  return {need,noDef,noNy,det}}
 function crnReqOpen(id){let q=0;(S.crnReq||[]).forEach(r=>{if(r.status!=='sent'&&r.status!=='partial')return;(r.rows||[]).forEach(x=>{if(x.item===id&&!x.done)q+=Math.max(0,toNum(x.qty)-toNum(x.got))})});return q}
-function crnRows(period){const {need,noDef,noNy}=crnNeed(period);const L=(S.crnItems||[]).filter(x=>x.grp==='rub'||x.grp==='nyl');
-  const rows=L.map(x=>{const k=x.ppr>0&&!x.plen?x.ppr:1;const nd=need[x.id]||0;const st=xQty('crn',x.id)*k;const inc=crnReqOpen(x.id)*k;const diff=st+inc-nd;const per=x.plen>0?1:x.ppr>0?x.ppr:x.roll;return {x,u:x.plen>0?'دانە':x.ppr>0?'پارچە':'m',need:nd,stock:st,inc,diff,rolls:diff<-0.0005&&per>0?Math.ceil(-diff/per-1e-9):0}}).filter(r=>r.need>0||r.stock>0||r.inc>0)
+function crnRows(period){const {need,noDef,noNy,det}=crnNeed(period);const L=(S.crnItems||[]).filter(x=>x.grp==='rub'||x.grp==='nyl');
+  const rows=L.map(x=>{const k=x.ppr>0&&!x.plen?x.ppr:1;const nd=need[x.id]||0;const st=xQty('crn',x.id)*k;const inc=crnReqOpen(x.id)*k;const diff=st+inc-nd;const per=x.plen>0?1:x.ppr>0?x.ppr:x.roll;return {x,det:Object.values(det[x.id]||{}).sort((a,b)=>b.q-a.q),u:x.plen>0?'دانە':x.ppr>0?'پارچە':'m',need:nd,stock:st,inc,diff,per,rolls:diff<-0.0005&&per>0?Math.ceil(-diff/per-1e-9):0}}).filter(r=>r.need>0||r.stock>0||r.inc>0)
     .sort((a,b)=>(a.x.grp>b.x.grp?1:a.x.grp<b.x.grp?-1:0)||miSort(a.x,b.x));return {rows,noDef,noNy}}
-function viewResRub(p,only){let {rows,noDef,noNy}=crnRows(p);if(only){rows=rows.filter(r=>r.x.grp===only)}const nd=Object.keys(noDef);const nn=Object.keys(noNy);const nylP=S.paints.filter(x=>x.nyl).map(x=>x.name);const short=rows.filter(r=>r.diff<-0.0005);
-  const sec=g=>{const R=rows.filter(r=>r.x.grp===g);if(!R.length)return '';return `<tr class="tsech"><td colspan="9">${CRN_G[g].ic} ${CRN_G[g].t}</td></tr>`+R.map(r=>`<tr${r.diff<-0.0005?' class="lowrow"':''}><td>${r.x.img?`<img src="${r.x.img}" class="rimg">`:''}</td><td><b>${esc(r.x.name)}</b></td><td class="ltr">${esc(r.x.code||'')}</td><td class="n">${fmt(r.need,0)} <small class="muted">${r.u}</small></td><td class="n">${fmt(r.stock,0)}</td><td class="n">${r.inc?fmt(r.inc,0):''}</td><td class="n"><b style="color:${r.diff<-0.0005?'var(--bad)':'var(--good)'}">${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td class="n">${r.x.plen?'دانە '+fmt(r.x.plen,1)+'m':r.x.ppr?fmt(r.x.ppr,0)+' پارچە':r.x.roll?fmt(r.x.roll,0)+' m':''}</td><td class="n"><b>${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):''}</b></td></tr>`).join('')};
-  return `<div class="card"><h2>${I('layers')} ئەنجاما لاستیک و نایلۆنێ</h2>
-   <div class="info"><b>لاستیک:</b> ب <b>دانە</b> (هەر دانەیەک بۆ نموونە 6 مەتر). قەدێ 6 مەتری = 1 دانە × خەت؛ قەدێ 7 مەتری = 1 دانە + 1 مەتر کو ژ دانەیەکا دی دهێتە بڕین (ژ دانەیەکا 6 مەتری 6 پارچەیێن 1 مەتری دەردکەڤن). <b>نایلۆن:</b> ژمارا قەدان × (درێژیا قەدی + <b>30 سم</b>) × خەت. «ل ڕێ» = داخوازیێن هێشتا نەگەهشتین.</div>
-   <div class="info">🎞 <b>نایلۆن</b> تەنێ بۆ وان ئۆردەران دهێتە حیسابکرن یێن سبغا وان نیشانا «نایلۆن» هەی (ل «زانیاری ← جۆرێن سبغێ»)${nylP.length?': <b class="ltr">'+nylP.map(esc).join(', ')+'</b>':' — <b>هێشتا چ سبغ نەهاتینە نیشانکرن</b>'}. جۆرێ نایلۆنێ بۆ هەر پڕۆفایلەکی ل «پڕۆفایل ← لاستیک / نایلۆن» دهێتە دانان.</div>
-   ${nn.length?`<div class="note">⚠️ ${nn.length} پڕۆفایل ب سبغا نایلۆنێ هاتینە ئۆردەرکرن بەلێ جۆرێ نایلۆنێ بۆ وان نەهاتیە دانان: <span class="ltr">${nn.slice(0,12).map(c=>esc(c)+' ('+fmt(noNy[c],0)+'m)').join(', ')}</span></div>`:''}
-   ${nd.length?`<div class="note">⚠️ ${nd.length} پڕۆفایل د ڤی ماوەی دا لاستیک/نایلۆن بۆ وان نەهاتیە دانان: <span class="ltr">${nd.slice(0,12).map(esc).join(', ')}${nd.length>12?' …':''}</span> — ل «زانیاری ← پڕۆفایل» دوگمەیا «لاستیک / نایلۆن» بکە (ئەگەر چ تێدا نەکەڤیت، «پاشەکەفتکرن» بکە ب «چ نینە»).</div>`:''}
-   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" data-act="rubPdf">${I('file','sm')} PDF</button>${can('inv_in')?['rub','nyl'].map(g=>{const n=short.filter(r=>r.x.grp===g).length;return n?`<button class="btn pri" data-act="rubReq" data-g="${g}">📄 داخوازیا ${CRN_G[g].t} (${n} کێم)</button>`:''}).join(''):''}</div>
-   <div class="tbl-scroll" data-nosrch><table><thead><tr><th></th><th>ناڤ</th><th>کۆد</th><th class="n">پێتڤی</th><th class="n">مەخزەن</th><th class="n">ل ڕێ</th><th class="n">زێدە / کێم</th><th class="n">دانە / ڕۆل</th><th class="n">بۆ کڕینێ</th></tr></thead><tbody>
-   ${sec('rub')+sec('nyl')||'<tr><td colspan="9" class="muted">چ پێتڤی نینە — ل دەستپێکێ جۆرێن لاستیکێ زێدە بکە و ل پڕۆفایلان دانێ.</td></tr>'}</tbody></table></div></div>`}
-function rubPdf(p){const {rows}=crnRows(p);const R=g=>rows.filter(r=>r.x.grp===g).map(r=>`<tr><td>${esc(r.x.name)}</td><td dir="ltr">${esc(r.x.code||'')}</td><td>${fmt(r.need,0)} ${r.u}</td><td>${fmt(r.stock,0)}</td><td>${r.inc?fmt(r.inc,0):''}</td><td><b>${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td><b>${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):''}</b></td></tr>`).join('');
+function crnMigrate(){if(!(S.crnItems||[]).length)return;let ch=false;(S.crnItems||[]).forEach(x=>{if(x.grp==='rub'&&!(x.plen>0)&&x.roll>0&&x.roll<=12&&x.unit==='مەتر'){const f=1/x.roll;if(['in','out'].some(d=>(S.tx[d]||[]).some(t=>t.sec==='crn'&&t.key===x.id)))miConvTx(x.id,f);x.plen=x.roll;delete x.roll;x.unit='دانە';ch=true}});
+  if(ch&&(isAdmin||can('inv_in')))save('cfg/crn',200)}
+function viewResRub(p,only){only=only||'rub';try{crnMigrate()}catch(e){}let {rows,noDef,noNy}=crnRows(p);rows=rows.filter(r=>r.x.grp===only);const nd=Object.keys(noDef);const nn=Object.keys(noNy);const nylP=S.paints.filter(x=>x.nyl).map(x=>x.name);const short=rows.filter(r=>r.diff<-0.0005);
+  const G=CRN_G[only];const isN=only==='nyl';const U=r=>r.u==='m'?'م':r.u;
+  const rowsH=rows.map((r,i)=>`<tr class="crow${r.diff<-0.0005?' lowrow':''}" data-act="crnDet" data-i="${i}" title="کلیک بکە دا ببینی چاوا هاتیە حیسابکرن"><td>${r.x.img?`<img src="${r.x.img}" class="rimg">`:''}</td><td><b>${esc(r.x.name)}</b><div class="muted ltr" style="font-size:.78rem;text-align:right">${esc(r.x.code||'')}</div></td>
+     <td class="n"><b>${fmt(r.need,0)}</b> <small class="muted">${U(r)}</small></td><td class="n">${fmt(r.stock,0)}</td><td class="n">${r.inc?fmt(r.inc,0):'—'}</td>
+     <td class="n"><b style="color:${r.diff<-0.0005?'var(--bad)':'var(--good)'}">${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td class="n"><b style="font-size:1.05rem">${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):'✓'}</b></td><td class="n muted">▾</td></tr>
+     <tr class="cdet${(S.crnOpen||{})[r.x.id]?'':' hide'}" data-cd="${i}"><td colspan="8"><div class="cbox"><b>چاوا هاتیە حیسابکرن — ${esc(r.x.code||r.x.name)}</b>
+       ${r.det.length?`<table class="ctbl"><thead><tr><th>پڕۆفایل</th>${isN?'<th>سبغ</th>':''}<th class="n">قەد</th><th class="n">درێژی</th><th class="n">خەت</th><th>حیساب</th><th class="n">= ${U(r)}</th></tr></thead><tbody>${r.det.map(e=>`<tr><td class="ltr"><b>${esc(e.code)}</b></td>${isN?`<td class="ltr">${esc(e.paint)}</td>`:''}<td class="n">${fmt(e.bars,0)}</td><td class="n">${fmt(e.L,2)} م</td><td class="n">${e.n}</td><td class="muted" style="font-size:.8rem">${esc(e.how)}</td><td class="n"><b>${fmt(e.q,0)}</b></td></tr>`).join('')}<tr><td colspan="${isN?6:5}"><b>کۆ — پێتڤی</b></td><td class="n"><b>${fmt(r.need,0)}</b></td></tr></tbody></table>`:'<p class="muted">د ئۆردەرێن ڤێ ماوەیێ دا ئەڤە نەهاتیە بکارئینان.</p>'}
+       <div class="cform">مەخزەن <b>${fmt(r.stock,0)}</b> + ل ڕێ <b>${fmt(r.inc,0)}</b> − پێتڤی <b>${fmt(r.need,0)}</b> = <b style="color:${r.diff<-0.0005?'var(--bad)':'var(--good)'}">${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)} ${U(r)}</b>${r.rolls?` → ${r.x.plen?`<b>${r.rolls} دانە</b> بکڕە`:`${fmt(-r.diff,0)} ÷ ${fmt(r.per,0)} (${U(r)} د ڕۆلەکێ دا) = <b>${r.rolls} ڕۆل</b> بکڕە`}`:' → ✓ بەسە'}</div></div></td></tr>`).join('');
+  return `<div class="card"><h2>${isN?'🎞':'⚫'} ${G.t} — ئەنجاما ڤێ ماوەیێ</h2>
+   <details class="thelp" open><summary>ℹ️ ئەڤ ستوینە چ دبێژن؟</summary><div class="cexp">
+     <div><b>پێتڤی</b> — چەند ${isN?'مەتر نایلۆن':'دانە لاستیک'} بۆ ئۆردەرێن ڤێ ماوەیێ پێتڤیە.</div>
+     <div><b>مەخزەن</b> — چەند نوکە ل ${isN?'مەخزەنا نایلۆنێ':'مەخزەنا لاستیکێ'} هەیە.</div>
+     <div><b>ل ڕێ</b> — یێ هاتیە داخوازکرن (داخوازیا هاتیە هنارتن) بەلێ هێشتا نەگەهشتی.</div>
+     <div><b>زێدە / کێم</b> = مەخزەن + ل ڕێ − پێتڤی. <span style="color:var(--bad)">سۆر (−)</span> = کێمە، <span style="color:var(--good)">کەسک (+)</span> = بەسە.</div>
+     <div><b>بۆ کڕینێ</b> — ${isN?'چەند ڕۆل بکڕی (کێمی ÷ درێژیا ڕۆلەکێ، ب سەر ڤە)':'چەند دانە بکڕی'}.</div>
+     <div class="muted" style="margin-top:4px">${isN?'حیساب: ژمارا قەدان × (درێژیا قەدی + <b>30 سم</b>) × خەت — تەنێ بۆ ئۆردەرێن سبغا نایلۆنێ'+(nylP.length?' (<b class="ltr">'+nylP.map(esc).join(', ')+'</b>)':' (<b>هێشتا چ سبغ نەهاتینە نیشانکرن</b> — ل «جۆرێن سبغێ» ✓ بدە)'):'حیساب: قەدێ 6 مەتری = 1 دانە × خەت. قەدێ 7 مەتری = 1 دانە + پارچەیەکا 1 مەتری؛ ژ دانەیەکا 6 مەتری 6 پارچەیێن 1 مەتری دەردکەڤن.'}</div>
+     <div class="muted">👆 ل سەر هەر ڕیزەکێ لێ بدە دا ببینی ژ کیژ پڕۆفایلان و چاوا هاتیە حیسابکرن.</div></div></details>
+   ${isN&&nn.length?`<div class="note">⚠️ ${nn.length} پڕۆفایل ب سبغا نایلۆنێ هاتینە ئۆردەرکرن بەلێ جۆرێ نایلۆنێ بۆ وان نەهاتیە دانان: <span class="ltr">${nn.slice(0,12).map(c=>esc(c)+' ('+fmt(noNy[c],0)+'m)').join(', ')}</span> — ل «پڕۆفایل ← لاستیک / نایلۆن».</div>`:''}
+   ${!isN&&nd.length?`<div class="note">⚠️ ${nd.length} پڕۆفایل د ڤێ ماوەیێ دا لاستیک بۆ وان نەهاتیە دانان: <span class="ltr">${nd.slice(0,12).map(esc).join(', ')}${nd.length>12?' …':''}</span> — ل «زانیاری ← پڕۆفایل ← لاستیک / نایلۆن» (ئەگەر چ تێدا نەکەڤیت، «پاشەکەفتکرن» بکە ب «چ نینە»).</div>`:''}
+   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" data-act="rubPdf" data-g="${only}">${I('file','sm')} PDF</button>${can('inv_in')&&short.length?`<button class="btn pri" data-act="rubReq" data-g="${only}">📄 داخوازیا ${G.t} (${short.length} کێم)</button>`:''}</div>
+   <div class="tbl-scroll" data-nosrch><table><thead><tr><th></th><th>ناڤ / کۆد</th><th class="n">پێتڤی</th><th class="n">مەخزەن</th><th class="n">ل ڕێ</th><th class="n">زێدە / کێم</th><th class="n">بۆ کڕینێ</th><th></th></tr></thead><tbody>
+   ${rowsH||`<tr><td colspan="8" class="muted">چ پێتڤی نینە — ل دەستپێکێ جۆرێن ${G.t} زێدە بکە و ل پڕۆفایلان دانێ.</td></tr>`}</tbody></table></div></div>`}
+function rubPdf(p,g){g=g||'rub';const {rows}=crnRows(p);const R=rows.filter(r=>r.x.grp===g).map(r=>`<tr><td>${esc(r.x.name)}</td><td dir="ltr">${esc(r.x.code||'')}</td><td>${fmt(r.need,0)} ${r.u==='m'?'م':r.u}</td><td>${fmt(r.stock,0)}</td><td>${r.inc?fmt(r.inc,0):''}</td><td><b>${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td><b>${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):'✓'}</b></td></tr>`).join('');
   const H='<tr><th>ناڤ</th><th>کۆد</th><th>پێتڤی</th><th>مەخزەن</th><th>ل ڕێ</th><th>زێدە / کێم</th><th>بۆ کڕینێ</th></tr>';
-  printHtml(`<h1>ئەنجاما لاستیک و نایلۆنێ</h1><div class="sub">${esc(p.name)} · ${esc(p.start)} → ${esc(p.end)}</div><h2>⚫ لاستیک</h2><table><thead>${H}</thead><tbody>${R('rub')||'<tr><td colspan="7">—</td></tr>'}</tbody></table><h2>🎞 نایلۆن</h2><table><thead>${H}</thead><tbody>${R('nyl')||'<tr><td colspan="7">—</td></tr>'}</tbody></table>`,'Rubber & Nylon')}
+  printHtml(`<h1>ئەنجاما ${CRN_G[g].t}</h1><div class="sub">${esc(p.name)} · ${esc(p.start)} → ${esc(p.end)}</div><table><thead>${H}</thead><tbody>${R||'<tr><td colspan="7">—</td></tr>'}</tbody></table>`,g==='nyl'?'Nylon':'Rubber')}
 let profFilter='';
 function viewProfiles(){
   const f=norm(profFilter);
@@ -3446,7 +3474,8 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='addProf'){S.profiles.unshift({code:'',b1:0,b2:0,s1:1,s2:1,w:0});profFilter='';save('cfg/profiles');render();const i=$('#main').querySelector('input[data-p="0"]');if(i)i.focus()}
   else if(act==='poPick'){S.poSel=S.poSel===t.dataset.k?'':t.dataset.k;render();if(S.poSel)setTimeout(()=>{const d=document.getElementById('poDet');if(d)d.scrollIntoView({behavior:'smooth',block:'start'})},60)}
   else if(act==='profCrn'){profCrnDialog(+t.dataset.i)}
-  else if(act==='rubPdf'){rubPdf(p)}
+  else if(act==='rubPdf'){rubPdf(p,t.dataset.g)}
+  else if(act==='crnDet'){const r=t.parentElement.querySelector(`[data-cd="${t.dataset.i}"]`);if(r)r.classList.toggle('hide')}
   else if(act==='rubReq'){const g=t0.dataset.g||'rub';const {rows}=crnRows(p);const sh=rows.filter(r=>r.diff<-0.0005&&r.x.grp===g);S.invKind='crn';S.crnGrp=g;const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.plen||z.x.ppr?z.rolls:z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.plen||z.x.ppr?'':z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+p.name;S.mrqEdit=r;go(g==='nyl'?'invNyl':'invRub','mreq');window.scrollTo({top:0})}
   else if(act==='delProf'){const x=S.profiles[+t.dataset.i];dialog(`<p>پڕۆفایلێ <b class="ltr">${esc(x.code)}</b> ژێببە؟</p>`,()=>{S.profiles.splice(+t.dataset.i,1);save('cfg/profiles',100);render()},'ژێببە')}
   else if(act==='paintPaste'){importPaints(parsePaints(parseText($('#paintPaste').value)))}
