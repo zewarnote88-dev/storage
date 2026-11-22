@@ -388,6 +388,11 @@ tr.oldrow td{background:color-mix(in srgb,#64748b 12%,transparent)}
 @media (max-width:760px){.twrow{grid-template-columns:1fr 1fr;padding:10px}.tw{grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px;flex-wrap:wrap;padding:0}
   .bxrow input.num{width:64px}.bxrow select{padding:0 4px}.tcell{padding:8px}}
 
+details.pocard>summary{list-style:none;cursor:pointer}details.pocard>summary::-webkit-details-marker{display:none}
+details.pocard .pochev{transition:transform .15s;font-size:.9rem;color:var(--muted)}details.pocard[open] .pochev{transform:rotate(90deg)}
+details.pocard .poopen{font-size:.8rem;font-weight:700;color:var(--accent);padding:5px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+details.pocard:not([open]){padding-bottom:10px}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -2046,11 +2051,12 @@ function poRcvCard(o){const id=o.p.id+'~'+o.kind;const f=rcvF(id);const isP=isPa
   const tot=o.items.reduce((s,i)=>s+i.qty,0),rc=o.items.reduce((s,i)=>s+Math.min(i.qty,i.rcv),0);const pct=tot>0?Math.min(100,rc/tot*100):0;
   const sup=isP?(o.po.supplier||o.kind.slice(6)):(o.po.supplier||tapeBrandName(o.p,o.kind.slice(5)));
   const recs=(S.tx.in||[]).filter(t=>t.po&&t.po.pid===o.p.id&&t.po.kind===o.kind).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
-  return `<div class="card" style="background:var(--bg)">
-   <div class="row" style="margin-bottom:6px"><div class="grow"><b class="ltr">${esc(o.po.no||'PO')}</b> · <b class="ltr">${esc(sup||'—')}</b>
-     <div class="muted" style="font-size:.8rem">هنارتن: <span class="ltr">${esc((o.po.sent||'').slice(0,10))}</span> · ماوە: ${esc(o.p.name)}</div></div>
-     ${o.done?`<span class="pill N">✓ ${o.po.closed?'هاتە داخستن':'هەمی گەهشت'}</span>`:`<span class="pill Q">ل ڕێیە</span>`}</div>
-   <div style="height:7px;background:var(--line);border-radius:9px;overflow:hidden;margin:4px 0 10px"><div style="height:100%;width:${pct}%;background:var(--good)"></div></div>
+  const remT=o.items.reduce((s,i)=>s+Math.max(0,i.qty-i.rcv),0);const isOpen=!!(S.poOpen||{})[id];
+  return `<details class="card pocard" style="background:var(--bg)" data-poid="${esc(id)}" ${isOpen?'open':''}>
+   <summary><div class="row" style="align-items:center;gap:10px"><span class="pochev">▸</span><div class="grow"><b class="ltr">${esc(o.po.no||'PO')}</b> · <b class="ltr">${esc(sup||'—')}</b>
+     <div class="muted" style="font-size:.8rem">هنارتن: <span class="ltr">${esc((o.po.sent||'').slice(0,10))}</span> · ماوە: ${esc(o.p.name)} · ${o.items.length} ${isP?'سبغ':'لسق'}${o.done?'':` · مایی: <b>${fmt(remT,dec)} ${U}</b>`}</div></div>
+     ${o.done?`<span class="pill N">✓ ${o.po.closed?'هاتە داخستن':'هەمی گەهشت'}</span>`:`<span class="pill Q">ل ڕێیە</span>`}<span class="poopen">${isOpen?'داخستن':'ڤەکرن ▾'}</span></div>
+   <div style="height:7px;background:var(--line);border-radius:9px;overflow:hidden;margin:8px 0 2px"><div style="height:100%;width:${pct}%;background:var(--good)"></div></div></summary><div style="height:8px"></div>
    <div class="tbl-scroll" data-nosrch><table><thead><tr><th>${isP?'سبغ':'لسق'}</th><th>جۆر</th><th class="n">داخوازکری (${U})</th><th class="n">گەهشتی (${U})</th><th class="n">مایی (${U})</th>${o.done?'':`<th class="n">نوکە هات (${isP?(f.unit==='t'?'تۆن':'کیلۆ'):'کارتۆن'})</th><th class="n">= ${U}</th>`}</tr></thead><tbody>
    ${o.items.map(i=>{const remU=isP?i.rem*1000/kgcOf(P,i.key):i.rem/Math.max(1e-9,rcvAmt(o,f,i,1));const q=f.q[i.key]??'';
      const tp=isP?null:tapeItemParts(o,i.key);
@@ -2067,7 +2073,7 @@ function poRcvCard(o){const id=o.p.id+'~'+o.kind;const f=rcvF(id);const isP=isPa
    <div class="row" style="margin-top:8px"><span class="grow muted">${recs.length?'گەهشتن: '+recs.slice(0,8).map(t=>`<span class="ltr">${esc(t.rdate||(t.at||'').slice(0,10))}</span> (${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'} ${esc(txLabel(t.sec,t.key))}${t.u?' · '+esc(uName(t.u)):''})${isAdmin?` <button class="x" data-act="rcvUndo" data-id="${esc(t.id)}" title="نەگەهشتیە — ژێببە">↩️</button>`:''}`).join(' · '):'هێشتا چ نەگەهشتیە.'}</span>
      ${o.p.__man&&isAdmin&&!o.items.some(i=>i.rcv>0)?`<button class="btn danger" data-act="manDel" data-id="${esc(id)}">${I('trash','sm')}</button>`:''}
      ${o.po.closed?`<button class="btn" data-act="poReopen" data-id="${esc(id)}">ڤەکرنەڤە</button>`:(o.done?'':`<button class="btn" data-act="poClose" data-id="${esc(id)}" title="ئەگەر یێ مایی نائێت">داخستن (یێ مایی نائێت)</button>`)}</div>
-  </div>`}
+  </details>`}
 function binNew(){return S.invKind==='paint'?{paint:'',qty:''}:{brand:(S.settings.brands[0]||{}).name||'',w:tapeWidths()[0]||40,t:'N',len:S.settings.rollLen||300,qty:''}}
 function binUnitLbl(f){return S.invKind!=='paint'||f.unit==='ctn'?'کارتۆن':f.unit==='t'?'تۆن':'کیلۆ'}
 function binF(){S.bin=S.bin||{};const K=S.invKind;if(!S.bin[K])S.bin[K]={date:today(),note:'',unit:K==='paint'?'kg':'ctn',rows:[binNew(),binNew(),binNew()]};return S.bin[K]}
@@ -2949,6 +2955,8 @@ function bind(){
       else row[f]=el.value};el.oninput=h;el.onchange=h});
 
     m.querySelectorAll('[data-tstk]').forEach(el=>el.onchange=()=>{const L=new Set(S.settings.stockTape||[]);if(el.checked)L.add(el.dataset.tstk);else L.delete(el.dataset.tstk);S.settings.stockTape=[...L];UNDO_LBL='نیشانا Stock: '+invUndoLbl('box',el.dataset.tstk)+(el.checked?' (دانان)':' (ڕاکرن)');save('cfg/settings',300);render();toast(el.checked?'✓ نیشانا Stock هاتە دان':'✓ نیشانا Stock هاتە ڕاکرن')});
+
+    m.querySelectorAll('details.pocard').forEach(d=>d.addEventListener('toggle',()=>{S.poOpen=S.poOpen||{};S.poOpen[d.dataset.poid]=d.open;const t=d.querySelector('.poopen');if(t)t.textContent=d.open?'داخستن':'ڤەکرن ▾'}));
     {const ms=m.querySelector('#msSearch');if(ms)ms.oninput=()=>{const qs=normQ(ms.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#msGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#msNone');if(z)z.style.display=n?'none':''}}
     [['#msStockQ',v=>S.msStockQ=v],['#msLogQ',v=>{S.msLogF=S.msLogF||{};S.msLogF.q=v}]].forEach(([sel,set])=>{const e=m.querySelector(sel);if(!e)return;const flt=()=>{set(e.value);const qs=normQ(e.value).trim().split(' ').filter(Boolean);e.closest('.card').querySelectorAll('tbody tr').forEach(tr=>{const t=normQ(tr.textContent);tr.style.display=qs.every(x=>t.includes(x))?'':'none'})};e.oninput=flt;if(e.value)flt()});
     m.querySelectorAll('[data-msf]').forEach(el=>{const h=()=>{const f=miF(el.dataset.msf);f[el.dataset.f]=el.value};el.oninput=h;el.onchange=h});
