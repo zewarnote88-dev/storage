@@ -1072,10 +1072,11 @@ async function doLogin(){if(SB_ON){location.reload();return}const un=norm($('#lg
 function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('inv_count')}
 /* کیژ مەخزەن: ئەگەر چ ژ هەردووکان نەهاتبیتە نیشانکرن = هەردوو */
 function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;if(!p.inv_paint&&!p.inv_tape&&!p.inv_misc&&!p.inv_crn)return true;return !!p['inv_'+k]}
-const TAB_PERM={home:()=>true,g_stock:()=>grpItems('stock').length>0,g_hall:()=>grpItems('hall').length>0,g_work:()=>grpItems('work').length>0,g_data:()=>grpItems('data').length>0,g_admin:()=>grpItems('admin').length>0,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),invMisc:()=>canInv()&&canKind('misc'),invCrn:()=>canInv()&&canKind('crn'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
+const TAB_PERM={home:()=>true,g_stock:()=>grpItems('stock').length>0,g_hall:()=>grpItems('hall').length>0,g_work:()=>grpItems('work').length>0,g_data:()=>grpItems('data').length>0,g_admin:()=>grpItems('admin').length>0,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),invMisc:()=>canInv()&&canKind('misc'),invCrn:()=>canInv()&&canKind('crn'),invChem:()=>canInv()&&canKind('crn'),invRub:()=>canInv()&&canKind('crn'),invNyl:()=>canInv()&&canKind('crn'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin};
 function firstTab(){return ['home','period','invPaint','invTape','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
-Object.defineProperty(S,'invSub',{get(){return S.invSubK[S.invKind]||'menu'},set(v){S.invSubK[S.invKind]=v},enumerable:false});
-function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='invMisc'||S.tab==='invCrn'||S.tab==='inventory'}
+const subKey=()=>S.invKind==='crn'?'crn_'+(S.crnGrp||'chem'):S.invKind;
+Object.defineProperty(S,'invSub',{get(){return S.invSubK[subKey()]||'menu'},set(v){S.invSubK[subKey()]=v},enumerable:false});
+function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='invMisc'||S.tab==='invCrn'||!!CRN_TABS[S.tab]||S.tab==='inventory'}
 const SUBMETA={out:{t:'دەرئێخستن',s:'بردنا ژ مەخزەنێ',ic:'up',c:'#c2410c'},in:{t:'داخلکرن',s:'هاتنا نوو و ل ڕێیە',ic:'down',c:'#15803d'},stock:{t:'مەخزەن',s:'چ هەیە و چەند',ic:'box',c:'#0e7478'},
   outlog:{t:'تۆمار',s:'کێ، چ، چەند و کەنگی',ic:'clock',c:'#6b6f2a'},report:{t:'ڕاپۆرت',s:'PDF و Excel',ic:'file',c:'#1f5f9e'},log:{t:'تۆمارا ژمارتنێ',s:'گوهۆڕینێن ژمارتنێ',ic:'clip',c:'#55606a'},
   mlog:{t:'تۆمار',s:'هەمی داخلکرن و دەرئێخستن',ic:'clock',c:'#6b6f2a'},items:{t:'لیستا کەرەستەیان',s:'ناڤ، کۆد، یەکە، پشک',ic:'layers',c:'#9a5b13'},mday:{t:'ڕۆژانە',s:'چ هات و چ چوو ئەڤرۆ',ic:'calendar',c:'#1f5f9e'},mreq:{t:'داخوازکرنا کەرەستەیان',s:'فۆرم بۆ کڕینێ — PDF / WhatsApp',ic:'file',c:'#7c3aed'}};
@@ -1316,7 +1317,7 @@ function render(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
   const m=$('#main');
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
-  const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_hall:()=>viewGroup('hall'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},invMisc:()=>{S.invKind='misc';return viewInv()},invCrn:()=>{S.invKind='crn';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
+  const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_hall:()=>viewGroup('hall'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},invMisc:()=>{S.invKind='misc';return viewInv()},invCrn:()=>{S.tab='invChem';S.invKind='crn';S.crnGrp='chem';return viewInv()},invChem:()=>{S.invKind='crn';S.crnGrp='chem';return viewInv()},invRub:()=>{S.invKind='crn';S.crnGrp='rub';return viewInv()},invNyl:()=>{S.invKind='crn';S.crnGrp='nyl';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings}[S.tab];
   if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
   closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)window.scrollTo(0,__sy);if(S.goQty){S.goQty=0;const an=m.querySelector('#pfAnchor');if(an)setTimeout(()=>{const y=an.getBoundingClientRect().top+window.scrollY-(innerWidth<=640?10:80);window.scrollTo({top:y,behavior:'smooth'})},30)}S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
   bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
@@ -1361,7 +1362,9 @@ function addSearch(){
 const SECTIONS=[
   {tab:'invPaint',t:'مەخزەنا سبغێ',s:'کارتۆن، داخلکرن، دەرئێخستن',ic:'drop',c:'#0e7478',g:'stock'},
   {tab:'invTape',t:'مەخزەنا لسقێ',s:'کارتۆن، داخلکرن، دەرئێخستن',ic:'tape',c:'#5d4495',g:'stock'},
-  {tab:'invCrn',t:'کرۆمات، لاستیک و نایلۆن',s:'تێزاب، کرۆمات، موساعید، لاستیک، نایلۆن',ic:'drop',c:'#0369a1',g:'hall'},
+  {tab:'invChem',t:'کرۆمات و تێزاب',s:'تێزاب، کرۆمات، موساعیدێ کرۆماتێ',ic:'drop',c:'#0369a1',g:'hall'},
+  {tab:'invRub',t:'لاستیک',s:'جۆرێن لاستیکێ ب کۆد و وێنە',ic:'layers',c:'#334155',g:'hall'},
+  {tab:'invNyl',t:'نایلۆن',s:'جۆرێن نایلۆنێ',ic:'file',c:'#7c3aed',g:'hall'},
   {tab:'invMisc',t:'مەخزەنا کەرەستێن دی',s:'ناڤ، کۆد، یەکە، ژمارە',ic:'box',c:'#9a5b13',g:'stock'},
   {tab:'period',t:'ماوێن ١٥ ڕۆژی',s:'ئۆردەر، ئەنجام، داخوازی',ic:'calendar',c:'#1f5f9e',g:'work'},
   {tab:'history',t:'مێژوو',s:'هەمی ماوە',ic:'clock',c:'#6b6f2a',g:'work'},
@@ -1370,14 +1373,14 @@ const SECTIONS=[
   {tab:'tapes',t:'جۆرێن لسقێ',s:'پانی، کۆمپانی، ڕۆل',ic:'tape',c:'#3a5b82',g:'data'},
   {tab:'users',t:'بکارهێنەر',s:'Login، دەستوور، چالاکی',ic:'users',c:'#9a3b5a',g:'admin'},
   {tab:'settings',t:'ڕێکخستن',s:'Safety factor، Backup، ڕەنگ',ic:'sliders',c:'#55606a',g:'admin'}];
-const HASH={home:'home',g_stock:'stock',g_hall:'hall',g_work:'work',g_data:'info',g_admin:'admin',invPaint:'paint',invTape:'tape',invMisc:'other',invCrn:'chem',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
-function go(tab,sub){if(sub){const k=tab==='invTape'?'tape':tab==='invMisc'?'misc':tab==='invCrn'?'crn':'paint';S.invSubK[k]=sub}S.tab=tab;try{const hh='#'+(HASH[tab]||'home');if(location.hash!==hh)history.pushState(null,'',hh)}catch(e){}render();window.scrollTo({top:0})}
+const HASH={home:'home',g_stock:'stock',g_hall:'hall',g_work:'work',g_data:'info',g_admin:'admin',invPaint:'paint',invTape:'tape',invMisc:'other',invCrn:'chromate',invChem:'chromate',invRub:'rubber',invNyl:'nylon',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
+function go(tab,sub){if(sub){const k=tab==='invTape'?'tape':tab==='invMisc'?'misc':CRN_TABS[tab]?'crn_'+CRN_TABS[tab]:tab==='invCrn'?'crn_chem':'paint';S.invSubK[k]=sub}S.tab=tab;try{const hh='#'+(HASH[tab]||'home');if(location.hash!==hh)history.pushState(null,'',hh)}catch(e){}render();window.scrollTo({top:0})}
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
 window.addEventListener('popstate',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
 function tileStat(tab){try{
   if(tab==='invPaint'){const r=reportData();return `${fmtT(r.totKg)}<small>تۆن · ${fmt(r.totCart,0)} کارتۆن</small>`}
   if(tab==='invMisc'){const L=S.miscItems||[];const n=L.filter(x=>xQty('misc',x.id)>0).length;return `${L.length}<small>کەرەستە · ${n} ل مەخزەنێ</small>`}
-  if(tab==='invCrn'){const L=S.crnItems||[];const g=k=>L.filter(x=>x.grp===k).length;return `${L.length}<small>🧪 ${g('chem')} · ⚫ ${g('rub')} · 🎞 ${g('nyl')}</small>`}
+  if(CRN_TABS[tab]){const g=CRN_TABS[tab];const L=(S.crnItems||[]).filter(x=>(x.grp||'chem')===g);const m=L.reduce((a,x)=>a+xQty('crn',x.id),0);return g==='chem'?`${L.length}<small>جۆر</small>`:`${fmt(m,0)}<small>مەتر · ${L.length} جۆر</small>`}
   if(tab==='invTape'){const r=reportData();return `${fmt(r.totM2,0)}<small>م² · ${fmt(r.totBoxes,0)} کارتۆن</small>`}
   if(tab==='period'){const l=sortedPeriods()[0];return l?`<span style="font-size:.95rem">${esc(l.name)}</span>`:'<small>هێشتا چ ماوە نینن</small>'}
   if(tab==='history')return `${Object.keys(S.periods).length}<small>ماوە</small>`;
@@ -2304,11 +2307,11 @@ function printHtml(inner,title){let pa=$('#printArea');if(!pa){pa=document.creat
   pa.innerHTML=inner;pa.querySelectorAll('table').forEach(t=>{if(t.tHead)return;const r=t.rows[0];if(r&&r.cells.length&&[...r.cells].every(c=>c.tagName==='TH')){const th=t.createTHead();th.appendChild(r)}});const old=document.title;if(title)document.title=title;
   const done=()=>{document.title=old;pa.innerHTML='';window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
   const go=()=>setTimeout(()=>window.print(),60);try{(document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(go)}catch(e){go()}}
-function invMiniStats(K){if(!can('inv_view')&&!can('inv_count'))return '';if(K==='misc'||K==='crn'){const L=MI();const td=today();const nOut=(S.tx.out||[]).filter(t=>t.sec===MX().sec&&t.at&&ymdLocal(new Date(t.at))===td).length,nIn=(S.tx.in||[]).filter(t=>t.sec===MX().sec&&t.at&&ymdLocal(new Date(t.at))===td).length,nLow=L.filter(miLow).length;return `<div class="mstats m4"><div><b>${L.length}</b><span>کەرەستە</span></div><div><b style="color:${nLow?'var(--bad)':''}">${nLow}</b><span>کێمن</span></div><div><b style="color:var(--good)">${nIn}</b><span>هاتن ئەڤرۆ</span></div><div><b style="color:#c2410c">${nOut}</b><span>چوون ئەڤرۆ</span></div></div>${miMenuExtra()}`}const r=reportData();
+function invMiniStats(K){if(!can('inv_view')&&!can('inv_count'))return '';if(K==='misc'||K==='crn'){const L=MIv();const td=today();const nOut=(S.tx.out||[]).filter(t=>t.sec===MX().sec&&t.at&&ymdLocal(new Date(t.at))===td).length,nIn=(S.tx.in||[]).filter(t=>t.sec===MX().sec&&t.at&&ymdLocal(new Date(t.at))===td).length,nLow=L.filter(miLow).length;return `<div class="mstats m4"><div><b>${L.length}</b><span>کەرەستە</span></div><div><b style="color:${nLow?'var(--bad)':''}">${nLow}</b><span>کێمن</span></div><div><b style="color:var(--good)">${nIn}</b><span>هاتن ئەڤرۆ</span></div><div><b style="color:#c2410c">${nOut}</b><span>چوون ئەڤرۆ</span></div></div>${miMenuExtra()}`}const r=reportData();
   return K==='paint'?`<div class="mstats"><div><b>${fmt(r.totKg,0)}</b><span>کیلۆ</span></div><div><b>${fmt(r.totCart,1)}</b><span>کارتۆن</span></div><div><b>${r.paints.length}</b><span>جۆر</span></div></div>`
    :`<div class="mstats"><div><b>${fmt(r.totM2,0)}</b><span>م²</span></div><div><b>${fmt(r.totBoxes,1)}</b><span>کارتۆن</span></div><div><b>${r.tapes.length}</b><span>جۆر</span></div></div>`}
 function viewInvMenu(ok){const K=S.invKind;const op=can('inv_in')?(XSEC[K]?mrqOpen().length:openPos(K).filter(o=>!o.done).length):0;
-  return `<div class="home"><div class="ihero" style="--tc:${K==='paint'?'#0e7478':K==='misc'?'#9a5b13':K==='crn'?'#0369a1':'#5d4495'}"><span class="bic">${I(K==='paint'?'drop':K==='misc'?'box':K==='crn'?'drop':'tape')}</span><div class="grow"><h2 style="margin:0">${K==='paint'?'مەخزەنا سبغێ':K==='misc'?'مەخزەنا کەرەستێن دی':K==='crn'?'کرۆمات، لاستیک و نایلۆن':'مەخزەنا لسقێ'}</h2><div class="muted">چ دڤێت بکەی؟</div></div></div>
+  return `<div class="home"><div class="ihero" style="--tc:${K==='paint'?'#0e7478':K==='misc'?'#9a5b13':K==='crn'?'#0369a1':'#5d4495'}"><span class="bic">${I(K==='paint'?'drop':K==='misc'?'box':K==='crn'?'drop':'tape')}</span><div class="grow"><h2 style="margin:0">${K==='paint'?'مەخزەنا سبغێ':K==='misc'?'مەخزەنا کەرەستێن دی':K==='crn'?{chem:'کرۆمات و تێزاب',rub:'لاستیک',nyl:'نایلۆن'}[S.crnGrp||'chem']:'مەخزەنا لسقێ'}</h2><div class="muted">چ دڤێت بکەی؟</div></div></div>
   ${invMiniStats(K)}
   ${!db&&OFFLINE?`<div class="info">🖥️ پڕۆگرام <b>Offline</b> کار دکەت. ${backupAgeTxt()} <button class="btn" data-act="exportAll" style="padding:2px 10px">${I('down','sm')} Backup</button></div>`:''}
   <div class="acts">${ok.map(k=>{const m=SUBMETA[k];const b=k==='in'&&op?`<span class="bdg2">${op} ل ڕێیە</span>`:'';
@@ -2321,15 +2324,17 @@ function MX(){return MCTX[S.invKind==='crn'?'crn':'misc']}
 function MI(){const k=MX().items;return S[k]||(S[k]=[])}
 function MR(){const k=MX().req;return S[k]||(S[k]=[])}
 const isCrn=()=>S.invKind==='crn';
+function MIv(){const L=MI();return isCrn()?L.filter(x=>(x.grp||'chem')===(S.crnGrp||'chem')):L}
+const CRN_TABS={invChem:'chem',invRub:'rub',invNyl:'nyl'};
 function xItem(sec,id){return (S[(MCTX[sec]||MCTX.misc).items]||[]).find(x=>x.id===id)}
 function xQty(sec,id){return toNum(((S.inv||{})[sec]||{})[id])}
 const MISC_UNITS=['دانە','کیلۆ','گرام','مەتر','لیتر','کارتۆن','پاکەت','ڕۆل','جووت','سێت','تۆن','بەرمیل'];
 const MISC_CATS=['بۆیلەر','زنجیر و گێڕ','کارەبا','ئامێر و ئالەت','پێچ و بزمار','ڕۆن و گریس','پاقژکرن','سەلامەتی','پلاستیک و پاکێج','کەرەستێن نڤیسینگەهێ','یێن دی'];
-function miItem(id){return MI().find(x=>x.id===id)}
+function miItem(id){return MIv().find(x=>x.id===id)}
 function miUnit(id){const x=miItem(id);return x?x.unit||'':''}
 function miQty(id){return toNum(((S.inv||{})[MX().sec]||{})[id])}
 function miLow(x){const m=toNum(x.min);if(m>0&&miQty(x.id)<=m)return true;if(isCrn()&&x.grp==='chem'){const d=miDaysLeft(x);return d<crnDays()}return false}
-function miCats(){return [...new Set([...(isCrn()?CRN_CATS:MISC_CATS),...MI().map(x=>x.cat).filter(Boolean)])]}
+function miCats(){return [...new Set([...(isCrn()?CRN_CATS:MISC_CATS),...MIv().map(x=>x.cat).filter(Boolean)])]}
 function miF(dir){S.msf=S.msf||{};if(!S.msf[dir])S.msf[dir]={item:'',qty:'',note:'',taker:'',kind:'misc'};return S.msf[dir]}
 function miCanEdit(){return isAdmin||can('inv_in')}
 function miscSubList(){const o=[];if(can('inv_out'))o.push('out');if(can('inv_in'))o.push('in');if(can('inv_view')||can('inv_count'))o.push('stock');if(can('inv_view'))o.push('mday','mlog');if(miCanEdit()||can('inv_view'))o.push('mreq','items');return o}
@@ -2340,11 +2345,11 @@ function miAvg(id,days){days=days||30;const from=Date.now()-days*86400000;let q=
 function miDaysLeft(x){const a=miAvg(x.id);return a>0?miQty(x.id)/a:Infinity}
 const crnDays=()=>toNum(S.settings.crnDays)||14;
 const rollTxt=(x,m)=>x&&x.roll>0?` <small class="muted">≈ ${fmt(m/x.roll,1)} ڕۆل</small>`:'';
-function miNew(name,code,unit,extra){const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const x=miNormItem({id,name:String(name).trim(),code:String(code||'').trim(),unit:String(unit||'دانە').trim()||'دانە',...(extra||{})});MI().push(x);save(MX().doc,100);return x}
+function miNew(name,code,unit,extra){const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(isCrn()){extra={grp:S.crnGrp||'chem',...(extra||{})};if(extra.grp!=='chem'){unit='مەتر';extra.cat=extra.cat||CRN_G[extra.grp].t}}const x=miNormItem({id,name:String(name).trim(),code:String(code||'').trim(),unit:String(unit||'دانە').trim()||'دانە',...(extra||{})});MI().push(x);save(MX().doc,100);return x}
 const miSort=(a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{numeric:true});
 const miIco=x=>x.img?`<span class="sw big mic img${miLow(x)?' low':''}"><img src="${x.img}" alt=""></span>`:`<span class="sw big mic${miLow(x)?' low':''}">${x.grp&&CRN_G[x.grp]?CRN_G[x.grp].ic:esc((x.name||'?').trim().charAt(0).toUpperCase())}</span>`;
 const miSubTxt=x=>[x.code?`<span dir="ltr">${esc(x.code)}</span>`:'',x.cat?esc(x.cat):'',x.roll?'ڕۆل '+fmt(x.roll,0)+'m':'',x.loc?'📍 '+esc(x.loc):''].filter(Boolean).join(' · ');
-function miPicker(dir,f){const L=[...MI()].filter(x=>dir==='in'||miQty(x.id)>0).sort(miSort);
+function miPicker(dir,f){const L=[...MIv()].filter(x=>dir==='in'||miQty(x.id)>0).sort(miSort);
   return `<input type="search" id="msSearch" placeholder="🔍 لێگەڕیان: ناڤ، کۆد، پشک ..." style="width:100%;margin-bottom:8px">
    <div class="pgrid" id="msGrid">${L.length?L.map(x=>`<button type="button" class="pcard${f.item===x.id?' on':''}" data-act="msPick" data-dir="${dir}" data-id="${esc(x.id)}" data-n="${esc(normQ(x.name+' '+x.code+' '+x.cat+' '+x.loc))}">
      <span class="psw">${miIco(x)}</span><span class="pinfo"><b>${esc(x.name)}</b><span class="muted psub">${miSubTxt(x)||'&nbsp;'}</span></span><span class="qv${miQty(x.id)>0?'':' zero'}${miLow(x)?' lowq':''}">${fmt(miQty(x.id),2)} <small>${esc(x.unit)}</small>${x.roll?`<small class="muted">≈ ${fmt(miQty(x.id)/x.roll,1)} ڕۆل</small>`:''}${miLow(x)?'<small class="lowb">کێمە</small>':''}</span></button>`).join('')
@@ -2352,7 +2357,7 @@ function miPicker(dir,f){const L=[...MI()].filter(x=>dir==='in'||miQty(x.id)>0).
    <div class="muted" id="msNone" style="display:none;padding:8px">چ تشت نەهاتە دیتن.</div>`}
 function viewMiscForm(dir){const f=miF(dir);const x=f.item&&miItem(f.item);if(f.item&&!x)f.item='';const have=x?miQty(x.id):0;const q=x?miInQ(x,f):0;const over=dir==='out'&&x&&q>have+1e-9;
   return `${dir==='in'?miPendingBox():''}<div class="tapeform">
-   <div class="tstep"><div class="lb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="grow">١. کەرەستەیێ هەلبژێرە <span class="muted" style="font-weight:400">(${MI().length} کەرەستە)</span></span>${dir==='in'&&miCanEdit()?`<button type="button" class="btn" data-act="msNew">➕ کەرەستەیەکا نوو</button>`:''}</div>
+   <div class="tstep"><div class="lb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="grow">١. کەرەستەیێ هەلبژێرە <span class="muted" style="font-weight:400">(${MIv().length} کەرەستە)</span></span>${dir==='in'&&miCanEdit()?`<button type="button" class="btn" data-act="msNew">➕ کەرەستەیەکا نوو</button>`:''}</div>
      ${miPicker(dir,f)}</div>
    ${x?`<div id="pfAnchor"></div><div class="selpaint"><span class="spsw">${miIco(x)}</span><span class="spinfo"><span class="splb">✓ هاتە هەلبژارتن</span><b>${esc(x.name)}</b><span class="muted" style="text-align:right">${miSubTxt(x)||'—'}</span></span><button type="button" class="btn spch" onclick="document.getElementById('msSearch').scrollIntoView({behavior:'smooth',block:'center'})">گوهۆڕین</button></div>
    <div class="stockbox${have<=0||miLow(x)?' empty':''}"><span>ل مەخزەنێ نوکە${x.min?`<div class="muted" style="font-size:.78rem">کەمترین: ${fmt(x.min,2)} ${esc(x.unit)}</div>`:''}${isCrn()&&x.grp==='chem'&&miAvg(x.id)>0?`<div class="muted" style="font-size:.78rem">بکارئینان: ~${fmt(miAvg(x.id),1)} ${esc(x.unit)}/ڕۆژ · بەس دکەت ~${fmt(miDaysLeft(x),0)} ڕۆژ</div>`:''}</span><span class="v">${fmt(have,2)} <small>${esc(x.unit)}</small>${rollTxt(x,have)}</span></div>
@@ -2375,7 +2380,7 @@ function miWhoStep(f){const halls=miPast('hall'),people=[...new Set([...miPast('
    <div class="mi-head" style="margin:0"><label>🏭 ناڤێ هۆڵێ<input data-msf="out" data-f="hall" list="msHalls" value="${esc(f.hall||'')}" placeholder="بۆ نموونە: هۆڵا 2">
    ${halls.length?`<span class="chips" style="margin-top:2px">${halls.slice(0,6).map(h=>`<button type="button" class="chip${f.hall===h?' on':''}" data-act="msHall" data-v="${esc(h)}">${esc(h)}</button>`).join('')}</span>`:''}</label>
    <label>👤 ناڤێ کەسی<input data-msf="out" data-f="person" list="msPeople" value="${esc(f.person||'')}" placeholder="ناڤێ وی کەسێ دبەت"></label></div></div>`}
-function miRows(dir){return ['in','out'].filter(d=>!dir||d===dir).flatMap(d=>(S.tx[d]||[]).filter(t=>t.sec===MX().sec).map(t=>({...t,dir:d}))).sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
+function miRows(dir){return ['in','out'].filter(d=>!dir||d===dir).flatMap(d=>(S.tx[d]||[]).filter(t=>t.sec===MX().sec&&(!isCrn()||((xItem('crn',t.key)||{}).grp||'chem')===S.crnGrp)).map(t=>({...t,dir:d}))).sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
 const p2=n=>String(n).padStart(2,'0');
 const miDate=d=>`${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
 function miRowHtml(t){const x=miItem(t.key);const d=t.at?new Date(t.at):null;
@@ -2389,11 +2394,11 @@ const MI_HEAD=()=>`<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ ما�
 function miRecent(dir){const R=miRows(dir).filter(t=>miMine(t)).slice(0,8);if(!R.length)return '';
   return `<div class="tstep" style="margin-top:16px"><div class="lb">دوماهیک تۆمار</div><div class="tbl-scroll" data-nosrch><table><thead>${MI_HEAD()}</thead><tbody>${R.map(miRowHtml).join('')}</tbody></table></div></div>`}
 /* --- menu dashboard --- */
-function miMenuExtra(){const L=MI();const low=L.filter(miLow).sort(miSort);if(!low.length)return '';
+function miMenuExtra(){const L=MIv();const low=L.filter(miLow).sort(miSort);if(!low.length)return '';
   return `<div class="note" style="cursor:pointer" data-act="msLowGo">⚠️ <b>${low.length}</b> کەرەستە کێم بوونە: ${low.slice(0,5).map(x=>esc(x.name)+' ('+fmt(miQty(x.id),2)+' '+esc(x.unit)+')').join('، ')}${low.length>5?' …':''} — بۆ داخوازکرنێ کلیک بکە.</div>`}
 /* --- stock --- */
-function miStockRows(){const q=normQ((S.msStockQ)||'');const c=S.msCat||'';return [...MI()].sort((a,b)=>(a.cat||'~').localeCompare(b.cat||'~')||miSort(a,b)).filter(x=>(!q||normQ(x.name+' '+x.code+' '+x.cat+' '+x.loc).includes(q))&&(!c||(c==='__low'?miLow(x):c==='__zero'?miQty(x.id)<=0:(x.cat||'')===c)))}
-function viewMiscStock(){const R=miStockRows();const L=MI();const cats=[...new Set(L.map(x=>x.cat).filter(Boolean))].sort();const c=S.msCat||'';const nLow=L.filter(miLow).length;
+function miStockRows(){const q=normQ((S.msStockQ)||'');const c=S.msCat||'';return [...MIv()].sort((a,b)=>(a.cat||'~').localeCompare(b.cat||'~')||miSort(a,b)).filter(x=>(!q||normQ(x.name+' '+x.code+' '+x.cat+' '+x.loc).includes(q))&&(!c||(c==='__low'?miLow(x):c==='__zero'?miQty(x.id)<=0:(x.cat||'')===c)))}
+function viewMiscStock(){const R=miStockRows();const L=MIv();const cats=[...new Set(L.map(x=>x.cat).filter(Boolean))].sort();const c=S.msCat||'';const nLow=L.filter(miLow).length;
   return `<div class="mstats"><div><b>${L.length}</b><span>کەرەستە</span></div><div><b>${L.filter(x=>miQty(x.id)>0).length}</b><span>ل مەخزەنێ</span></div><div><b style="color:${nLow?'var(--bad)':''}">${nLow}</b><span>کێمن</span></div></div>
    <div class="chips" style="margin:8px 0">${[['','هەمی'],['__low','⚠️ کێمن ('+nLow+')'],['__zero','ڤالا'],...cats.map(k=>[k,k])].map(([v,l])=>`<button type="button" class="chip${c===v?' on':''}" data-act="msCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>
    <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><input type="search" id="msStockQ" value="${esc(S.msStockQ||'')}" placeholder="🔍 لێگەڕیان: ناڤ، کۆد، جه" class="grow" style="min-width:200px"><button class="btn" data-act="msStockPdf">${I('file','sm')} PDF</button></div>
@@ -2419,7 +2424,7 @@ function viewMiscDay(){const d=S.msDay||today();const R=miDayRows(d);const I_=R.
    <h3 class="dsec out">⬆ ئەڤێن چووین (OUT)</h3>${sumT(O,'out')}
    <h3 class="dsec">🕒 هەمی تۆمارێن ڕۆژێ</h3><div class="tbl-scroll" data-nosrch><table><thead>${MI_HEAD()}</thead><tbody>${R.map(miRowHtml).join('')||`<tr><td colspan="12" class="muted">چ تۆمار نینن.</td></tr>`}</tbody></table></div>`}
 /* --- items --- */
-function viewMiscItems(){const ed=miCanEdit();const L=[...MI()].sort((a,b)=>(a.cat||'~').localeCompare(b.cat||'~')||miSort(a,b));let lastCat=null;
+function viewMiscItems(){const ed=miCanEdit();const L=[...MIv()].sort((a,b)=>(a.cat||'~').localeCompare(b.cat||'~')||miSort(a,b));let lastCat=null;
   return `${ed?`<div class="row" style="margin-bottom:10px"><button class="btn pri" data-act="msNew">➕ کەرەستەیەکا نوو</button><span class="muted grow">${L.length} کەرەستە</span></div>`:''}
    <div class="milist">${L.map(x=>{const h=x.cat!==lastCat?`<div class="micat">${esc(x.cat||'بێ پشک')}</div>`:'';lastCat=x.cat;
      return h+`<div class="mirow">${miIco(x)}<div class="grow" style="min-width:0"><b>${esc(x.name)}</b><div class="muted" style="font-size:.8rem">${miSubTxt(x)||'—'}${x.min?` · کەمترین ${fmt(x.min,2)}`:''}</div></div>
@@ -2434,15 +2439,15 @@ function miSelBind(id,cb){const s=$('#'+id+'S'),o=$('#'+id+'O');if(!s)return;s.o
 function miUnitLbl(){const g=$('#msNGrp');if(g&&(g.value==='rub'||g.value==='nyl'))return;const u=miSelVal('msNUnit');document.querySelectorAll('.msNU').forEach(e=>e.textContent=u)}
 /* --- item dialog (new / edit) --- */
 function msNewDialog(after){miItemDialog(null,after)}
-function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;const ci=!ed&&can('inv_in')&&canKind('misc');const C=isCrn();const x=ed||{name:'',code:'',unit:C?'کیلۆ':'دانە',cat:'',min:0,loc:'',grp:C?(S.crnGrpNew||'chem'):''};let img=x.img||'';
+function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;const ci=!ed&&can('inv_in')&&canKind('misc');const C=isCrn();const x=ed||{name:'',code:'',unit:C?'کیلۆ':'دانە',cat:'',min:0,loc:'',grp:C?(S.crnGrp||'chem'):''};let img=x.img||'';
   dialog(`<h3 style="margin-top:0">${ed?'✏️ گوهۆڕینا کەرەستەی':'➕ کەرەستەیەکا نوو'}</h3>
   <div class="mi-head"><label>ناڤێ مادێ<input id="msNName" value="${esc(x.name)}" placeholder="بۆ نموونە: زنجیرا بۆیلەری 08B"></label><label>کۆدێ مادێ<input id="msNCode" value="${esc(x.code)}" class="ltr" placeholder="CH-08B" style="text-align:left"></label></div>
-  ${C?`<div class="lb" style="font-weight:600;margin:0 0 6px">جۆر</div><div class="useg" id="msNGrpB" style="margin-bottom:10px">${Object.entries(CRN_G).map(([k,g])=>`<button type="button" class="chip${(x.grp||'chem')===k?' on':''}" data-g="${k}">${g.ic} ${g.t}</button>`).join('')}</div><input type="hidden" id="msNGrp" value="${esc(x.grp||'chem')}">
+  ${C?`<div class="useg" id="msNGrpB" style="display:none">${Object.entries(CRN_G).map(([k,g])=>`<button type="button" class="chip${(x.grp||'chem')===k?' on':''}" data-g="${k}">${g.ic} ${g.t}</button>`).join('')}</div><input type="hidden" id="msNGrp" value="${esc(x.grp||'chem')}">
    <div class="mi-head" style="align-items:center"><div class="miimg" id="msNImgP">${img?`<img src="${img}">`:'📷'}</div><label class="btn" style="justify-content:center">📷 وێنە (ژ مۆبایلێ / فایل)<input type="file" id="msNImgF" accept="image/*" class="hide"></label>${img?'<button type="button" class="btn" id="msNImgX">🗑 ژێبرنا وێنەی</button>':''}</div>`:''}
   <div id="msNHint" class="info" style="display:none;margin:0 0 10px"></div>
   <div class="mi-head"><label id="msNUnitBox">یەکە<span class="muted" style="font-weight:400;font-size:.78rem">ب چ دهێتە ژمارتن؟</span>${miSel('msNUnit',C?CRN_G.chem.units:MISC_UNITS,x.unit)}</label>
    ${C?`<label id="msNRollBox">درێژیا ڕۆلەکێ (مەتر)<span class="muted" style="font-weight:400;font-size:.78rem">مەخزەن ب مەتر دهێتە ژمارتن</span><input id="msNRoll" class="num" inputmode="decimal" value="${x.roll||''}" placeholder="بۆ نموونە 500"></label>`:''}
-   <label id="msNCatBox">${C?'جۆرێ کیمیاوی':'پشک'}<span class="muted" style="font-weight:400;font-size:.78rem">${C?'تێزاب / کرۆمات / موساعید':'جۆرێ کەرەستەی'}</span>${miSel('msNCat',(C?CRN_CATS:MISC_CATS).concat(MI().map(z=>z.cat).filter(c=>c&&!(C?CRN_CATS:MISC_CATS).includes(c)&&!(C&&Object.values(CRN_G).some(g=>g.t===c)))).filter((v,i,a)=>a.indexOf(v)===i),x.cat,'— هەلبژێرە —')}</label></div>
+   <label id="msNCatBox">${C?'جۆرێ کیمیاوی':'پشک'}<span class="muted" style="font-weight:400;font-size:.78rem">${C?'تێزاب / کرۆمات / موساعید':'جۆرێ کەرەستەی'}</span>${miSel('msNCat',(C?CRN_CATS:MISC_CATS).concat(MIv().map(z=>z.cat).filter(c=>c&&!(C?CRN_CATS:MISC_CATS).includes(c)&&!(C&&Object.values(CRN_G).some(g=>g.t===c)))).filter((v,i,a)=>a.indexOf(v)===i),x.cat,'— هەلبژێرە —')}</label></div>
   <div class="mi-head"><label>کەمترین ژمارە <span class="muted" style="font-weight:400;font-size:.78rem">(دەمێ دگەهیتە ڤێ، ئاگەهداری دهێت)</span><div class="qin"><input id="msNMin" class="num" inputmode="decimal" value="${x.min||''}" placeholder="0"><span class="qu msNU">${esc(x.unit)}</span></div></label>
    <label>جه ل مەخزەنێ <span class="muted" style="font-weight:400;font-size:.78rem">(ڕەف / دۆلاب)</span><input id="msNLoc" value="${esc(x.loc)}" placeholder="بۆ نموونە: ڕەفا A-3"></label></div>
   ${ci?`<div class="lb" style="font-weight:600;margin:10px 0 6px">چەند گەهشتیە؟ <span class="muted" style="font-weight:400">(ئەگەر نوکە هاتبیت — دێ ب خۆ وەک داخلکرن تۆمار بیت)</span></div>
@@ -2453,7 +2458,7 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
     if(rl&&!(roll>0)){$('#msNErr').textContent='⚠️ درێژیا ڕۆلەکێ ب مەتر بنڤیسە';return false}const ext=C?{grp,...(roll?{roll}:{}),...(img?{img}:{})}:{};
     if(!n){$('#msNErr').textContent='⚠️ ناڤی بنڤیسە';return false}
     if(!u){$('#msNErr').textContent='⚠️ یەکێ هەلبژێرە یان بنڤیسە';return false}
-    if(ed){const dup=c&&MI().find(z=>z.id!==ed.id&&(z.code||'').toLowerCase()===c.toLowerCase());if(dup){$('#msNErr').textContent='⚠️ ئەڤ کۆدە بۆ «'+dup.name+'» هاتیە دانان';return false}
+    if(ed){const dup=c&&MIv().find(z=>z.id!==ed.id&&(z.code||'').toLowerCase()===c.toLowerCase());if(dup){$('#msNErr').textContent='⚠️ ئەڤ کۆدە بۆ «'+dup.name+'» هاتیە دانان';return false}
       Object.assign(ed,{name:n,code:c,unit:u,cat,min,loc,...ext});if(C){if(!rl)delete ed.roll;if(!img)delete ed.img}save(MX().doc,100);toast('✓ هاتە پاشەکەفتکرن');render();return}
     const q=ci?toNum($('#msNQty').value)*(rl&&$('#msNQtyU')&&$('#msNQtyU').value==='roll'?roll:1):0;if(ci&&$('#msNQty').value.trim()&&!(q>0)){$('#msNErr').textContent='⚠️ ژمارە دروست نینە';return false}
     const note=ci?$('#msNNote').value.trim():'';
@@ -2461,7 +2466,7 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
     if(ex){if(after)after(ex);
       if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:MX().sec,key:ex.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${ex.name}» بەری نوکە هەبوو — ${fmt(q,2)} ${ex.unit} ل سەر هاتنە زێدەکرن (نوکە ${fmt(miQty(ex.id),2)})`);render()}})}
       else toast(`ℹ️ «${ex.name}» بەری نوکە هەیە — هاتە هەلبژارتن`);render();return}
-    const xx=miNew(n,c,u,{cat,min,loc,...ext});if(C)S.crnGrpNew=grp;if(after)after(xx);
+    const xx=miNew(n,c,u,{cat,min,loc,...ext});if(after)after(xx);
     if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:MX().sec,key:xx.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${n}» هاتە زێدەکرن و ${fmt(q,2)} ${u} هاتنە داخلکرن`);render()}})}
     else toast('✓ «'+n+'» هاتە زێدەکرن');render()},ed?'پاشەکەفتکرن':'پاشەکەفتکرن','wide');
   miSelBind('msNUnit',miUnitLbl);miSelBind('msNCat');
@@ -2474,14 +2479,14 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
   if(!ed){['#msNCode','#msNName'].forEach(q=>{const e=$(q);if(e)e.addEventListener('input',miExHint)})}
   setTimeout(()=>{const e=$('#msNName');if(e&&!ed&&!$('#dlg').contains(document.activeElement))e.focus()},50)}
 function miResize(file,max){max=max||260;return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.72))};im.onerror=rej;im.src=u})}
-function miFindExisting(c,n){const L=MI();c=String(c||'').trim().toLowerCase();n=String(n||'').trim().toLowerCase();
+function miFindExisting(c,n){const L=MIv();c=String(c||'').trim().toLowerCase();n=String(n||'').trim().toLowerCase();
   if(c)return L.find(x=>(x.code||'').toLowerCase()===c)||null;return n?L.find(x=>!x.code&&x.name.toLowerCase()===n)||null:null}
 function miExHint(){const c=$('#msNCode'),nm=$('#msNName');if(!c)return;const ex=miFindExisting(c.value,nm.value);const h=$('#msNHint');if(!h)return;
   if(ex){h.innerHTML=`ℹ️ ئەڤ کۆدە بەری نوکە هەیە: <b>${esc(ex.name)}</b> — ل مەخزەنێ <b>${fmt(miQty(ex.id),2)} ${esc(ex.unit)}</b>. ژمارا تو دنڤیسی دێ <b>ل سەر وێ زێدە بیت</b>.`;h.style.display='';
     miSelSet('msNUnit',ex.unit);miUnitLbl();$('#dlgOk').textContent='زێدەکرن ل سەر یا هەی'}
   else{h.style.display='none';$('#dlgOk').textContent='پاشەکەفتکرن'}}
 function miMine(t){const me=myUid();return isAdmin||t.u===me||t.rec===me}
-function miTxEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;const L=[...MI()].sort(miSort);
+function miTxEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;const L=[...MIv()].sort(miSort);
   dialog(`<h3 style="margin-top:0">✏️ گوهۆڕینا تۆمارێ (${dir==='in'?'داخلکرن':'دەرئێخستن'})</h3>
    <div class="mi-head"><label>کەرەستە<select id="msEItem">${L.map(z=>`<option value="${esc(z.id)}" ${z.id===t.key?'selected':''}>${esc(z.name)}${z.code?' — '+esc(z.code):''} (${esc(z.unit)})</option>`).join('')}</select></label>
    <label>ژمارە<input id="msEQty" class="num" inputmode="decimal" value="${+t.qty}"></label></div>
@@ -2494,13 +2499,13 @@ function miTxEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miM
     (async()=>{if(!db){Object.assign(t,d);recomputeInv();localSave();render();toast('✓ تۆمار هاتە گوهۆڕین');return}
       try{await db.doc((dir==='in'?'invin/':'invout/')+id).set(d);toast('✓ تۆمار هاتە گوهۆڕین')}catch(e){toast('⚠️ گوهۆڕین نەبوو')}})()},'پاشەکەفتکرن','wide')}
 /* --- purchase requests (داخوازکرنا کەرەستەیان) --- */
-function mrqList(){return [...MR()].sort((a,b)=>(b.no||0)-(a.no||0))}
-function mrqNew(){const no=Math.max(0,...MR().map(r=>toNum(r.no)))+1;const u=curApp();return {id:'r'+Date.now().toString(36),no,date:today(),by:(u&&(u.name||u.username))||'',to:'',note:'',status:'draft',rows:[mrqRow(),mrqRow(),mrqRow()]}}
+function mrqList(){return [...MR()].filter(r=>!isCrn()||(r.grp||'chem')===S.crnGrp).sort((a,b)=>(b.no||0)-(a.no||0))}
+function mrqNew(){const no=Math.max(0,...MR().map(r=>toNum(r.no)))+1;const u=curApp();return {id:'r'+Date.now().toString(36),...(isCrn()?{grp:S.crnGrp}:{}),no,date:today(),by:(u&&(u.name||u.username))||'',to:'',note:'',status:'draft',rows:[mrqRow(),mrqRow(),mrqRow()]}}
 function mrqRow(x,q){return {item:x?x.id:'',name:x?x.name:'',code:x?x.code:'',unit:x?x.unit:'دانە',qty:q?String(q):'',note:''}}
 const MRQ_ST={draft:['ڕەشنڤیس','#6b7280'],sent:['هاتیە هنارتن','#1f5f9e'],partial:['هندەک گەهشتن','#b45309'],received:['گەهشت','#15803d']};
 function mrqSugg(x){const m=toNum(x.min),q=miQty(x.id);return Math.max(1,Math.ceil(m*2-q))}
 function viewMiscReq(){const ed=S.mrqEdit;if(ed)return viewMrqEdit(ed);const L=mrqList();const can_=miCanEdit();
-  return `${can_?`<div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn pri" data-act="mrqNew">➕ داخوازیەکا نوو</button><button class="btn" data-act="mrqNewLow">⚠️ داخوازی ژ کەرەستێن کێم (${MI().filter(miLow).length})</button></div>`:''}
+  return `${can_?`<div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn pri" data-act="mrqNew">➕ داخوازیەکا نوو</button><button class="btn" data-act="mrqNewLow">⚠️ داخوازی ژ کەرەستێن کێم (${MIv().filter(miLow).length})</button></div>`:''}
    <div class="mrqs">${L.map(r=>{const st=MRQ_ST[r.status]||MRQ_ST.draft;const n=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0).length;
      return `<div class="mrq"><div class="mrqh"><b class="ltr">#${r.no}</b><span class="pill" style="background:${st[1]};color:#fff">${st[0]}</span><span class="grow"></span><span class="muted ltr">${esc(r.date||'')}</span></div>
       <div class="muted" style="font-size:.85rem">${r.to?'بۆ: <b>'+esc(r.to)+'</b> · ':''}${n} کەرەستە${r.by?' · ژ لایێ '+esc(r.by):''}</div>
@@ -2508,7 +2513,7 @@ function viewMiscReq(){const ed=S.mrqEdit;if(ed)return viewMrqEdit(ed);const L=m
       ${(r.recv||[]).length?`<div style="font-size:.8rem;margin-top:4px">${r.recv.map(v=>`📦 <span class="ltr">${esc(miDate(new Date(v.at)))}</span> — وەرگر: <b>${esc(v.by)}</b> (${v.items.length} کەرەستە)`).join('<br>')}</div>`:''}
       <div class="mrqa">${can_&&r.status!=='received'?`<button class="btn" data-act="mrqOpen" data-id="${r.id}">✏️ گوهۆڕین</button>`:''}<button class="btn" data-act="mrqPdf" data-id="${r.id}">${I('file','sm')} PDF</button><button class="btn" data-act="mrqShare" data-id="${r.id}">📤 هنارتن</button>
        ${can_&&r.status!=='received'&&r.status!=='draft'?`<button class="btn pri" data-act="mrqRecv" data-id="${r.id}">📦 گەهشت</button>`:''}${can_?`<button class="btn" data-act="mrqDel" data-id="${r.id}" title="ژێبرن">🗑</button>`:''}</div></div>`}).join('')||'<div class="muted">هێشتا چ داخوازی نینن. داخوازیەکێ چێبکە و بۆ وی کەسێ دکڕیت بهنێرە (PDF یان WhatsApp).</div>'}</div>`}
-function viewMrqEdit(r){const L=[...MI()].sort(miSort);
+function viewMrqEdit(r){const L=[...MIv()].sort(miSort);
   return `<datalist id="mrqItems">${L.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist><datalist id="mrqCodes">${L.filter(x=>x.code).map(x=>`<option value="${esc(x.code)}">${esc(x.name)}</option>`).join('')}</datalist><datalist id="mrqUnits">${MISC_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>
    <div class="row" style="margin-bottom:8px"><b class="grow" style="font-size:1.1rem">داخوازیا ژمارە <span class="ltr">#${r.no}</span></b><button class="btn" data-act="mrqBack">← زڤڕین</button></div>
    <div class="mi-head"><label>بۆ کێ؟ (ئەوێ دکڕیت)<input data-mrq="to" value="${esc(r.to)}" placeholder="ناڤێ کەسی یان کۆمپانیێ"></label><label>ژ لایێ<input data-mrq="by" value="${esc(r.by)}"></label><label>ڕۆژ<input type="date" data-mrq="date" value="${esc(r.date)}"></label></div>
@@ -2525,7 +2530,7 @@ function viewMrqEdit(r){const L=[...MI()].sort(miSort);
    <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn pri big" data-act="mrqSave" data-s="sent" style="flex:1">${I('check','sm')} پاشەکەفتکرن و هنارتن</button><button class="btn" data-act="mrqSave" data-s="draft">پاشەکەفتکرن وەک ڕەشنڤیس</button></div>`}
 function mrqHave(x){const it=x.item&&miItem(x.item);return it?`ل مەخزەنێ: ${fmt(miQty(it.id),2)} ${esc(it.unit)}${miLow(it)?' · <b style="color:var(--bad)">کێمە</b>':''}`:x.name?'🆕 کەرەستەیەکا نوو':''}
 function mrqParseName(v){v=String(v||'').trim();const m=v.split(' | ');const nm=m[0].trim(),cd=(m[1]||'').trim();
-  const L=MI();const x=(cd&&L.find(z=>(z.code||'').toLowerCase()===cd.toLowerCase()))||L.find(z=>z.name===nm)||L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase());return {x,nm:x?x.name:nm,cd:x?x.code:cd}}
+  const L=MIv();const x=(cd&&L.find(z=>(z.code||'').toLowerCase()===cd.toLowerCase()))||L.find(z=>z.name===nm)||L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase());return {x,nm:x?x.name:nm,cd:x?x.code:cd}}
 function mrqText(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);
   return `📋 داخوازیا کەرەستەیان #${r.no}\n📅 ${r.date}${r.to?'\n👤 بۆ: '+r.to:''}${r.by?'\n✍️ ژ لایێ: '+r.by:''}\n\n${R.map((x,i)=>`${i+1}. ${x.name}${x.code?' ('+x.code+')':''} — ${fmt(toNum(x.qty),2)} ${x.unit}${x.note?' · '+x.note:''}`).join('\n')}${r.note?'\n\n📝 '+r.note:''}`}
 function mrqPdf(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);
@@ -2590,7 +2595,7 @@ function viewInv(){
       const key=String(l.key||'');const nm=l.sec==='box'?key.split('|').map((x,i)=>i===1?x+' mm':i===2?(x==='P'?'Rough':'Normal'):i===3?x+'m':x).join(' · '):key;
       return `<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(l.at))}</td><td>${l.u?`<span data-uid="${esc(l.u)}">…</span>`:'—'}</td><td>${lbl}: <b class="ltr">${esc(nm)}</b></td><td class="n muted">${l.from??'—'}</td><td class="n"><b>${l.to??'—'}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">هێشتا چ گوهۆڕین نەهاتینە تۆمارکرن.</td></tr>'}
     </tbody></table></div>`;
-  return `<div class="card invcard"><h2 style="display:flex;align-items:center;gap:10px"><span class="hic" style="--tc:${SUBMETA[S.invSub]?SUBMETA[S.invSub].c:'#0e7478'}">${I(SUBMETA[S.invSub]?SUBMETA[S.invSub].ic:'box')}</span>${SUBMETA[S.invSub]?SUBMETA[S.invSub].t:''} <span class="muted" style="font-size:.9rem;font-weight:400">· ${K==='paint'?'سبغ':K==='misc'?'کەرەستێن دی':K==='crn'?'کرۆمات، لاستیک، نایلۆن':'لسق'}</span></h2>
+  return `<div class="card invcard"><h2 style="display:flex;align-items:center;gap:10px"><span class="hic" style="--tc:${SUBMETA[S.invSub]?SUBMETA[S.invSub].c:'#0e7478'}">${I(SUBMETA[S.invSub]?SUBMETA[S.invSub].ic:'box')}</span>${SUBMETA[S.invSub]?SUBMETA[S.invSub].t:''} <span class="muted" style="font-size:.9rem;font-weight:400">· ${K==='paint'?'سبغ':K==='misc'?'کەرەستێن دی':K==='crn'?{chem:'کرۆمات و تێزاب',rub:'لاستیک',nyl:'نایلۆن'}[S.crnGrp||'chem']:'لسق'}</span></h2>
   <p class="muted" style="display:none">مەخزەنا هەڤپشک و زیندی — هەمی ماوە ب ڤێ مەخزەنێ حیساب دکەن.${me&&me.name?` تو وەکی <b>${esc(me.name)}</b> هاتیە ژوور${isAdmin?' (بەرپرس)':''}.`:''}</p>
   ${!db&&OFFLINE?`<div class="info">🖥️ پڕۆگرام <b>Offline</b> کار دکەت — هەمی داتا ل سەر ڤی کۆمپیوتەری و د ڤی براوزەریدا دهێنە پاشەکەفتکرن. ${backupAgeTxt()} <button class="btn" data-act="exportAll" style="padding:2px 10px">${I('down','sm')} Backup</button></div>`:''}
   ${!db&&!OFFLINE?`<div class="note">داتابەیس گرێنەدایە — گوهۆڕین تەنێ ل سەر ڤی براوزەری دهێنە پاشەکەفتکرن و بکارهێنەرێن دی نابینن.<br><span style="font-size:.82rem">${capInfo.runtime?'ئەگەر: Claude پەیوەندی ب لاپەڕی کر لێ داتابەیس نەدا — بێگومان Tracking prevention یا براوزەری یان تو نەچوویە ناڤ هەژمارا Claude.':'ئەگەر: لاپەڕ ل دەرڤەی claude.ai هاتیە ڤەکرن (یان براوزەری پەیوەندی ب Claude ڤە گرت). لینکا دروست: claude.ai/artifact/PnPX7dKnxJSAiyDcFkLytG'}</span></div>`:''}
@@ -2638,7 +2643,7 @@ function viewResRub(p){const {rows,noDef}=crnRows(p);const nd=Object.keys(noDef)
   return `<div class="card"><h2>${I('layers')} ئەنجاما لاستیک و نایلۆنێ</h2>
    <div class="info">پێتڤی = ژمارا قەدان × درێژی × خەتێن لاستیکێ (ژ «زانیاری ← پڕۆفایل»). مەخزەن ژ «کرۆمات، لاستیک و نایلۆن» دهێت. «ل ڕێ» = داخوازیێن هێشتا نەگەهشتین. هەمی ب <b>مەتر</b>.</div>
    ${nd.length?`<div class="note">⚠️ ${nd.length} پڕۆفایل د ڤی ماوەی دا لاستیک/نایلۆن بۆ وان نەهاتیە دانان: <span class="ltr">${nd.slice(0,12).map(esc).join(', ')}${nd.length>12?' …':''}</span> — ل «زانیاری ← پڕۆفایل» دوگمەیا «لاستیک / نایلۆن» بکە (ئەگەر چ تێدا نەکەڤیت، «پاشەکەفتکرن» بکە ب «چ نینە»).</div>`:''}
-   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" data-act="rubPdf">${I('file','sm')} PDF</button>${short.length&&can('inv_in')?`<button class="btn pri" data-act="rubReq">📄 داخوازی بۆ ${short.length} یێن کێم</button>`:''}</div>
+   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" data-act="rubPdf">${I('file','sm')} PDF</button>${can('inv_in')?['rub','nyl'].map(g=>{const n=short.filter(r=>r.x.grp===g).length;return n?`<button class="btn pri" data-act="rubReq" data-g="${g}">📄 داخوازیا ${CRN_G[g].t} (${n} کێم)</button>`:''}).join(''):''}</div>
    <div class="tbl-scroll" data-nosrch><table><thead><tr><th></th><th>ناڤ</th><th>کۆد</th><th class="n">پێتڤی (m)</th><th class="n">مەخزەن (m)</th><th class="n">ل ڕێ (m)</th><th class="n">زێدە / کێم</th><th class="n">m / ڕۆل</th><th class="n">ڕۆل بۆ کڕینێ</th></tr></thead><tbody>
    ${sec('rub')+sec('nyl')||'<tr><td colspan="9" class="muted">چ پێتڤی نینە — ل دەستپێکێ جۆرێن لاستیکێ زێدە بکە و ل پڕۆفایلان دانێ.</td></tr>'}</tbody></table></div></div>`}
 function rubPdf(p){const {rows}=crnRows(p);const R=g=>rows.filter(r=>r.x.grp===g).map(r=>`<tr><td>${esc(r.x.name)}</td><td dir="ltr">${esc(r.x.code||'')}</td><td>${fmt(r.need,0)}</td><td>${fmt(r.stock,0)}</td><td>${r.inc?fmt(r.inc,0):''}</td><td><b>${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td><b>${r.rolls||''}</b></td></tr>`).join('');
@@ -2840,7 +2845,7 @@ function bind(){
     {const e=m.querySelector('#msDay');if(e)e.onchange=()=>{if(e.value){S.msDay=e.value;render()}}}
     m.querySelectorAll('[data-mrq]').forEach(el=>{el.oninput=el.onchange=()=>{if(S.mrqEdit)S.mrqEdit[el.dataset.mrq]=el.value}});
     m.querySelectorAll('[data-mrr]').forEach(el=>{const h=ev=>{const r=S.mrqEdit;if(!r)return;const row=r.rows[+el.dataset.mrr];if(!row)return;const f=el.dataset.f;
-      if(f==='name'||f==='code'){const i=el.dataset.mrr;const v=el.value.trim();const L=MI();row[f]=v;const x=f==='code'?(v&&L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase())):(v&&L.find(z=>z.name===v));const p={x};row.item=x?x.id:(row.item&&miItem(row.item)&&miItem(row.item)[f]===v?row.item:'');if(x&&ev.type==='change'){row.name=x.name;row.code=x.code;const o=m.querySelector(`[data-mrr="${i}"][data-f="${f==='code'?'name':'code'}"]`);if(o)o.value=f==='code'?x.name:x.code}if(p.x){row.unit=p.x.unit;row.cu=false;const u=m.querySelector(`[data-mrr="${i}"][data-f="unit"]`);if(u){if(u.tagName==='SELECT'&&![...u.options].some(o=>o.value===p.x.unit))u.insertAdjacentHTML('afterbegin',`<option>${esc(p.x.unit)}</option>`);u.value=p.x.unit}if(ev.type==='change'&&!row.qty&&miLow(p.x)){row.qty=String(mrqSugg(p.x));const q=m.querySelector(`[data-mrr="${i}"][data-f="qty"]`);if(q)q.value=row.qty}}const h=m.querySelector(`[data-mrh="${i}"]`);if(h)h.innerHTML=mrqHave(row)}
+      if(f==='name'||f==='code'){const i=el.dataset.mrr;const v=el.value.trim();const L=MIv();row[f]=v;const x=f==='code'?(v&&L.find(z=>(z.code||'').toLowerCase()===v.toLowerCase())):(v&&L.find(z=>z.name===v));const p={x};row.item=x?x.id:(row.item&&miItem(row.item)&&miItem(row.item)[f]===v?row.item:'');if(x&&ev.type==='change'){row.name=x.name;row.code=x.code;const o=m.querySelector(`[data-mrr="${i}"][data-f="${f==='code'?'name':'code'}"]`);if(o)o.value=f==='code'?x.name:x.code}if(p.x){row.unit=p.x.unit;row.cu=false;const u=m.querySelector(`[data-mrr="${i}"][data-f="unit"]`);if(u){if(u.tagName==='SELECT'&&![...u.options].some(o=>o.value===p.x.unit))u.insertAdjacentHTML('afterbegin',`<option>${esc(p.x.unit)}</option>`);u.value=p.x.unit}if(ev.type==='change'&&!row.qty&&miLow(p.x)){row.qty=String(mrqSugg(p.x));const q=m.querySelector(`[data-mrr="${i}"][data-f="qty"]`);if(q)q.value=row.qty}}const h=m.querySelector(`[data-mrh="${i}"]`);if(h)h.innerHTML=mrqHave(row)}
       else if(f==='unit'&&el.value==='__other'){row.cu=true;row.unit='';render();const n=m.querySelector(`input[data-mrr="${el.dataset.mrr}"][data-f="unit"]`);if(n)n.focus()}
       else row[f]=el.value};el.oninput=h;el.onchange=h});
     {const ms=m.querySelector('#msSearch');if(ms)ms.oninput=()=>{const qs=normQ(ms.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#msGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#msNone');if(z)z.style.display=n?'none':''}}
@@ -3176,12 +3181,12 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='msDayPdf')miPdf('day');
   else if(act==='msEditItem'){if(miCanEdit())miItemDialog(t0.dataset.id)}
   else if(act==='mrqNew'){S.mrqEdit=mrqNew();render();window.scrollTo({top:0})}
-  else if(act==='mrqNewLow'){const r=mrqNew();const low=MI().filter(miLow).sort(miSort);if(low.length)r.rows=low.map(x=>mrqRow(x,mrqSugg(x)));S.mrqEdit=r;render();window.scrollTo({top:0})}
+  else if(act==='mrqNewLow'){const r=mrqNew();const low=MIv().filter(miLow).sort(miSort);if(low.length)r.rows=low.map(x=>mrqRow(x,mrqSugg(x)));S.mrqEdit=r;render();window.scrollTo({top:0})}
   else if(act==='mrqOpen'){const r=MR().find(x=>x.id===t0.dataset.id);if(r){S.mrqEdit=JSON.parse(JSON.stringify(r));if(!S.mrqEdit.rows.length)S.mrqEdit.rows=[mrqRow()];render();window.scrollTo({top:0})}}
   else if(act==='mrqBack'){S.mrqEdit=null;render()}
   else if(act==='mrqRowAdd'){S.mrqEdit.rows.push(mrqRow());render();const n=$('#main').querySelectorAll('.mrqname');if(n.length)n[n.length-1].focus()}
   else if(act==='mrqRowDel'){const r=S.mrqEdit;r.rows.splice(+t0.dataset.i,1);if(!r.rows.length)r.rows.push(mrqRow());render()}
-  else if(act==='mrqAddLow'){const r=S.mrqEdit;const have=new Set(r.rows.map(x=>x.item).filter(Boolean));r.rows=r.rows.filter(x=>x.name);MI().filter(x=>miLow(x)&&!have.has(x.id)).sort(miSort).forEach(x=>r.rows.push(mrqRow(x,mrqSugg(x))));if(!r.rows.length)r.rows.push(mrqRow());render()}
+  else if(act==='mrqAddLow'){const r=S.mrqEdit;const have=new Set(r.rows.map(x=>x.item).filter(Boolean));r.rows=r.rows.filter(x=>x.name);MIv().filter(x=>miLow(x)&&!have.has(x.id)).sort(miSort).forEach(x=>r.rows.push(mrqRow(x,mrqSugg(x))));if(!r.rows.length)r.rows.push(mrqRow());render()}
   else if(act==='mrqSave'){const r=S.mrqEdit;const R=r.rows.filter(x=>x.name.trim());if(!R.length||!R.some(x=>toNum(x.qty)>0)){toast('⚠️ لانیکێم کەرەستەیەکێ ب ژمارە بنڤیسە');return}
     const bad=R.find(x=>!(toNum(x.qty)>0));if(bad){toast('⚠️ ژمارا «'+bad.name+'» بنڤیسە');return}
     R.forEach(x=>{delete x.cu;if(!x.unit)x.unit='دانە'});r.rows=R;if(r.status==='draft'||!r.status)r.status=t0.dataset.s;const i=MR().findIndex(x=>x.id===r.id);if(i>=0)MR()[i]=r;else MR().push(r);save(MX().rdoc,100);S.mrqEdit=null;render();
@@ -3251,7 +3256,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='addProf'){S.profiles.unshift({code:'',b1:0,b2:0,s1:1,s2:1,w:0});profFilter='';save('cfg/profiles');render();const i=$('#main').querySelector('input[data-p="0"]');if(i)i.focus()}
   else if(act==='profCrn'){profCrnDialog(+t.dataset.i)}
   else if(act==='rubPdf'){rubPdf(p)}
-  else if(act==='rubReq'){const {rows}=crnRows(p);const sh=rows.filter(r=>r.diff<-0.0005);S.invKind='crn';const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+p.name;S.mrqEdit=r;S.invSubK.crn='mreq';go('invCrn');window.scrollTo({top:0})}
+  else if(act==='rubReq'){const g=t0.dataset.g||'rub';const {rows}=crnRows(p);const sh=rows.filter(r=>r.diff<-0.0005&&r.x.grp===g);S.invKind='crn';S.crnGrp=g;const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+p.name;S.mrqEdit=r;go(g==='nyl'?'invNyl':'invRub','mreq');window.scrollTo({top:0})}
   else if(act==='delProf'){const x=S.profiles[+t.dataset.i];dialog(`<p>پڕۆفایلێ <b class="ltr">${esc(x.code)}</b> ژێببە؟</p>`,()=>{S.profiles.splice(+t.dataset.i,1);save('cfg/profiles',100);render()},'ژێببە')}
   else if(act==='paintPaste'){importPaints(parsePaints(parseText($('#paintPaste').value)))}
   else if(act==='hexClr'){const x=S.paints[+t0.dataset.i];if(x){delete x.hex;save('cfg/paints',100);render()}}
