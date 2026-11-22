@@ -355,6 +355,39 @@ tr.oldrow td{background:color-mix(in srgb,#64748b 12%,transparent)}
 .stkchk.on{background:#64748b;color:#fff;border-color:#64748b}
 .bxrow.isold input.num{background:color-mix(in srgb,#64748b 18%,var(--field))!important;border-color:#64748b!important}
 
+#undoFab{position:fixed;inset-inline-start:14px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:999px;border:none;background:#1f2937;color:#fff;font:inherit;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer}
+#undoFab .ui{font-size:1.2rem;line-height:1}#undoFab .un{background:#f59e0b;color:#111;border-radius:999px;padding:0 7px;font-size:.78rem}
+#undoFab.pulse{animation:upulse .6s ease}@keyframes upulse{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+@media (min-width:900px){#undoFab{bottom:24px}}
+.undolist{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}.undorow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.undorow .btn{flex:none}
+
+.thelp{margin:4px 0 12px}.thelp summary{cursor:pointer;color:var(--accent);font-weight:600}
+.tbrands{display:flex;flex-direction:column;gap:16px}
+.tbrand{border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden}
+.tbh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,var(--card)),var(--card));border-bottom:1px solid var(--line)}
+.tbh>b{font-size:1.2rem}
+.tsum{font-size:.82rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}.tsum b{font-size:.95rem}
+.tsum.tn{background:color-mix(in srgb,#3b82f6 12%,transparent);border-color:color-mix(in srgb,#3b82f6 35%,transparent)}
+.tsum.tp{background:color-mix(in srgb,#f59e0b 14%,transparent);border-color:color-mix(in srgb,#f59e0b 40%,transparent)}
+.tsum.ts{background:color-mix(in srgb,#64748b 16%,transparent)}
+.twrows{display:flex;flex-direction:column}
+.twrow{display:grid;grid-template-columns:150px 1fr 1fr;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:start}
+.twrow:last-child{border-bottom:none}
+.tw{display:flex;flex-direction:column;gap:2px;padding-top:4px}.tw b{font-size:1.35rem}.tw b small{font-size:.75rem;margin-inline-start:2px;color:var(--muted)}.tw .muted{font-size:.78rem}
+.twho{font-size:.72rem;color:var(--muted)}
+.tcell{border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--line)}
+.tcell.tn{background:color-mix(in srgb,#3b82f6 6%,var(--card))}.tcell.tp{background:color-mix(in srgb,#f59e0b 7%,var(--card))}
+.tcell.na{opacity:.5;justify-content:center}
+.tcell .thead{display:flex;align-items:baseline;gap:6px}.tcell .tlbl{font-size:.75rem;font-weight:800;letter-spacing:.3px;padding:1px 8px;border-radius:999px}
+.tcell.tn .tlbl{background:#3b82f6;color:#fff}.tcell.tp .tlbl{background:#d97706;color:#fff}
+.tcell .tm2{margin-inline-start:auto;font-weight:800;font-size:1.05rem}
+.bxrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bxrow input.num{width:84px;min-height:44px;font-size:1.15rem;font-weight:700;text-align:center;border-radius:12px}
+.bxrow select{min-height:44px;border-radius:12px}
+.addlen{border:1px dashed var(--line2);background:none;color:var(--accent);border-radius:10px;padding:4px 10px;font:inherit;font-size:.8rem;cursor:pointer;align-self:flex-start}
+@media (max-width:760px){.twrow{grid-template-columns:1fr 1fr;padding:10px}.tw{grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px;flex-wrap:wrap;padding:0}
+  .bxrow input.num{width:64px}.bxrow select{padding:0 4px}.tcell{padding:8px}}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -693,8 +726,44 @@ function docData(path){
   if(path==='inv/crnreq')return {list:S.crnReq||[]};
   if(path.startsWith('periods/')){const p=S.periods[path.slice(8)];return p?JSON.parse(JSON.stringify(p)):null}
 }
+
+/* ===================== UNDO (گەڕاندنەوە) ===================== */
+let lastUserAct=0;['pointerdown','keydown','input','change'].forEach(ev=>document.addEventListener(ev,e=>{if(e.isTrusted!==false)lastUserAct=Date.now()},true));
+const userActive=()=>Date.now()-lastUserAct<4000;
+const UNDO=[];let undoing=false;const UNDO_OPEN={};const SNAP={};let UNDO_LBL='';
+const UNDO_PATHS={'cfg/settings':'ڕێکخستن','cfg/paints':'جۆرێن سبغێ','cfg/profiles':'پڕۆفایل','inv/incoming':'ل ڕێیە','cfg/misc':'لیستا کەرەستەیان','inv/miscreq':'داخوازیێن کەرەستەیان','cfg/crn':'کرۆمات / لاستیک / نایلۆن','inv/crnreq':'داخوازیێن هۆڵا سبغێ'};
+function undoPathLbl(path){if(UNDO_PATHS[path])return UNDO_PATHS[path];if(path.startsWith('periods/')){const p=S.periods[path.slice(8)];return 'ماوە'+(p?' «'+p.name+'»':'')}return path}
+function undoSnapAll(){if(!S.loaded&&db)return;const ps=Object.keys(UNDO_PATHS);if(S.cur)ps.push('periods/'+S.cur);ps.forEach(pa=>{if(dirty[pa]||UNDO_OPEN[pa])return;try{SNAP[pa]=JSON.stringify(docData(pa))}catch(e){}})}
+function undoPush(e){e.at=Date.now();UNDO.unshift(e);if(UNDO.length>40)UNDO.length=40;undoFab()}
+function undoOnSave(path){if(undoing||!userActive()){if(!undoing)UNDO_LBL='';return}if(!(path in UNDO_PATHS)&&!path.startsWith('periods/'))return;const lbl=UNDO_LBL;UNDO_LBL='';
+  const o=UNDO_OPEN[path];if(o&&Date.now()-o.t<5000&&!(lbl&&o.e&&o.e.label!==lbl)){o.t=Date.now();clearTimeout(o.tm);o.tm=setTimeout(()=>{delete UNDO_OPEN[path]},5000);if(lbl&&o.e)o.e.label=lbl;return}
+  const before=SNAP[path];if(before===undefined)return;
+  const e={kind:'doc',path,before,label:lbl||('گوهۆڕین ل '+undoPathLbl(path))};undoPush(e);UNDO_OPEN[path]={t:Date.now(),e,tm:setTimeout(()=>{delete UNDO_OPEN[path]},5000)}}
+function applyDoc(path,d){if(!d)return;
+  if(path==='cfg/settings')S.settings=d;else if(path==='cfg/paints')S.paints=d.list||[];else if(path==='cfg/profiles')S.profiles=d.list||[];else if(path==='inv/incoming')S.manInc=d.list||[];
+  else if(path==='cfg/misc')S.miscItems=d.list||[];else if(path==='inv/miscreq')S.miscReq=d.list||[];else if(path==='cfg/crn')S.crnItems=d.list||[];else if(path==='inv/crnreq')S.crnReq=d.list||[];
+  else if(path.startsWith('periods/'))S.periods[path.slice(8)]=d}
+function invUndoLbl(sec,key){if(sec==='box'){const [b,w,t,l]=key.split('|');const bo=brandObj(b);return `${bo?bo.name:b} ${w}mm ${t==='P'?'Rough':'Normal'}${l?' '+l+'m':''}`}const d=paintDef(key);return d?d.name:key}
+function undoOnInv(sec,key,old){if(undoing||!userActive())return;const mk='inv:'+sec+':'+key;const o=UNDO_OPEN[mk];
+  if(o&&Date.now()-o.t<5000){o.t=Date.now();clearTimeout(o.tm);o.tm=setTimeout(()=>{delete UNDO_OPEN[mk]},5000);return}
+  const e={kind:'inv',sec,key,old,label:'مەخزەن: '+invUndoLbl(sec,key)+' ('+(old==null?'ڤالا':fmt(old,1))+' → …)'};undoPush(e);UNDO_OPEN[mk]={t:Date.now(),e,tm:setTimeout(()=>{delete UNDO_OPEN[mk]},5000)}}
+function undoTxDel(dir,t){if(undoing||!t)return;lastUserAct=Date.now();undoPush({kind:'tx',dir,t:JSON.parse(JSON.stringify(t)),label:'ژێبرنا تۆمارەکێ ('+(dir==='in'?'IN':'OUT')+': '+fmt(t.qty,2)+' '+txLabel(t.sec,t.key)+')'})}
+async function undoDo(i){const e=UNDO[i];if(!e)return;undoing=true;
+  try{if(e.kind==='doc'){const d=JSON.parse(e.before);applyDoc(e.path,d);delete UNDO_OPEN[e.path];save(e.path,100)}
+    else if(e.kind==='inv'){delete UNDO_OPEN['inv:'+e.sec+':'+e.key];setInv(e.sec,e.key,e.old==null?'':String(e.old))}
+    else if(e.kind==='tx'){const t={...e.t};const id=t.id;delete t.id;delete t.dir;if(!db){S.tx[e.dir].push({...t,id});recomputeInv();localSave()}else await db.doc((e.dir==='in'?'invin/':'invout/')+id).set(t)}
+    UNDO.splice(i,1);toast('↶ هاتە گەڕاندن: '+e.label)}catch(er){toast('⚠️ گەڕاندن نەبوو')}
+  undoing=false;render();undoFab()}
+function undoFab(){let f=document.getElementById('undoFab');const n=UNDO.filter(e=>Date.now()-e.at<60*60000).length;if(db&&!curApp()){if(f)f.style.display='none';return}
+  if(!f){f=document.createElement('button');f.id='undoFab';f.type='button';f.onclick=undoPanel;document.body.appendChild(f)}
+  f.innerHTML=`<span class="ui">↶</span><span class="ut">گەڕاندنەوە</span>${n?`<span class="un">${n}</span>`:''}`;f.style.display=n&&!document.body.classList.contains('auth')?'':'none';f.classList.remove('pulse');void f.offsetWidth;f.classList.add('pulse')}
+function undoPanel(){const L=UNDO.filter(e=>Date.now()-e.at<60*60000);if(!L.length){undoFab();return}
+  const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'نوکە':m+' خولەک بەری نوکە'};
+  dialog(`<h3 style="margin-top:0">↶ گەڕاندنەوە</h3><p class="muted" style="margin-top:0">ئەگەر تشتەک ب خەلەتی هاتە گوهۆڕین، ل ڤێرە بزڤڕینە. گوهۆڕینێن ئێک دەمژمێرا دوماهیێ.</p>
+   <div class="undolist">${L.map((e,i)=>`<div class="undorow"><div class="grow"><b>${esc(e.label)}</b><div class="muted" style="font-size:.78rem">${ago(e.at)}</div></div><button type="button" class="btn pri" data-undo="${UNDO.indexOf(e)}">↶ بزڤڕینە</button></div>`).join('')}</div>`,()=>{},'داخستن','wide');
+  document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{$('#dlg').innerHTML='';undoDo(+b.dataset.undo)})}
 function save(path,delay=900){
-  dirty[path]=true;
+  undoOnSave(path);dirty[path]=true;
   if(!db){clearTimeout(timers.__local);timers.__local=setTimeout(()=>{localSave();dirty[path]=false;setStatus('✓ هاتە پاشەکەفتکرن')},500);return}
   setStatus('پاشەکەفتکرن...');
   clearTimeout(timers[path]);
@@ -945,7 +1014,7 @@ function applyInvRemote(d){
   S.invBase=nx;const meta={...(d.meta||{})};pendingInv.forEach(mk=>{if(S.invMeta[mk])meta[mk]=S.invMeta[mk]});S.invMeta=meta;recomputeInv();
 }
 function setInv(sec,key,str){
-  if(!S.invBase)S.invBase=normStock({});if(!S.inv)recomputeInv();const mk=sec+':'+key;
+  if(!S.invBase)S.invBase=normStock({});if(!S.inv)recomputeInv();const mk=sec+':'+key;undoOnInv(sec,key,S.invBase[sec][key]===undefined?null:S.invBase[sec][key]);
   if(!(mk in invPrev))invPrev[mk]=S.inv[sec][key]===undefined?null:S.inv[sec][key];
   if(String(str).trim()==='')delete S.invBase[sec][key];else S.invBase[sec][key]=toNum(str);
   S.invMeta[mk]={u:myUid(),at:new Date().toISOString()};pendingInv.add(mk);recomputeInv();
@@ -1563,29 +1632,29 @@ function lockBar(p){
 }
 function copyBtn(p,what){const prev=prevPeriod(p);return prev?`<div class="row" style="margin-bottom:8px"><button class="btn" data-act="copyStock" data-what="${what}" data-from="${prev.id}">کۆپیکرن ژ «${esc(prev.name)}»</button></div>`:''}
 function viewStockTape(p){const inv=!!p.__inv;
+  const bd=periodBrands(p);const ws=tapeWidths(p);const ks=Object.keys(bd);
+  const bobj=k=>(S.settings.brands||[]).find(x=>brandKey(x.name)===k);
+  const entries=(base)=>{const ks=Object.keys(p.stock.box).filter(k=>(k===base||k.startsWith(base+'|'))&&p.stock.box[k]!==undefined);extraLen.forEach(k=>{if(k.startsWith(base+'|')&&!ks.includes(k))ks.push(k)});if(!ks.length)ks.push(base+'|'+(S.settings.rollLen||300));return ks.sort((a,b)=>boxLen(a)-boxLen(b))};
+  const cellM2=(base)=>entries(base).reduce((s,k)=>s+boxM2(p,k),0);
+  const sumB=(b,t,old)=>Object.keys(p.stock.box).filter(k=>k.startsWith(b+'|')&&k.split('|')[2]===t&&toNum(p.stock.box[k])>0&&(old==null||(inv&&isOldTape(k))===old)).reduce((a,k)=>a+boxM2(p,k),0);
+  const cell=(b,w,t)=>{const base=b+'|'+w+'|'+t;const o=bobj(b);const es=entries(base);const ok=!o||offers(o,w,t)||es.some(k=>toNum(p.stock.box[k])>0);
+    if(!ok)return `<div class="tcell na ${t==='N'?'tn':'tp'}"><span class="tlbl">${t==='N'?'Normal':'Rough'}</span><span class="muted">—</span></div>`;
+    const lens=rollLens();const m2=cellM2(base);
+    return `<div class="tcell ${t==='N'?'tn':'tp'}"><div class="thead"><span class="tlbl">${t==='N'?'Normal':'Rough'}</span><span class="tm2" data-m2="${esc(base)}">${m2?fmt(m2,1):''}</span><small class="muted">م²</small></div>
+      ${es.map(k=>{const L=boxLen(k);const opts=[...new Set([...lens,L])].sort((a,b)=>a-b);const old=inv&&isOldTape(k);
+        return `<div class="bxrow${old?' isold':''}"><input class="num" inputmode="decimal" data-st="box" data-k="${esc(k)}" value="${p.stock.box[k]??''}" placeholder="0" title="کارتۆن"><select data-len data-k="${esc(k)}" title="درێژیا ڕۆلی" ${inv?'':'disabled'}>${opts.map(x=>`<option value="${x}" ${x===L?'selected':''}>${x}m</option>`).join('')}</select>${inv&&(toNum(p.stock.box[k])>0||old)?`<label class="stkchk${old?' on':''}" title="Stock — ئەڤ لسقە نائێتە بکارئینان"><input type="checkbox" data-tstk="${esc(oldKey(k))}" ${old?'checked':''}>Stock</label>`:''}</div>`}).join('')}
+      ${inv&&es.length<lens.length?`<button class="addlen" data-act="addLen" data-base="${esc(base)}" title="درێژیەکا دی یا ڕۆلی">+ درێژیەکا دی</button>`:''}</div>`};
+  const brands=ks.map(b=>{const o=bobj(b);const rows=ws.filter(w=>!o||offers(o,w,'N')||offers(o,w,'P')||Object.keys(p.stock.box).some(k=>k.startsWith(b+'|'+w+'|')&&toNum(p.stock.box[k])>0));
+    if(!rows.length)return `<div class="tbrand empty"><div class="tbh"><b class="ltr">${esc(bd[b])}</b></div><div class="muted" style="padding:8px 14px">چ لسق بۆ ڤێ کۆمپانیێ نەهاتینە دیارکرن (تابا «جۆرێن لسقێ»)</div></div>`;
+    const n=sumB(b,'N',inv?false:null),pp=sumB(b,'P',inv?false:null),st=inv?sumB(b,'N',true)+sumB(b,'P',true):0;
+    return `<div class="tbrand"><div class="tbh"><b class="ltr">${esc(bd[b])}</b><span class="grow"></span>
+      <span class="tsum tn">Normal <b data-bsum="${esc(b)}|N">${fmt(n,0)}</b></span><span class="tsum tp">Rough <b data-bsum="${esc(b)}|P">${fmt(pp,0)}</b></span>${st?`<span class="tsum ts">Stock <b>${fmt(st,0)}</b></span>`:''}<small class="muted">م²</small></div>
+      <div class="twrows">${rows.map(w=>{const mk=inv?(Object.keys(S.invMeta).filter(x=>x.startsWith('box:'+b+'|'+w+'|')).sort((x,y)=>S.invMeta[y].at.localeCompare(S.invMeta[x].at))[0]||''):'';const m=mk&&S.invMeta[mk];
+        return `<div class="twrow"><div class="tw"><b class="ltr">${w}<small>mm</small></b><span class="muted">${fmt(rpbOf(w))} ڕۆل/کارتۆن</span>${m?`<span class="twho">${m.u?`<span data-uid="${esc(m.u)}">…</span>`:''} · <span class="ltr">${whenTxt(m.at)}</span></span>`:''}</div>${cell(b,w,'N')}${cell(b,w,'P')}</div>`}).join('')}</div></div>`}).join('');
   return `${inv?'':`<div class="info">لسقا نوکە ل مەخزەنێ هەی بنڤیسە.</div>${copyBtn(p,'tape')}`}
-  <h3>مەخزەنا لسقێ (کارتۆن) — ل دویڤ کۆمپانیێ</h3>
-  <p class="muted">ژمارا کارتۆنان (Box in Stock) و درێژیا ڕۆلێن وان (300 / 400 / 500 مەتر) بۆ هەر کۆمپانیەکێ بنڤیسە. ئەگەر ژ هەمان لسقێ کارتۆنێن ب درێژیێن جودا هەبن، «+ درێژیەکا دی» بکە. م² = کارتۆن × ڕۆل بۆ کارتۆنێ × (پانی ÷ ١٠٠٠) × درێژیا ڕۆلی.</p>
-  ${inv?'<p class="muted" style="margin-top:-4px">🏷 <b>Stock</b>: نیشانێ بدە ئەو لسقێن ل مەخزەنێ هەین بەلێ <b>نائێنە بکارئینان</b> — د ڕاپۆرتێ دا ل دوماهیێ ب جودا دیار دبن (Normal ← Rough ← Stock Normal ← Stock Rough) و د ئەنجاما لسقێ دا ناهێنە حیسابکرن.</p>':''}
-  ${(()=>{const bd=periodBrands(p);const ws=tapeWidths(p);
-    const ks=Object.keys(bd);
-    if(!ks.length)return '<p class="muted">هێشتا چ کۆمپانیێن لسقێ نینن. ل تابا «جۆرێن لسقێ» زێدە بکە.</p>';
-    const bobj=k=>(S.settings.brands||[]).find(x=>brandKey(x.name)===k);
-    const entries=(base)=>{const ks=Object.keys(p.stock.box).filter(k=>(k===base||k.startsWith(base+'|'))&&p.stock.box[k]!==undefined);extraLen.forEach(k=>{if(k.startsWith(base+'|')&&!ks.includes(k))ks.push(k)});if(!ks.length)ks.push(base+'|'+(S.settings.rollLen||300));return ks.sort((a,b)=>boxLen(a)-boxLen(b))};
-    const cellM2=(base)=>entries(base).reduce((s,k)=>s+boxM2(p,k),0);
-    const cell=(b,w,t)=>{const base=b+'|'+w+'|'+t;const o=bobj(b);const es=entries(base);const ok=!o||offers(o,w,t)||es.some(k=>toNum(p.stock.box[k])>0);
-      if(!ok)return '<td class="n muted">—</td><td></td>';
-      const lens=rollLens();
-      return `<td class="n"><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">${es.map(k=>{const L=boxLen(k);const opts=[...new Set([...lens,L])].sort((a,b)=>a-b);
-        const old=inv&&isOldTape(k);return `<div class="bxrow${old?' isold':''}" style="display:flex;gap:4px;align-items:center"><input class="num" inputmode="decimal" data-st="box" data-k="${esc(k)}" value="${p.stock.box[k]??''}" style="width:70px" title="کارتۆن"><select data-len data-k="${esc(k)}" title="درێژیا ڕۆلی" ${inv?'':'disabled'}>${opts.map(x=>`<option value="${x}" ${x===L?'selected':''}>${x}m</option>`).join('')}</select>${inv&&(toNum(p.stock.box[k])>0||old)?`<label class="stkchk${old?' on':''}" title="Stock — ئەڤ لسقە نائێتە بکارئینان"><input type="checkbox" data-tstk="${esc(oldKey(k))}" ${old?'checked':''}>Stock</label>`:''}</div>`}).join('')}
-        ${inv&&es.length<lens.length?`<button class="x" data-act="addLen" data-base="${esc(base)}" title="درێژیەکا دی یا ڕۆلی" style="font-size:.8rem;color:var(--accent)">+ درێژیەکا دی</button>`:''}</div></td><td class="n muted" data-m2="${esc(base)}">${cellM2(base)?fmt(cellM2(base),1):''}</td>`};
-    return ks.map(b=>{const o=bobj(b);const rows=ws.filter(w=>!o||offers(o,w,'N')||offers(o,w,'P')||Object.keys(p.stock.box).some(k=>k.startsWith(b+'|'+w+'|')&&toNum(p.stock.box[k])>0));
-    if(!rows.length)return `<div style="margin-bottom:8px"><b class="ltr">${esc(bd[b])}</b> <span class="muted">— چ لسق بۆ ڤێ کۆمپانیێ نەهاتینە دیارکرن (تابا «جۆرێن لسقێ»)</span></div>`;
-    return `<div style="margin-bottom:12px"><b class="ltr">${esc(bd[b])}</b>
-    <div class="tbl-scroll"><table><thead><tr><th>پانی</th><th class="n">ڕۆل/کارتۆن</th><th class="n">Normal — کارتۆن</th><th class="n">م²</th><th class="n">Rough — کارتۆن</th><th class="n">م²</th>${inv?'<th>دوماهیک گوهۆڕین</th>':''}</tr></thead><tbody>
-    ${rows.map(w=>{const mk=inv?(Object.keys(S.invMeta).filter(x=>x.startsWith('box:'+b+'|'+w+'|')).sort((x,y)=>S.invMeta[y].at.localeCompare(S.invMeta[x].at))[0]||''):'';
-      return `<tr><td><b class="ltr">${w} mm</b></td><td class="n muted">${fmt(rpbOf(w))}</td>${cell(b,w,'N')}${cell(b,w,'P')}${inv?whoCell(mk):''}</tr>`}).join('')}
-    </tbody></table></div></div>`}).join('')})()}
+  <details class="thelp"><summary>ℹ️ چاوا بنڤیسم؟</summary><p class="muted">ژمارا کارتۆنان و درێژیا ڕۆلێن وان (300 / 400 / 500 مەتر) بنڤیسە. ئەگەر ژ هەمان لسقێ کارتۆنێن ب درێژیێن جودا هەبن، «+ درێژیەکا دی» بکە. م² = کارتۆن × ڕۆل بۆ کارتۆنێ × (پانی ÷ ١٠٠٠) × درێژیا ڕۆلی.</p>
+  ${inv?'<p class="muted">🏷 <b>Stock</b>: ئەو لسقێن ل مەخزەنێ هەین بەلێ نائێنە بکارئینان — ل دەرئێخستنێ دیار نابن، د ڕاپۆرتێ دا ل دوماهیێ دیار دبن و د ئەنجاما لسقێ دا ناهێنە حیسابکرن.</p><p class="muted">↶ ئەگەر ب خەلەتی تشتەک گوهۆڕی، دوگمەیا «گەڕاندنەوە» ل خوارێ بکە.</p>':''}</details>
+  ${ks.length?`<div class="tbrands">${brands}</div>`:'<p class="muted">هێشتا چ کۆمپانیێن لسقێ نینن. ل تابا «جۆرێن لسقێ» زێدە بکە.</p>'}
   <p class="muted">بۆ زێدەکرنا کۆمپانیەکا نوو یا لسقێ، بچە تابا «جۆرێن لسقێ».</p>`;
 }
 function viewStockPaint(p){const inv=!!p.__inv;const poInc=inv?poIncoming():{};
@@ -2878,7 +2947,7 @@ function bind(){
       else if(f==='unit'&&el.value==='__other'){row.cu=true;row.unit='';render();const n=m.querySelector(`input[data-mrr="${el.dataset.mrr}"][data-f="unit"]`);if(n)n.focus()}
       else row[f]=el.value};el.oninput=h;el.onchange=h});
 
-    m.querySelectorAll('[data-tstk]').forEach(el=>el.onchange=()=>{const L=new Set(S.settings.stockTape||[]);if(el.checked)L.add(el.dataset.tstk);else L.delete(el.dataset.tstk);S.settings.stockTape=[...L];save('cfg/settings',300);render();toast(el.checked?'✓ نیشانا Stock هاتە دان':'✓ نیشانا Stock هاتە ڕاکرن')});
+    m.querySelectorAll('[data-tstk]').forEach(el=>el.onchange=()=>{const L=new Set(S.settings.stockTape||[]);if(el.checked)L.add(el.dataset.tstk);else L.delete(el.dataset.tstk);S.settings.stockTape=[...L];UNDO_LBL='نیشانا Stock: '+invUndoLbl('box',el.dataset.tstk)+(el.checked?' (دانان)':' (ڕاکرن)');save('cfg/settings',300);render();toast(el.checked?'✓ نیشانا Stock هاتە دان':'✓ نیشانا Stock هاتە ڕاکرن')});
     {const ms=m.querySelector('#msSearch');if(ms)ms.oninput=()=>{const qs=normQ(ms.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#msGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#msNone');if(z)z.style.display=n?'none':''}}
     [['#msStockQ',v=>S.msStockQ=v],['#msLogQ',v=>{S.msLogF=S.msLogF||{};S.msLogF.q=v}]].forEach(([sel,set])=>{const e=m.querySelector(sel);if(!e)return;const flt=()=>{set(e.value);const qs=normQ(e.value).trim().split(' ').filter(Boolean);e.closest('.card').querySelectorAll('tbody tr').forEach(tr=>{const t=normQ(tr.textContent);tr.style.display=qs.every(x=>t.includes(x))?'':'none'})};e.oninput=flt;if(e.value)flt()});
     m.querySelectorAll('[data-msf]').forEach(el=>{const h=()=>{const f=miF(el.dataset.msf);f[el.dataset.f]=el.value};el.oninput=h;el.onchange=h});
@@ -2900,7 +2969,8 @@ function bind(){
       if(kind==='cart'&&el.value.trim()!==''&&!(toNum(S.inv.kgc[k])>0)){const d=paintDef(k);setInv('kgc',k,String((d&&d.kgc)||25))}
       if(kind==='kgc'){const d=paintDef(k);if(d&&toNum(el.value)>0&&d.kgc!==toNum(el.value)){d.kgc=toNum(el.value);save('cfg/paints',1500)}}
       const P=invPeriod();
-      if(kind==='box'){const base=k.split('|').slice(0,3).join('|');const c=m.querySelector(`[data-m2="${CSS.escape(base)}"]`);if(c){const s=Object.keys(S.inv.box).filter(x=>x===base||x.startsWith(base+'|')).reduce((a,x)=>a+boxM2(P,x),0);c.textContent=s?fmt(s,1):''}}
+      if(kind==='box'){const base=k.split('|').slice(0,3).join('|');const c=m.querySelector(`[data-m2="${CSS.escape(base)}"]`);if(c){const s=Object.keys(S.inv.box).filter(x=>x===base||x.startsWith(base+'|')).reduce((a,x)=>a+boxM2(P,x),0);c.textContent=s?fmt(s,1):''}
+        const [bb,,tt]=base.split('|');const bs=m.querySelector(`[data-bsum="${CSS.escape(bb+'|'+tt)}"]`);if(bs){bs.textContent=fmt(Object.keys(S.inv.box).filter(x=>x.startsWith(bb+'|')&&x.split('|')[2]===tt&&!isOldTape(x)).reduce((a,x)=>a+boxM2(P,x),0),0)}}
       if(kind==='cart'||kind==='kgc'){const c=m.querySelector(`[data-kg="${CSS.escape(k)}"]`);if(c){const v=stockKg(P,k);c.textContent=v?fmt(v,1):''}}});
     m.querySelectorAll('select[data-len]').forEach(el=>el.onchange=()=>{const k=el.dataset.k;const base=k.split('|').slice(0,3).join('|');const nk=base+'|'+el.value;if(nk===k)return;
       const v=S.inv.box[k];extraLen.delete(k);
@@ -3015,6 +3085,7 @@ function autoBackupCheck(){if(!db||!S.loaded||!S.permLoaded)return;const u=curAp
   if(!bkTried){bkTried=true;doBackup(true)}
   if(!$('#bkNow')){const lb=lastBackup();$('#banner').innerHTML=`<div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">💾 ${lb?'پتر ژ '+bkDays()+' ڕۆژانە Backup نەهاتیە کرن.':'هێشتا چ Backup نەهاتیە کرن.'} Backup ب خۆ دهێتە داگرتن — ئەگەر فایل نەهات، ل ڤێرە کلیک بکە.</span><button class="btn pri" id="bkNow">${I('down','sm')} نوکە Backup بکە</button></div>`;$('#bkNow').onclick=()=>doBackup()}}
 setTimeout(autoBackupCheck,5000);setInterval(autoBackupCheck,10*60000);
+{const _r=render;render=function(){const x=_r.apply(this,arguments);try{undoSnapAll();undoFab()}catch(e){}return x};const _s=softRender;softRender=function(){const x=_s.apply(this,arguments);try{undoSnapAll()}catch(e){}return x}}
 function backupAgeTxt(){const lb=lastBackup();if(!lb)return '<b>هێشتا چ Backup نەهاتینە کرن.</b>';const d=Math.floor((Date.now()-new Date(lb).getTime())/86400000);return `دوماهیک Backup: ${d<=0?'ئەڤرۆ':d+' ڕۆژ بەری نوکە'}.`}
 function backupReminder(){if(!OFFLINE)return;const lb=lastBackup();const old=!lb||(Date.now()-new Date(lb).getTime())>5*86400000;
   if(old&&(Object.keys(S.periods).length||S.profiles.length||hasStock(S.invBase))){$('#banner').innerHTML=`<div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">💾 ${lb?'پتر ژ ٥ ڕۆژانە تە Backup نەکریە.':'هێشتا تە Backup نەکریە.'} داتا تەنێ ل سەر ڤی کۆمپیوتەری نە — ئەگەر براوزەر پاقژ ببیت یان کۆمپیوتەر خراب ببیت، دێ بەرزە بن.</span><button class="btn pri" id="bkNow">${I('down','sm')} نوکە Backup بکە</button></div>`;
@@ -3232,6 +3303,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='msTxDel'){const dir=t0.dataset.dir,id=t0.dataset.id;const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;
     if(dir==='in'&&miQty(t.key)-toNum(t.qty)<-1e-9){toast('⚠️ ناشێی ژێببەی — پشتی ڤێ داخلکرنێ هندەک هاتیە دەرئێخستن. ل دەستپێکێ وێ دەرئێخستنێ ڕاست بکە.');return}
     dialog(`<p>ئەڤ تۆمارە ژێببە؟<br><b>${dir==='in'?'+':'−'}${fmt(t.qty,2)} ${esc(miUnit(t.key))} ${esc(txLabel('misc',t.key))}</b><br><span class="muted">مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</span></p>`,async()=>{
+      undoTxDel(dir,t);
       if(!db){S.tx[dir]=S.tx[dir].filter(x=>x.id!==id);recomputeInv();localSave();render();return}
       try{await db.doc((dir==='in'?'invin/':'invout/')+id).delete();toast('✓ هاتە ژێبرن')}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
   else if(act==='msLogDir'){S.msLogF=S.msLogF||{};S.msLogF.dir=t0.dataset.v;render()}
@@ -3245,6 +3317,7 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx(dir,[doc])){f.qty='';f.note='';f.person='';toast(`✓ ${dir==='in'?'داخلکرن':'دەرئێخستن'}: ${fmt(qty,2)} ${x.unit} ${x.name}${person?' — بۆ '+esc(person):''}${hall?' ('+esc(hall)+')':''}`);render()}}
   else if(act==='txEdit'&&isAdmin){txEdit(t0.dataset.dir,t0.dataset.id)}
   else if(act==='txDel'&&isAdmin){const dir=t0.dataset.dir,id=t0.dataset.id;dialog('<p>ئەڤ تۆمارە ژێببە؟ مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</p>',async()=>{
+      undoTxDel(dir,(S.tx[dir]||[]).find(x=>x.id===id));
       if(!db){S.tx[dir]=S.tx[dir].filter(x=>x.id!==id);recomputeInv();localSave();render();return}
       try{await db.doc((dir==='in'?'invin/':'invout/')+id).delete()}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
   else if(act==='lockP'&&p){p.stock=normStock(JSON.parse(JSON.stringify(S.inv||{})));p.locked=true;p.lockedAt=new Date().toISOString();save('periods/'+p.id,100);render();toast('🔒 مەخزەنا نوکە بۆ ڤێ ماوەیێ هاتە پاشەکەفتکرن')}
