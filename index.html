@@ -1852,23 +1852,23 @@ function txF(dir){const fk=dir+'-'+S.invKind;if(!S.txf[fk])S.txf[fk]={unit:'kg',
 function paintCurTxt(k){const c=toNum(S.inv.cart[k]);return `${fmt(c*kgcOf({stock:S.inv},k),1)} کیلۆ (${fmt(c,1)} کارتۆن)`}
 function txUnitLbl(f){return f.kind!=='paint'||f.unit==='ctn'?'کارتۆن':f.unit==='t'?'تۆن':'کیلۆ'}
 /* ---- Tape OUT/IN form: tap-friendly (mobile) ---- */
-function tapeStock(bk,w,t,len){let s=0;Object.entries(S.inv.box||{}).forEach(([k,v])=>{const [b,ww,tt,ll]=k.split('|');if(b===bk&&(w==null||+ww==+w)&&(t==null||tt===t)&&(len==null||+ll==+len))s+=toNum(v)});return s}
+function tapeStock(bk,w,t,len,noOld){let s=0;Object.entries(S.inv.box||{}).forEach(([k,v])=>{const [b,ww,tt,ll]=k.split('|');if(noOld&&isOldTape(k))return;if(b===bk&&(w==null||+ww==+w)&&(t==null||tt===t)&&(len==null||+ll==+len))s+=toNum(v)});return s}
 function brandOpts(name){const bo=(S.settings.brands||[]).find(b=>b.name===name);const it=(bo&&bo.items||[]).map(x=>String(x).split('|'));
   const ws=it.length?[...new Set(it.map(x=>+x[0]))].sort((a,b)=>a-b):tapeWidths();const tsFor=w=>it.length?[...new Set(it.filter(x=>+x[0]==+w).map(x=>x[1]))]:['N','P'];return {ws,tsFor}}
-function tapeForm(dir,f){const isIn=dir==='in';const brands=S.settings.brands||[];const bk=brandKey(f.brand);const o=brandOpts(f.brand);
+function tapeForm(dir,f){const isIn=dir==='in';const tS=(a,b,c,d)=>tapeStock(a,b,c,d,!isIn);const brands=S.settings.brands||[];const bk=brandKey(f.brand);const o=brandOpts(f.brand);
   if(!o.ws.some(w=>w==f.w)&&o.ws.length)f.w=o.ws[0];const ts=o.tsFor(f.w);if(!ts.includes(f.t)&&ts.length)f.t=ts[0];
   const lensAll=[...new Set([...rollLens().map(Number),...Object.keys(S.inv.box||{}).map(k=>toNum(k.split('|')[3])).filter(Boolean)])].sort((a,b)=>a-b);
-  const lens=isIn?rollLens():lensAll.filter(l=>tapeStock(bk,f.w,f.t,l)>0);
+  const lens=isIn?rollLens():lensAll.filter(l=>tS(bk,f.w,f.t,l)>0);
   if(!isIn&&lens.length&&!lens.some(l=>l==f.len))f.len=lens[0];
-  const cur=tapeStock(bk,f.w,f.t,f.len);const q=toNum(f.qty);const over=!isIn&&q>cur+1e-9;
+  const cur=tS(bk,f.w,f.t,f.len);const q=toNum(f.qty);const over=!isIn&&q>cur+1e-9;
   const chip=(fld,v,lbl,c,on)=>`<button type="button" class="chip${on?' on':''}${c===0&&!isIn?' zero':''}" data-act="txSet" data-dir="${dir}" data-f="${fld}" data-v="${esc(v)}">${lbl}${c!=null?`<span class="c">${fmt(c,0)}</span>`:''}</button>`;
-  const avail=isIn?[]:Object.entries(S.inv.box||{}).filter(([k,v])=>toNum(v)>0).map(([k,v])=>{const [b,w,t,l]=k.split('|');return {k,b,w:+w,t,l:+l,v:toNum(v)}})
+  const avail=isIn?[]:Object.entries(S.inv.box||{}).filter(([k,v])=>toNum(v)>0&&!isOldTape(k)).map(([k,v])=>{const [b,w,t,l]=k.split('|');return {k,b,w:+w,t,l:+l,v:toNum(v)}})
     .sort((a,b)=>a.b.localeCompare(b.b)||a.w-b.w||a.t.localeCompare(b.t));
   return `<div class="card tapeform" style="background:var(--bg)">
-   <div class="tstep"><div class="lb">کۆمپانی</div><div class="chips">${brands.map(b=>chip('brand',b.name,esc(b.name),isIn?null:tapeStock(brandKey(b.name)),b.name===f.brand)).join('')}</div></div>
-   <div class="tstep"><div class="lb">پانی</div><div class="chips">${o.ws.map(w=>chip('w',w,`<span class="ltr">${w} mm</span>`,isIn?null:tapeStock(bk,w),w==f.w)).join('')}</div></div>
-   <div class="tstep"><div class="lb">جۆر</div><div class="chips">${ts.map(t=>chip('t',t,t==='P'?'Rough':'Normal',isIn?null:tapeStock(bk,f.w,t),t===f.t)).join('')}</div></div>
-   <div class="tstep"><div class="lb">درێژیا ڕۆلی</div><div class="chips">${lens.length?lens.map(l=>chip('len',l,`<span class="ltr">${l}m</span>`,isIn?null:tapeStock(bk,f.w,f.t,l),l==f.len)).join(''):'<span class="short">⚠️ ژ ڤێ لسقێ چ ل مەخزەنێ نینە</span>'}</div></div>
+   <div class="tstep"><div class="lb">کۆمپانی</div><div class="chips">${brands.map(b=>chip('brand',b.name,esc(b.name),isIn?null:tS(brandKey(b.name)),b.name===f.brand)).join('')}</div></div>
+   <div class="tstep"><div class="lb">پانی</div><div class="chips">${o.ws.map(w=>chip('w',w,`<span class="ltr">${w} mm</span>`,isIn?null:tS(bk,w),w==f.w)).join('')}</div></div>
+   <div class="tstep"><div class="lb">جۆر</div><div class="chips">${ts.map(t=>chip('t',t,t==='P'?'Rough':'Normal',isIn?null:tS(bk,f.w,t),t===f.t)).join('')}</div></div>
+   <div class="tstep"><div class="lb">درێژیا ڕۆلی</div><div class="chips">${lens.length?lens.map(l=>chip('len',l,`<span class="ltr">${l}m</span>`,isIn?null:tS(bk,f.w,f.t,l),l==f.len)).join(''):'<span class="short">⚠️ ژ ڤێ لسقێ چ ل مەخزەنێ نینە</span>'}</div></div>
    <div class="stockbox${cur<=0?' empty':''}"><span>ل مەخزەنێ نوکە<div class="muted" dir="ltr" style="font-size:.78rem;text-align:right">${esc(f.brand)} · ${f.w} mm · ${f.t==='P'?'Rough':'Normal'} · ${f.len}m</div></span><span class="v">${fmt(cur,1)} <small>کارتۆن</small></span></div>
    <div class="tstep"><div class="lb">ژمارا کارتۆنان</div>
      <div class="stepper"><button type="button" class="btn" data-act="txStep" data-dir="${dir}" data-d="-1">−</button>
@@ -3192,6 +3192,7 @@ $('#main').addEventListener('click',async e=>{
     let sec,key;if(f.kind==='paint'){const k=norm(f.paint);if(!paintDef(k)){toast('⚠️ ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە');return}sec='cart';key=k;
       const kgc=kgcOf({stock:S.inv},k);if(f.unit==='ctn'){kg=q0*kgc}else{kg=f.unit==='t'?q0*1000:q0;qty=+(kg/kgc).toFixed(4)}}
     else{const bk=brandKey(f.brand);if(!f.brand){toast('⚠️ کۆمپانیەکێ هەلبژێرە');return}sec='box';key=bk+'|'+toNum(f.w)+'|'+f.t+'|'+toNum(f.len)}
+    if(dir==='out'&&sec==='box'&&isOldTape(key)){toast('⚠️ ئەڤ لسقە Stock ە (خرابە) — نائێتە دەرئێخستن');return}
     if(dir==='out'&&toNum(S.inv[sec][key])<qty-1e-4){toast(`⚠️ ل مەخزەنێ تەنێ ${sec==='cart'?paintCurTxt(key):fmt(toNum(S.inv[sec][key]),1)+' کارتۆن'} هەنە`);return}
     const meU=myUid();const tk=(dir==='out'&&canProxy()&&f.taker)?f.taker:meU;
     const doc={at:new Date().toISOString(),u:tk,...(tk!==meU?{rec:meU}:{}),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim()};
