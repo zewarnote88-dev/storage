@@ -304,6 +304,10 @@ html[data-glass="1"] input,html[data-glass="1"] select,html[data-glass="1"] text
 .sw.big.mic{display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#c98a3a,#9a5b13);color:#fff;font-weight:800;font-size:1.2rem;border-radius:12px}
 .pcard .qv.zero{color:var(--muted)}
 
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}
+.ugrid .chip{margin:0;min-height:44px;justify-content:center;display:flex;align-items:center;border-radius:12px;font-size:.95rem}
+.ugrid .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -2300,9 +2304,9 @@ function miRowHtml(t,admin){const x=miItem(t.key);const d=t.at?new Date(t.at):nu
    <td><span class="pill" style="background:${t.dir==='in'?'#15803d':'#c2410c'};color:#fff">${t.dir==='in'?'⬇ IN':'⬆ OUT'}</span></td>
    <td><b>${esc(x?x.name:t.key)}</b></td><td class="ltr muted">${esc(x?x.code:'')}</td><td class="n"><b>${t.dir==='in'?'+':'−'}${fmt(t.qty,2)}</b></td><td>${esc(x?x.unit:'')}</td>
    <td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}${t.rec?`<div class="muted" style="font-size:.75rem">تۆمارکەر: <span data-uid="${esc(t.rec)}">…</span></div>`:''}</td><td class="muted">${esc(t.note||'')}</td>
-   ${admin?`<td style="white-space:nowrap"><button class="btn" style="padding:2px 8px" data-act="txDel" data-dir="${t.dir}" data-id="${esc(t.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}
-const MI_HEAD=admin=>`<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th class="n">ژمارە</th><th>یەکە</th><th>کێ</th><th>تێبینی</th>${admin?'<th></th>':''}</tr>`;
-function miRecent(dir){const R=miRows(dir).filter(t=>t.u===myUid()||t.rec===myUid()||isAdmin).slice(0,8);if(!R.length)return '';
+   <td style="white-space:nowrap">${miMine(t)?`<button class="btn" style="padding:2px 8px" data-act="msTxEdit" data-dir="${t.dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✏️</button> <button class="btn" style="padding:2px 8px" data-act="msTxDel" data-dir="${t.dir}" data-id="${esc(t.id)}" title="ژێبرن">🗑</button>`:''}${t.editedAt?'<div class="muted" style="font-size:.7rem">گوهۆڕی</div>':''}</td></tr>`}
+const MI_HEAD=admin=>`<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th class="n">ژمارە</th><th>یەکە</th><th>کێ</th><th>تێبینی</th><th></th></tr>`;
+function miRecent(dir){const R=miRows(dir).filter(t=>miMine(t)).slice(0,8);if(!R.length)return '';
   return `<div class="tstep" style="margin-top:16px"><div class="lb">دوماهیک تۆمار</div><div class="tbl-scroll" data-nosrch><table><thead>${MI_HEAD(isAdmin)}</thead><tbody>${R.map(t=>miRowHtml(t,isAdmin)).join('')}</tbody></table></div></div>`}
 function miStockRows(){const q=normQ((S.msStockQ)||'');return [...(S.miscItems||[])].sort(miSort).filter(x=>!q||normQ(x.name+' '+x.code).includes(q))}
 function viewMiscStock(){const R=miStockRows();
@@ -2316,23 +2320,54 @@ function viewMiscLog(){const f=S.msLogF=S.msLogF||{dir:'',q:''};const R=miLogFil
     <div class="useg" style="flex:none;min-width:240px">${[['','هەمی'],['in','⬇ IN'],['out','⬆ OUT']].map(([v,l])=>`<button type="button" class="chip${(f.dir||'')===v?' on':''}" data-act="msLogDir" data-v="${v}" style="min-height:40px">${l}</button>`).join('')}</div>
     <input type="search" id="msLogQ" value="${esc(f.q||'')}" placeholder="🔍 ناڤ، کۆد، کەس ..." class="grow" style="min-width:180px"><button class="btn" data-act="msLogPdf">${I('file','sm')} PDF</button></div>
    <div class="muted" style="margin-bottom:6px">${R.length} تۆمار · ${tin} IN · ${R.length-tin} OUT</div>
-   <div class="tbl-scroll" data-nosrch><table><thead>${MI_HEAD(isAdmin)}</thead><tbody>${R.slice(0,500).map(t=>miRowHtml(t,isAdmin)).join('')||`<tr><td colspan="${isAdmin?10:9}" class="muted">هێشتا چ تۆمار نینن.</td></tr>`}</tbody></table></div>`}
+   <div class="tbl-scroll" data-nosrch><table><thead>${MI_HEAD(isAdmin)}</thead><tbody>${R.slice(0,500).map(t=>miRowHtml(t,isAdmin)).join('')||`<tr><td colspan="10" class="muted">هێشتا چ تۆمار نینن.</td></tr>`}</tbody></table></div>`}
 function viewMiscItems(){const ed=miCanEdit();const L=[...(S.miscItems||[])].sort(miSort);
   return `<datalist id="msUnits">${MISC_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>
    ${ed?`<div class="row" style="margin-bottom:10px"><button class="btn pri" data-act="msNew">➕ کەرەستەیەکا نوو</button><span class="muted grow">${L.length} کەرەستە</span></div>`:''}
    <div class="tbl-scroll"><table><thead><tr><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th>یەکە</th><th class="n">ل مەخزەنێ</th>${ed?'<th></th>':''}</tr></thead><tbody>
-   ${L.map(x=>ed?`<tr><td><input data-msi="${esc(x.id)}" data-f="name" value="${esc(x.name)}" style="width:100%;min-width:150px"></td><td><input data-msi="${esc(x.id)}" data-f="code" value="${esc(x.code)}" class="ltr" style="width:130px"></td><td><input data-msi="${esc(x.id)}" data-f="unit" list="msUnits" value="${esc(x.unit)}" style="width:100px"></td><td class="n">${fmt(miQty(x.id),2)}</td><td><button class="btn" style="padding:2px 8px" data-act="msDelItem" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td></tr>`
+   ${L.map(x=>ed?`<tr><td><input data-msi="${esc(x.id)}" data-f="name" value="${esc(x.name)}" style="width:100%;min-width:150px"></td><td><input data-msi="${esc(x.id)}" data-f="code" value="${esc(x.code)}" class="ltr" style="width:130px"></td><td><select data-msi="${esc(x.id)}" data-f="unit" style="width:110px">${[...new Set([...MISC_UNITS,x.unit])].map(u=>`<option ${u===x.unit?'selected':''}>${esc(u)}</option>`).join('')}</select></td><td class="n">${fmt(miQty(x.id),2)}</td><td><button class="btn" style="padding:2px 8px" data-act="msDelItem" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td></tr>`
      :`<tr><td><b>${esc(x.name)}</b></td><td class="ltr">${esc(x.code)}</td><td>${esc(x.unit)}</td><td class="n">${fmt(miQty(x.id),2)}</td></tr>`).join('')||`<tr><td colspan="5" class="muted">هێشتا چ کەرەستە نینن.</td></tr>`}
    </tbody></table></div>`}
 function viewMiscBody(){const k=S.invSub;if(k==='out'||k==='in')return viewMiscForm(k);if(k==='stock')return viewMiscStock();if(k==='mlog')return viewMiscLog();if(k==='items')return viewMiscItems();return ''}
-function msNewDialog(after){dialog(`<h3 style="margin-top:0">➕ کەرەستەیەکا نوو</h3><datalist id="msUnits2">${MISC_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>
-  <div class="mi-head"><label>ناڤێ مادێ<input id="msNName" placeholder="بۆ نموونە: پێچ 4×20"></label><label>کۆدێ مادێ<input id="msNCode" class="ltr" placeholder="SCR-420" style="text-align:left"></label>
-  <label>یەکە<input id="msNUnit" list="msUnits2" value="دانە"></label></div><div id="msNErr" class="short"></div>`,()=>{
-    const n=$('#msNName').value.trim(),c=$('#msNCode').value.trim(),u=$('#msNUnit').value.trim()||'دانە';
+function miUnitPicker(id,cur){cur=cur||'دانە';const isStd=MISC_UNITS.includes(cur);
+  return `<input type="hidden" id="${id}" value="${esc(cur)}"><div class="ugrid" data-ug="${id}">${MISC_UNITS.map(u=>`<button type="button" class="chip${u===cur?' on':''}" data-ugv="${u}">${u}</button>`).join('')}<button type="button" class="chip${isStd?'':' on'}" data-ugv="__other">✏️ یا دی</button></div>
+   <input id="${id}O" placeholder="یەکا خۆ بنڤیسە" value="${isStd?'':esc(cur)}" style="width:100%;margin-top:6px;${isStd?'display:none':''}">`}
+function miUnitBind(id){const g=document.querySelector(`[data-ug="${id}"]`);if(!g)return;const h=$('#'+id),o=$('#'+id+'O');
+  g.querySelectorAll('[data-ugv]').forEach(b=>b.onclick=()=>{g.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));b.classList.add('on');
+    if(b.dataset.ugv==='__other'){o.style.display='';o.focus();h.value=o.value.trim()}else{o.style.display='none';h.value=b.dataset.ugv}miUnitLbl()});
+  o.oninput=()=>{h.value=o.value.trim();miUnitLbl()}}
+function miUnitLbl(){const u=($('#msNUnit')||{}).value||'';document.querySelectorAll('.msNU').forEach(e=>e.textContent=u)}
+function msNewDialog(after){const ci=can('inv_in')&&canKind('misc');
+  dialog(`<h3 style="margin-top:0">➕ کەرەستەیەکا نوو</h3>
+  <div class="mi-head"><label>ناڤێ مادێ<input id="msNName" placeholder="بۆ نموونە: پێچ 4×20"></label><label>کۆدێ مادێ<input id="msNCode" class="ltr" placeholder="SCR-420" style="text-align:left"></label></div>
+  <div class="lb" style="font-weight:600;margin:4px 0 6px">یەکە — ئەڤ کەرەستە ب چ دهێتە ژمارتن؟</div>${miUnitPicker('msNUnit','دانە')}
+  ${ci?`<div class="lb" style="font-weight:600;margin:14px 0 6px">چەند گەهشتیە؟ <span class="muted" style="font-weight:400">(ئەگەر نوکە هاتبیت — دێ ب خۆ وەک داخلکرن تۆمار بیت)</span></div>
+   <div class="qin"><input id="msNQty" class="num" inputmode="decimal" placeholder="0"><span class="qu msNU">دانە</span></div>
+   <input id="msNNote" placeholder="تێبینی: ژ کۆمپانیا ... / ژمارا فاتۆرێ" style="width:100%;margin-top:8px">`:''}
+  <div id="msNErr" class="short"></div>`,()=>{
+    const n=$('#msNName').value.trim(),c=$('#msNCode').value.trim(),u=$('#msNUnit').value.trim();
     if(!n){$('#msNErr').textContent='⚠️ ناڤی بنڤیسە';return false}
+    if(!u){$('#msNErr').textContent='⚠️ یەکێ هەلبژێرە یان بنڤیسە';return false}
     if(c&&(S.miscItems||[]).some(x=>x.code&&x.code.toLowerCase()===c.toLowerCase())){$('#msNErr').textContent='⚠️ ئەڤ کۆدە بەری نوکە هەیە';return false}
     if((S.miscItems||[]).some(x=>x.name.toLowerCase()===n.toLowerCase()&&(x.code||'')===c)){$('#msNErr').textContent='⚠️ ئەڤ کەرەستە بەری نوکە هەیە';return false}
-    const x=miNew(n,c,u);toast('✓ «'+n+'» هاتە زێدەکرن');if(after)after(x);render()},'زێدەکرن');setTimeout(()=>{const e=$('#msNName');if(e&&!$('#dlg').contains(document.activeElement))e.focus()},50)}
+    const q=ci?toNum($('#msNQty').value):0;if(ci&&$('#msNQty').value.trim()&&!(q>0)){$('#msNErr').textContent='⚠️ ژمارە دروست نینە';return false}
+    const note=ci?$('#msNNote').value.trim():'';
+    const x=miNew(n,c,u);if(after)after(x);
+    if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:'misc',key:x.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${n}» هاتە زێدەکرن و ${fmt(q,2)} ${u} هاتنە داخلکرن`);render()}})}
+    else toast('✓ «'+n+'» هاتە زێدەکرن');render()},'پاشەکەفتکرن','wide');
+  miUnitBind('msNUnit');setTimeout(()=>{const e=$('#msNName');if(e&&!$('#dlg').contains(document.activeElement))e.focus()},50)}
+function miMine(t){const me=myUid();return isAdmin||t.u===me||t.rec===me}
+function miTxEdit(dir,id){const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;const x=miItem(t.key);const L=[...(S.miscItems||[])].sort(miSort);
+  dialog(`<h3 style="margin-top:0">✏️ گوهۆڕینا تۆمارێ (${dir==='in'?'داخلکرن':'دەرئێخستن'})</h3>
+   <div class="mi-head"><label>کەرەستە<select id="msEItem">${L.map(z=>`<option value="${esc(z.id)}" ${z.id===t.key?'selected':''}>${esc(z.name)}${z.code?' — '+esc(z.code):''} (${esc(z.unit)})</option>`).join('')}</select></label>
+   <label>ژمارە<input id="msEQty" class="num" inputmode="decimal" value="${+t.qty}"></label></div>
+   <label style="display:block">تێبینی<input id="msENote" value="${esc(t.note||'')}" style="width:100%"></label><div id="msEErr" class="short"></div>`,()=>{
+    const key=$('#msEItem').value,q=toNum($('#msEQty').value),note=$('#msENote').value.trim();if(!(q>0)){$('#msEErr').textContent='⚠️ ژمارە دروست نینە';return false}
+    if(dir==='out'){const avail=miQty(key)+(key===t.key?toNum(t.qty):0);if(q>avail+1e-9){$('#msEErr').textContent=`⚠️ ل مەخزەنێ تەنێ ${fmt(avail,2)} ${miUnit(key)} هەنە`;return false}}
+    else{const after=miQty(t.key)-(key===t.key?toNum(t.qty)-q:toNum(t.qty));if(after<-1e-9){$('#msEErr').textContent='⚠️ ئەڤ گوهۆڕینە مەخزەنێ دکەتە کێمتر ژ سفری (بەری نوکە هاتیە دەرئێخستن)';return false}}
+    const d={...t,key,qty:+q.toFixed(4),note,editedAt:new Date().toISOString(),editedBy:myUid()};delete d.id;
+    (async()=>{if(!db){Object.assign(t,d);recomputeInv();localSave();render();toast('✓ تۆمار هاتە گوهۆڕین');return}
+      try{await db.doc((dir==='in'?'invin/':'invout/')+id).set(d);toast('✓ تۆمار هاتە گوهۆڕین')}catch(e){toast('⚠️ گوهۆڕین نەبوو')}})()},'پاشەکەفتکرن','wide')}
 function miPdf(kind){const now=new Date();const p=n=>String(n).padStart(2,'0');const stamp=`${p(now.getDate())}/${p(now.getMonth()+1)}/${now.getFullYear()} ${p(now.getHours())}:${p(now.getMinutes())}`;
   if(kind==='stock'){const R=miStockRows();printHtml(`<h1>مەخزەنا کەرەستێن دی</h1><div class="sub">${stamp} · ${R.length} کەرەستە</div><table><thead><tr><th>#</th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th>یەکە</th><th>ژمارە</th></tr></thead><tbody>${R.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td dir="ltr">${esc(x.code)}</td><td>${esc(x.unit)}</td><td><b>${fmt(miQty(x.id),2)}</b></td></tr>`).join('')}</tbody></table>`,'Stock - Other items')}
   else{const R=miLogFilter();printHtml(`<h1>تۆمارێن مەخزەنا کەرەستێن دی</h1><div class="sub">${stamp} · ${R.length} تۆمار</div><table><thead><tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th>ژمارە</th><th>یەکە</th><th>کێ</th><th>تێبینی</th></tr></thead><tbody>${R.map(t=>{const x=miItem(t.key);const d=t.at?new Date(t.at):null;return `<tr><td>${d?`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`:''}</td><td>${d?p(d.getHours())+':'+p(d.getMinutes()):''}</td><td>${t.dir==='in'?'IN':'OUT'}</td><td>${esc(x?x.name:t.key)}</td><td dir="ltr">${esc(x?x.code:'')}</td><td><b>${t.dir==='in'?'+':'−'}${fmt(t.qty,2)}</b></td><td>${esc(x?x.unit:'')}</td><td>${esc(uName(t.u))}</td><td>${esc(t.note||'')}</td></tr>`}).join('')}</tbody></table>`,'Log - Other items')}}
@@ -2883,6 +2918,12 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='msDelItem'){if(!miCanEdit())return;const id=t0.dataset.id;const x=miItem(id);if(!x)return;const used=miRows().some(t=>t.key===id);
     if(used&&!isAdmin){toast('⚠️ ئەڤ کەرەستە تۆمار هەنە — تەنێ بەرپرس دشێت ژێببەت');return}
     dialog(`<p>«<b>${esc(x.name)}</b>» ژ لیستێ ژێببە؟${used?'<br><span class="short">⚠️ ئەڤ کەرەستە تۆمارێن IN/OUT هەنە؛ تۆمار دێ مینن لێ ناڤ دێ نەمینیت.</span>':''}</p>`,()=>{S.miscItems=S.miscItems.filter(z=>z.id!==id);save('cfg/misc',100);render()},'ژێببە')}
+  else if(act==='msTxEdit'){miTxEdit(t0.dataset.dir,t0.dataset.id)}
+  else if(act==='msTxDel'){const dir=t0.dataset.dir,id=t0.dataset.id;const t=(S.tx[dir]||[]).find(x=>x.id===id);if(!t||!miMine(t))return;
+    if(dir==='in'&&miQty(t.key)-toNum(t.qty)<-1e-9){toast('⚠️ ناشێی ژێببەی — پشتی ڤێ داخلکرنێ هندەک هاتیە دەرئێخستن. ل دەستپێکێ وێ دەرئێخستنێ ڕاست بکە.');return}
+    dialog(`<p>ئەڤ تۆمارە ژێببە؟<br><b>${dir==='in'?'+':'−'}${fmt(t.qty,2)} ${esc(miUnit(t.key))} ${esc(txLabel('misc',t.key))}</b><br><span class="muted">مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</span></p>`,async()=>{
+      if(!db){S.tx[dir]=S.tx[dir].filter(x=>x.id!==id);recomputeInv();localSave();render();return}
+      try{await db.doc((dir==='in'?'invin/':'invout/')+id).delete();toast('✓ هاتە ژێبرن')}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
   else if(act==='msLogDir'){S.msLogF=S.msLogF||{};S.msLogF.dir=t0.dataset.v;render()}
   else if(act==='msStockPdf')miPdf('stock');
   else if(act==='msLogPdf')miPdf('log');
