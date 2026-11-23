@@ -686,6 +686,12 @@ nav.tabs{display:none!important}
   .home .note{text-align:center}
 }
 
+
+/* illustrated icons */
+.dill{width:100%;height:100%;filter:drop-shadow(0 4px 7px rgba(0,0,0,.14))}
+.act .aic.ill,.tile .tic.ill{background:none;width:58px;height:58px;padding:0}
+.act .aic.ill .dill,.tile .tic.ill .dill{width:56px;height:56px}
+@media (max-width:640px){.act .aic.ill{width:50px;height:50px}.act .aic.ill .dill{width:48px;height:48px}}
 /* ===== Professional print layout (all PDF/print reports) ===== */
 @media print{
  @page{size:A4;margin:12mm 11mm 14mm;@bottom-center{content:"لاپەڕ " counter(page) " / " counter(pages);font:8pt 'Noto Sans Arabic',Tahoma,sans-serif;color:#777}}
@@ -1651,13 +1657,24 @@ function viewHome(){
   <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="bigc" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
     ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
     <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
+function dIll(k){const box=(a,b,c)=>`<polygon points="30,6 54,18 30,30 6,18" fill="${a}"/><polygon points="6,18 30,30 30,56 6,44" fill="${b}"/><polygon points="54,18 30,30 30,56 54,44" fill="${c}"/><polygon points="18,12 42,24 42,30 18,18" fill="#fff" opacity=".28"/>`;
+  const badge=(bg,d)=>`<circle cx="49" cy="47" r="12" fill="${bg}" stroke="#fff" stroke-width="3"/><path d="${d}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(k==='in')return `<svg viewBox="0 0 64 64" class="dill">${box('#5aa2ff','#2f6fe0','#4a8cf5')}${badge('#1f62e8','M49 40v13M43.5 48l5.5 5.5 5.5-5.5')}</svg>`;
+  if(k==='out')return `<svg viewBox="0 0 64 64" class="dill">${box('#f3c27a','#c98a3a','#e0a556')}${badge('#18a058','M49 54V41M43.5 46.5 49 41l5.5 5.5')}</svg>`;
+  if(k==='rep')return `<svg viewBox="0 0 64 64" class="dill"><rect x="12" y="10" width="40" height="48" rx="6" fill="#7c5cf0"/><rect x="17" y="16" width="30" height="37" rx="3" fill="#fff"/><rect x="24" y="6" width="16" height="9" rx="3" fill="#5b3fd0"/><rect x="22" y="38" width="5" height="10" rx="1.5" fill="#7c5cf0"/><rect x="30" y="31" width="5" height="17" rx="1.5" fill="#9b84f5"/><rect x="38" y="25" width="5" height="23" rx="1.5" fill="#7c5cf0"/></svg>`;
+  if(k==='cnt')return `<svg viewBox="0 0 64 64" class="dill"><rect x="12" y="10" width="40" height="48" rx="6" fill="#14a3a0"/><rect x="17" y="16" width="30" height="37" rx="3" fill="#fff"/><rect x="24" y="6" width="16" height="9" rx="3" fill="#0d7f7c"/><path d="m22 27 3 3 6-6M22 41l3 3 6-6" stroke="#14a3a0" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="34" y="26" width="9" height="3" rx="1.5" fill="#9fdcda"/><rect x="34" y="40" width="9" height="3" rx="1.5" fill="#9fdcda"/></svg>`;
+  if(k==='stk')return `<svg viewBox="0 0 64 64" class="dill"><rect x="6" y="40" width="52" height="5" rx="2" fill="#0d7f7c"/><rect x="10" y="20" width="20" height="20" rx="3" fill="#e0a556"/><rect x="10" y="26" width="20" height="3" fill="#b7792d" opacity=".6"/><rect x="33" y="14" width="22" height="26" rx="3" fill="#c98a3a"/><rect x="33" y="22" width="22" height="3" fill="#8f5f22" opacity=".6"/><rect x="18" y="47" width="28" height="12" rx="3" fill="#14a3a0"/><rect x="22" y="51" width="20" height="3" rx="1.5" fill="#fff" opacity=".7"/></svg>`;
+  if(k==='clk')return `<svg viewBox="0 0 64 64" class="dill"><circle cx="32" cy="33" r="25" fill="#f5b400"/><circle cx="32" cy="33" r="19" fill="#fff"/><path d="M32 21v13l9 6" stroke="#1f2a44" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="34" r="2.6" fill="#1f2a44"/><rect x="26" y="3" width="12" height="6" rx="2" fill="#d99a00"/></svg>`;
+  if(k==='req')return `<svg viewBox="0 0 64 64" class="dill"><rect x="10" y="6" width="36" height="50" rx="5" fill="#fff" stroke="#1f62e8" stroke-width="3"/><rect x="17" y="16" width="22" height="3.5" rx="1.7" fill="#9db9ff"/><rect x="17" y="25" width="22" height="3.5" rx="1.7" fill="#9db9ff"/><rect x="17" y="34" width="14" height="3.5" rx="1.7" fill="#9db9ff"/><path d="m36 50 16-16 6 6-16 16h-6z" fill="#f08a1c"/><path d="m50 36 6 6" stroke="#fff" stroke-width="2"/></svg>`;
+  return `<svg viewBox="0 0 64 64" class="dill"><g transform="translate(32 32)">${[0,45,90,135,180,225,270,315].map(a=>`<rect x="-5" y="-27" width="10" height="12" rx="2.5" fill="#f08a1c" transform="rotate(${a})"/>`).join('')}<circle r="19" fill="#f08a1c"/><circle r="8" fill="#fff"/></g></svg>`}
+const ILLK={in:'in',out:'out',report:'rep',mrep:'rep',mcount:'cnt',stock:'stk',outlog:'clk',log:'clk',mlog:'clk',mday:'clk',mreq:'req',items:'stk'};
 function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
   if(g==='stock')return `<div class="home">${grpAlerts(g)}${grpMonthly(g)}<div class="bigs">${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
     <span class="bic">${I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`;
   return `<div class="home">${grpAlerts(g)}${g==='hall'?grpMonthly(g):''}
   ${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}
   ${its.length?`${A.length?`<div class="grp-t">${G.t} — هەمی بەش</div>`:''}<div class="tiles">${its.map(s=>`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">
-      <span class="chev">${I('arrow','sm')}</span><span class="tic">${I(s.ic)}</span><span class="tt">${s.t}</span><span class="ts">${s.s}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`).join('')}</div>`:''}</div>`}
+      <span class="chev">${I('arrow','sm')}</span><span class="tic${s.tab==='settings'?' ill':''}">${s.tab==='settings'?dIll('set'):I(s.ic)}</span><span class="tt">${s.t}</span><span class="ts">${s.s}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`).join('')}</div>`:''}</div>`}
 function updateChrome(){
   const sb=$('#secbar'),bn=$('#bnav');if(!sb)return;
   const locked=!isAdmin&&S.loaded&&(!curApp()||!firstTab());
@@ -2584,7 +2601,7 @@ function viewInvMenu(ok){const K=S.invKind;const op=can('inv_in')?(XSEC[K]?mrqOp
   ${invMiniStats(K)}
   ${!db&&OFFLINE?`<div class="info">🖥️ پڕۆگرام <b>Offline</b> کار دکەت. ${backupAgeTxt()} <button class="btn" data-act="exportAll" style="padding:2px 10px">${I('down','sm')} Backup</button></div>`:''}
   <div class="acts">${ok.map(k=>{const m=SUBMETA[k];const b=k==='in'&&op?`<span class="bdg2">${op} ل ڕێیە</span>`:'';
-    return `<button class="act" data-invsub="${k}" style="--tc:${m.c};--tc-soft:${m.c}1f"><span class="aic">${I(m.ic)}</span><span class="atx"><b>${m.t} ${b}</b><small>${m.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
+    return `<button class="act" data-invsub="${k}" style="--tc:${m.c};--tc-soft:${m.c}1f"><span class="aic${ILLK[k]?' ill':''}">${ILLK[k]?dIll(ILLK[k]):I(m.ic)}</span><span class="atx"><b>${m.t} ${b}</b><small>${m.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
 
 /* ===================== مەخزەنا کەرەستێن دی (misc) + کرۆمات/لاستیک/نایلۆن (crn) ===================== */
 const XSEC={misc:1,crn:1};
