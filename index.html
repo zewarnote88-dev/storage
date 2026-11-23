@@ -431,6 +431,19 @@ tr.cdet>td{background:var(--card2)!important;padding:10px}
 .cform{font-size:.92rem;padding:8px 10px;border-radius:10px;background:var(--card);border:1px dashed var(--line2)}
 .cexp{display:flex;flex-direction:column;gap:4px;font-size:.88rem;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
 
+.crnsel{display:flex;align-items:center;gap:14px;padding:12px;border-radius:18px;border:2px solid var(--accent);background:var(--accent-soft);margin:4px 0 10px}
+.crnsel .cimg{flex:none;width:96px;height:96px;border-radius:14px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1px solid var(--line)}
+.crnsel .cimg img{width:100%;height:100%;object-fit:contain}
+.crnsel .cinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.crnsel .cinfo b{font-size:1.35rem;line-height:1.2}
+.ctags{display:flex;gap:6px;flex-wrap:wrap}.ctag{font-size:.78rem;padding:2px 9px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.cstock{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;margin-bottom:6px}
+.cstock>div{display:flex;flex-direction:column;align-items:center;padding:10px 8px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center}
+.cstock span{font-size:.78rem;color:var(--muted);font-weight:600}.cstock b{font-size:1.7rem;line-height:1.15;color:var(--good)}.cstock small{font-size:.8rem;color:var(--muted)}
+.cstock em{font-style:normal;font-size:.78rem;color:var(--muted);margin-top:2px}.cstock em.bad{color:var(--bad);font-weight:700}
+.cstock.low>div:first-child b{color:var(--bad)}.cstock b.neg{color:var(--bad)!important}
+.cbar{height:8px;border-radius:9px;background:var(--line);overflow:hidden;margin:0 2px 12px}.cbar i{display:block;height:100%;background:var(--good)}.cbar.low i{background:var(--bad)}
+@media (max-width:640px){.crnsel .cimg{width:76px;height:76px}.crnsel .cinfo b{font-size:1.15rem}.cstock{gap:5px}.cstock>div{padding:8px 4px}.cstock b{font-size:1.2rem}.cstock span{font-size:.68rem}.cstock em{font-size:.68rem}}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -2529,8 +2542,8 @@ function viewMiscForm0(dir){const f=miF(dir);const x=f.item&&miItem(f.item);if(f
   return `${dir==='in'?miPendingBox():''}<div class="tapeform">
    <div class="tstep"><div class="lb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="grow">١. کەرەستەیێ هەلبژێرە <span class="muted" style="font-weight:400">(${MIv().length} کەرەستە)</span></span>${dir==='in'&&miCanEdit()?`<button type="button" class="btn" data-act="msNew">➕ کەرەستەیەکا نوو</button>`:''}</div>
      ${miPicker(dir,f)}</div>
-   ${x?`<div id="pfAnchor"></div><div class="selpaint"><span class="spsw">${miIco(x)}</span><span class="spinfo"><span class="splb">✓ هاتە هەلبژارتن</span><b>${esc(x.name)}</b><span class="muted" style="text-align:right">${miSubTxt(x)||'—'}</span></span><button type="button" class="btn spch" onclick="document.getElementById('msSearch').scrollIntoView({behavior:'smooth',block:'center'})">گوهۆڕین</button></div>
-   <div class="stockbox${have<=0||miLow(x)?' empty':''}"><span>ل مەخزەنێ نوکە${x.min?`<div class="muted" style="font-size:.78rem">کەمترین: ${fmt(x.min,2)} ${esc(x.unit)}</div>`:''}${isCrn()&&x.grp==='chem'&&miAvg(x.id)>0?`<div class="muted" style="font-size:.78rem">بکارئینان: ~${fmt(miAvg(x.id),1)} ${esc(x.unit)}/ڕۆژ · بەس دکەت ~${fmt(miDaysLeft(x),0)} ڕۆژ</div>`:''}</span><span class="v">${fmt(have,2)} <small>${esc(x.unit)}</small>${rollTxt(x,have)}</span></div>
+   ${x?`${isCrn()?crnSelPanel(x,dir,have):`<div id="pfAnchor"></div><div class="selpaint"><span class="spsw">${miIco(x)}</span><span class="spinfo"><span class="splb">✓ هاتە هەلبژارتن</span><b>${esc(x.name)}</b><span class="muted" style="text-align:right">${miSubTxt(x)||'—'}</span></span><button type="button" class="btn spch" onclick="document.getElementById('msSearch').scrollIntoView({behavior:'smooth',block:'center'})">گوهۆڕین</button></div>
+   <div class="stockbox${have<=0||miLow(x)?' empty':''}"><span>ل مەخزەنێ نوکە${x.min?`<div class="muted" style="font-size:.78rem">کەمترین: ${fmt(x.min,2)} ${esc(x.unit)}</div>`:''}${isCrn()&&x.grp==='chem'&&miAvg(x.id)>0?`<div class="muted" style="font-size:.78rem">بکارئینان: ~${fmt(miAvg(x.id),1)} ${esc(x.unit)}/ڕۆژ · بەس دکەت ~${fmt(miDaysLeft(x),0)} ڕۆژ</div>`:''}</span><span class="v">${fmt(have,2)} <small>${esc(x.unit)}</small>${rollTxt(x,have)}</span></div>`}
    <div class="tstep"><div class="lb">٢. چەند؟ <span class="muted" style="font-weight:400">(${x.roll?(f.ru==='m'?'مەتر':'ڕۆل — هەر ڕۆلەک '+fmt(x.roll,0)+' m'):esc(x.unit)})</span></div>
      ${x.roll?`<div class="useg" style="margin-bottom:8px">${[['roll','ڕۆل'],['m','مەتر']].map(([v,l])=>`<button type="button" class="chip${(f.ru||'roll')===v?' on':''}" data-act="msRu" data-dir="${dir}" data-v="${v}">${l}</button>`).join('')}</div>`:''}
      <div class="qbox"><div class="qstep"><button type="button" class="btn" data-act="msStep" data-dir="${dir}" data-d="1">+</button>
@@ -2538,10 +2551,19 @@ function viewMiscForm0(dir){const f=miF(dir);const x=f.item&&miItem(f.item);if(f
        <button type="button" class="btn" data-act="msStep" data-dir="${dir}" data-d="-1">−</button></div>
      <div class="qgrid">${[1,5,10].map(n=>`<button type="button" class="chip" data-act="msQty" data-dir="${dir}" data-v="${n}">${n} ${x.roll?(f.ru==='m'?'مەتر':'ڕۆل'):esc(x.unit)}</button>`).join('')}</div></div>
      ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(have,2)} ${esc(x.unit)} هەنە</div>`:''}</div>
-   ${dir==='out'?miWhoStep(f):''}
-   <div class="tstep"><div class="lb">${dir==='out'?'٤':'٣'}. تێبینی (ئەگەر هەبیت)</div><input data-msf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${dir==='in'?'بۆ نموونە: ژ کۆمپانیا ... / ژمارا فاتۆرێ':'بۆ نموونە: بۆ چاککرنا بۆیلەری'}"></div>
+   ${dir==='out'&&!isCrn()?miWhoStep(f):''}
+   ${dir==='out'&&isCrn()?'':`<div class="tstep"><div class="lb">${dir==='out'?'٤':'٣'}. تێبینی (ئەگەر هەبیت)</div><input data-msf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${dir==='in'?'بۆ نموونە: ژ کۆمپانیا ... / ژمارا فاتۆرێ':'بۆ نموونە: بۆ چاککرنا بۆیلەری'}"></div>`}
    <button class="btn pri big" data-act="msSave" data-dir="${dir}" ${dir==='out'&&have<=0?'disabled':''}>${I('check','sm')} ${dir==='in'?'تۆمارکرنا داخلکرنێ':'تۆمارکرنا دەرئێخستنێ'}${q>0?` — ${fmt(q,2)} ${esc(x.unit)}`:''}</button>`:`<div class="muted" style="text-align:center;padding:14px;border:1px dashed var(--line2);border-radius:14px">☝️ ل سەرێ کەرەستەیەکێ هەلبژێرە</div>`}
   </div>${miRecent(dir)}`}
+function crnSelPanel(x,dir,have){const U=esc(x.unit);const mtr=x.plen?have*x.plen:x.roll?have/x.roll:0;const low=miLow(x);const pct=x.min?Math.min(100,Math.round(have/(x.min*3)*100)):100;
+  return `<div id="pfAnchor"></div><div class="crnsel"><div class="cimg">${x.img?`<img src="${x.img}" alt="">`:`<span>${(CRN_G[x.grp]||CRN_G.chem).ic}</span>`}</div>
+   <div class="cinfo"><span class="splb">✓ هاتە هەلبژارتن</span><b>${esc(x.name)}</b><div class="ctags">${x.code?`<span class="ctag ltr">${esc(x.code)}</span>`:''}${x.plen?`<span class="ctag">هەر دانەیەک ${fmt(x.plen,1)}م</span>`:''}${x.roll?`<span class="ctag">ڕۆل ${fmt(x.roll,0)}م</span>`:''}${x.loc?`<span class="ctag">📍 ${esc(x.loc)}</span>`:''}</div></div>
+   <button type="button" class="btn spch" onclick="document.getElementById('msSearch').scrollIntoView({behavior:'smooth',block:'center'})">گوهۆڕین</button></div>
+   <div class="cstock${low?' low':''}">
+    <div><span>ل مەخزەنێ نوکە</span><b>${fmt(have,x.plen?0:2)}</b><small>${U}</small>${x.plen?`<em>= ${fmt(mtr,0)} مەتر</em>`:x.roll?`<em>≈ ${fmt(mtr,1)} ڕۆل</em>`:''}</div>
+    ${x.min?`<div><span>کەمترین</span><b>${fmt(x.min,0)}</b><small>${U}</small>${low?'<em class="bad">⚠️ کێمە</em>':''}</div>`:''}
+    <div><span>${dir==='out'?'پشتی دەرئێخستنێ':'پشتی داخلکرنێ'}</span><b id="msAfter" data-have="${have}" data-dir="${dir}">${fmt(have,x.plen?0:2)}</b><small>${U}</small></div></div>
+   ${x.min?`<div class="cbar${low?' low':''}"><i style="width:${pct}%"></i></div>`:''}`}
 function miInQ(x,f){const v=toNum(f.qty);return x&&x.roll&&(f.ru||'roll')==='roll'?v*x.roll:v}
 function miPast(fld){const c={};miRows('out').forEach(t=>{const v=String(t[fld]||'').trim();if(v)c[v]=(c[v]||0)+1});return Object.keys(c).sort((a,b)=>c[b]-c[a])}
 function miWhoStep(f){const halls=miPast('hall'),people=[...new Set([...miPast('person'),...activeUsers().map(u=>u.name||u.username)])];
@@ -3064,7 +3086,7 @@ function bind(){
 
     {const ms=m.querySelector('#msSearch');if(ms)ms.oninput=()=>{const qs=normQ(ms.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#msGrid .pcard,#msGrid .ptile').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#msNone');if(z)z.style.display=n?'none':''}}
     [['#msStockQ',v=>S.msStockQ=v],['#msLogQ',v=>{S.msLogF=S.msLogF||{};S.msLogF.q=v}]].forEach(([sel,set])=>{const e=m.querySelector(sel);if(!e)return;const flt=()=>{set(e.value);const qs=normQ(e.value).trim().split(' ').filter(Boolean);e.closest('.card').querySelectorAll('tbody tr').forEach(tr=>{const t=normQ(tr.textContent);tr.style.display=qs.every(x=>t.includes(x))?'':'none'})};e.oninput=flt;if(e.value)flt()});
-    m.querySelectorAll('[data-msf]').forEach(el=>{const h=()=>{const f=miF(el.dataset.msf);f[el.dataset.f]=el.value};el.oninput=h;el.onchange=h});
+    m.querySelectorAll('[data-msf]').forEach(el=>{const h=()=>{const f=miF(el.dataset.msf);f[el.dataset.f]=el.value;const a=m.querySelector('#msAfter');if(a&&el.dataset.f==='qty'){const x=miItem(f.item);const q=x?miInQ(x,f):0;const v=toNum(a.dataset.have)+(a.dataset.dir==='out'?-q:q);a.textContent=fmt(v,x&&x.plen?0:2);a.classList.toggle('neg',v<0)}};el.oninput=h;el.onchange=h});
     m.querySelectorAll('[data-msi]').forEach(el=>{const h=()=>{const x=miItem(el.dataset.msi);if(!x)return;const v=el.value.trim();if(el.dataset.f==='name'&&!v)return;x[el.dataset.f]=el.dataset.f==='unit'?(v||'دانە'):v;save(MX().doc,1200)};el.oninput=h;el.onchange=h});
     {const ps=m.querySelector('#pfSearch');if(ps)ps.oninput=()=>{const qs=normQ(ps.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#pfGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#pfNone');if(z)z.style.display=n?'none':''}}
     {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
