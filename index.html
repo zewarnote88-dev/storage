@@ -484,6 +484,32 @@ tr.cdet>td{background:var(--card2)!important;padding:10px}
  .scards{grid-template-columns:1fr}
 }
 
+/* monthly count + report */
+.cnthead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.cprog{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.cprog .nbar{flex:1;min-width:140px;height:10px;margin:0}.cprog span{font-size:.85rem}
+.clist{display:flex;flex-direction:column;gap:6px}
+.crow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-inline-start:5px solid var(--line2)}
+.crow.ok{border-inline-start-color:var(--good)}.crow.diff{border-inline-start-color:var(--bad);background:color-mix(in srgb,var(--bad) 6%,var(--card))}
+.crow .cico .sw{width:36px;height:36px;font-size:1rem}.crow .cico .sw img{width:100%;height:100%;object-fit:cover}
+.cnm{flex:1;min-width:0;display:flex;flex-direction:column}.cnm b{font-size:.95rem}.cnm small{font-size:.74rem;color:var(--muted)}
+.cin{display:flex;gap:4px;align-items:center}.cin .btn{padding:6px 11px;font-weight:800}.cin input{width:92px;font-size:1.1rem;font-weight:700;text-align:center;min-height:42px}
+.cdif{min-width:56px;text-align:center;font-weight:800;font-size:.95rem}.crow.diff .cdif{color:var(--bad)}.crow.ok .cdif{color:var(--good)}
+.cbar2{position:sticky;bottom:calc(var(--bnav-h,64px) + 8px);display:flex;gap:8px;margin-top:12px;z-index:5;padding:8px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.hlist{display:flex;flex-direction:column;gap:6px}.hrow{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.mrl{display:flex;flex-direction:column;gap:6px}
+.mrr{display:grid;grid-template-columns:minmax(160px,2fr) repeat(5,minmax(70px,1fr));gap:8px;align-items:center;padding:9px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.mrr>span{text-align:center;font-variant-numeric:tabular-nums}.mrr .mrn{text-align:right;display:flex;flex-direction:column;min-width:0}.mrr .mrn small{color:var(--muted);font-size:.72rem}
+.mrh{background:none;border:0;font-size:.78rem;color:var(--muted);font-weight:700;padding-block:2px}
+.mrh>span:first-child{text-align:right}.mrr .gi,.mrr .go{direction:ltr}.mrr .gi{color:var(--good)}.mrr .go{color:#c2410c}.mrr.adj .ga{color:var(--bad);font-weight:800}.mrr .gc b{font-size:1.05rem}
+.mpanel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:14px}
+.mchips{display:flex;gap:8px;flex-wrap:wrap}.mchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px;border-radius:14px;border:1px solid var(--line2);background:var(--field);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.mchip small{font-weight:400;font-size:.72rem;color:var(--muted)}.mchip.ok{border-color:var(--good);color:var(--good)}.mchip.todo{border-style:dashed}
+@media (max-width:640px){
+ .mrh{display:none}.mrr{grid-template-columns:repeat(5,1fr);gap:4px 6px}.mrr .mrn{grid-column:1/-1}
+ .mrr>span[data-l]{display:flex;flex-direction:column;font-size:.85rem}.mrr>span[data-l]::before{content:attr(data-l);font-size:.62rem;color:var(--muted);font-weight:600}
+ .cin input{width:76px}.cdif{min-width:44px;font-size:.85rem}.crow{padding:8px;gap:7px}
+}
+
 /* mobile-first stock forms */
 .pcard .psub{font-size:.76rem}.pcard .ppul{font-size:.72rem;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -764,7 +790,7 @@ const S={
   profiles:[],    // {code,b1,b2,w,wrap,per}  w = kg per meter, per = perimeter mm
   periods:{},     // id -> {id,name,start,end,orders:[{ord,code,paint,qty,unit}],stock:{tape:{},paint:{}},note,createdAt}
   tab:'home', cur:null, sub:'resPaint', invKind:'paint', invSubK:{paint:'menu',tape:'menu',misc:'menu',crn:'menu'}, miscItems:[], miscReq:[], crnItems:[], crnReq:[],
-  visits:[], userSel:'', perm:{}, permLoaded:false, appUsers:[], logins:[], session:null, inv:null, invBase:null, invMeta:{}, invLog:[], tx:{in:[],out:[]}, txf:{},
+  visits:[], userSel:'', perm:{}, permLoaded:false, appUsers:[], logins:[], session:null, inv:null, invBase:null, invMeta:{}, invLog:[], invLogAll:null, cntSessions:[], cntDraft:(()=>{try{return JSON.parse(localStorage.getItem('bandorder-cntdraft')||'{}')||{}}catch(e){return {}}})(), tx:{in:[],out:[]}, txf:{},
   dbOk:false, loaded:false
 };
 let userNs=null, me={id:null,name:''}, isAdmin=true, claudeAdmin=true;
@@ -900,8 +926,8 @@ const OFFLINE=location.protocol==='file:';
 function localLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||'null');if(!d)return;
   if(d.settings)S.settings={...S.settings,...d.settings};if(d.paints)S.paints=d.paints;if(d.profiles)S.profiles=d.profiles;
   if(d.periods)Object.values(d.periods).forEach(v=>{S.periods[v.id]={...v,stock:normStock(v.stock),sel:normSel(v.sel),po:normPo(v.po),locked:v.locked!==undefined?!!v.locked:hasStock(v.stock)}});
-  if(d.invBase||d.inv)S.invBase=normStock(d.invBase||d.inv);if(d.invMeta)S.invMeta=d.invMeta;if(d.tx)S.tx={in:d.tx.in||[],out:d.tx.out||[]};if(d.appUsers)S.appUsers=d.appUsers;S.recovery=d.recovery||null;if(d.manInc)S.manInc=d.manInc;if(Array.isArray(d.miscItems))S.miscItems=d.miscItems.map(miNormItem);if(Array.isArray(d.miscReq))S.miscReq=d.miscReq;if(Array.isArray(d.crnItems))S.crnItems=d.crnItems.map(miNormItem);if(Array.isArray(d.crnReq))S.crnReq=d.crnReq;if(d.invLog)S.invLog=d.invLog;if(d.logins)S.logins=d.logins;recomputeInv()}catch(e){}}
-function localSave(){try{localStorage.setItem(LS,JSON.stringify({settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,invBase:S.invBase,invMeta:S.invMeta,tx:S.tx,appUsers:S.appUsers,recovery:S.recovery||null,manInc:S.manInc||[],miscItems:S.miscItems||[],miscReq:S.miscReq||[],crnItems:S.crnItems||[],crnReq:S.crnReq||[],invLog:(S.invLog||[]).slice(0,500),logins:(S.logins||[]).slice(0,500)}))}catch(e){toast('⚠️ پاشەکەفتکرن ل سەر ڤی کۆمپیوتەری نەبوو — Backup بکە!')}}
+  if(Array.isArray(d.cntSessions))S.cntSessions=d.cntSessions;if(d.invBase||d.inv)S.invBase=normStock(d.invBase||d.inv);if(d.invMeta)S.invMeta=d.invMeta;if(d.tx)S.tx={in:d.tx.in||[],out:d.tx.out||[]};if(d.appUsers)S.appUsers=d.appUsers;S.recovery=d.recovery||null;if(d.manInc)S.manInc=d.manInc;if(Array.isArray(d.miscItems))S.miscItems=d.miscItems.map(miNormItem);if(Array.isArray(d.miscReq))S.miscReq=d.miscReq;if(Array.isArray(d.crnItems))S.crnItems=d.crnItems.map(miNormItem);if(Array.isArray(d.crnReq))S.crnReq=d.crnReq;if(d.invLog)S.invLog=d.invLog;if(d.logins)S.logins=d.logins;recomputeInv()}catch(e){}}
+function localSave(){try{localStorage.setItem(LS,JSON.stringify({settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,invBase:S.invBase,invMeta:S.invMeta,tx:S.tx,appUsers:S.appUsers,recovery:S.recovery||null,manInc:S.manInc||[],miscItems:S.miscItems||[],miscReq:S.miscReq||[],crnItems:S.crnItems||[],crnReq:S.crnReq||[],cntSessions:S.cntSessions||[],invLog:(S.invLog||[]).slice(0,3000),logins:(S.logins||[]).slice(0,500)}))}catch(e){toast('⚠️ پاشەکەفتکرن ل سەر ڤی کۆمپیوتەری نەبوو — Backup بکە!')}}
 async function waitClaude(ms){const t0=Date.now();while(!(window.claude&&window.claude.use)&&Date.now()-t0<ms)await new Promise(r=>setTimeout(r,100));return !!(window.claude&&window.claude.use)}
 /* ======================= Supabase (online database) =======================
    ئەڤان هەردوو ژمارێن خۆ یێن Supabase ل ڤێرە دانێ:
@@ -1035,6 +1061,8 @@ async function initDb(){
     if(!f5&&!s.metadata.fromCache){f5=true;done()}else if(S.loaded)softRender();
   },onErr);
   db.collection('invlog').orderBy('at','desc').limit(80).onSnapshot(q=>{S.invLog=q.docs.map(d=>({id:d.id,...d.data()}));if(S.loaded&&isInvTab())softRender()},()=>{});
+  db.collection('invlog').orderBy('at','desc').onSnapshot(q=>{S.invLogAll=q.docs.map(d=>({id:d.id,...d.data()}))},()=>{});
+  db.collection('invcnt').orderBy('at','desc').onSnapshot(q=>{S.cntSessions=q.docs.map(d=>({id:d.id,...d.data()}));if(S.loaded&&(isInvTab()||S.tab.startsWith('g_')))softRender()},()=>{});
   if(me&&me.id){(async()=>{try{const ref=db.doc('visits/'+me.id);const s=await ref.get();const now=new Date().toISOString();const d=s.exists?s.data():{};
     await ref.set({u:me.id,first:d.first||now,last:now,n:toNum(d.n)+1})}catch(e){}})()}
   db.doc('cfg/misc').onSnapshot(s=>{if(dirty['cfg/misc']||writing['cfg/misc'])return;S.miscItems=s.exists?(((s.data()||{}).list)||[]).filter(x=>x&&x.id).map(miNormItem):[];if(S.loaded)softRender()},()=>{});
@@ -1252,13 +1280,13 @@ const subKey=()=>S.invKind==='crn'?'crn_'+(S.crnGrp||'chem'):S.invKind;
 Object.defineProperty(S,'invSub',{get(){return S.invSubK[subKey()]||'menu'},set(v){S.invSubK[subKey()]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='invMisc'||S.tab==='invCrn'||!!CRN_TABS[S.tab]||S.tab==='inventory'}
 const SUBMETA={out:{t:'دەرئێخستن',s:'بردنا ژ مەخزەنێ',ic:'up',c:'#c2410c'},in:{t:'داخلکرن',s:'هاتنا نوو و ل ڕێیە',ic:'down',c:'#15803d'},stock:{t:'مەخزەن',s:'چ هەیە و چەند',ic:'box',c:'#0e7478'},
-  outlog:{t:'تۆمار',s:'کێ، چ، چەند و کەنگی',ic:'clock',c:'#6b6f2a'},report:{t:'ڕاپۆرت',s:'PDF و Excel',ic:'file',c:'#1f5f9e'},tstk:{t:'لسقێن Stock',s:'ئەوێن نائێنە بکارئینان — نیشانکرن',ic:'layers',c:'#64748b'},log:{t:'تۆمارا ژمارتنێ',s:'گوهۆڕینێن ژمارتنێ',ic:'clip',c:'#55606a'},
+  outlog:{t:'تۆمار',s:'کێ، چ، چەند و کەنگی',ic:'clock',c:'#6b6f2a'},report:{t:'ڕاپۆرت',s:'PDF و Excel',ic:'file',c:'#1f5f9e'},mcount:{t:'ژمارتنا مەهانە',s:'ژمارتنا مەخزەنێ و جوداهی',ic:'clip',c:'#0f766e'},mrep:{t:'ڕاپۆرتا مەهانە',s:'هات، چوو، دەستپێک و دوماهی',ic:'calendar',c:'#be185d'},tstk:{t:'لسقێن Stock',s:'ئەوێن نائێنە بکارئینان — نیشانکرن',ic:'layers',c:'#64748b'},log:{t:'تۆمارا ژمارتنێ',s:'گوهۆڕینێن ژمارتنێ',ic:'clip',c:'#55606a'},
   mlog:{t:'تۆمار',s:'هەمی داخلکرن و دەرئێخستن',ic:'clock',c:'#6b6f2a'},items:{t:'لیستا کەرەستەیان',s:'ناڤ، کۆد، یەکە، پشک',ic:'layers',c:'#9a5b13'},mday:{t:'ڕۆژانە',s:'چ هات و چ چوو ئەڤرۆ',ic:'calendar',c:'#1f5f9e'},mreq:{t:'داخوازکرنا کەرەستەیان',s:'فۆرم بۆ کڕینێ — PDF / WhatsApp',ic:'file',c:'#7c3aed'}};
-const SUBORDER=['out','in','stock','outlog','report','tstk','log'];
+const SUBORDER=['out','in','stock','outlog','report','mrep','mcount','tstk','log'];
 const oldKey=k=>k.split('|').slice(0,3).join('|')+'|'+boxLen(k);
 const isOldTape=k=>(S.settings.stockTape||[]).includes(oldKey(k));
 function invSubList(){const ok=invSubs().filter(x=>x!=='|').map(x=>x[0]);return SUBORDER.filter(k=>ok.includes(k))}
-function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمارێن دەرئێخستنێ','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')],['log','تۆمارا ژمارتنێ','clock',isAdmin]].filter(s=>s==='|'||s[3])}
+function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمارێن دەرئێخستنێ','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')],['mrep','ڕاپۆرتا مەهانە','calendar',can('inv_view')],['mcount','ژمارتنا مەهانە','clip',can('inv_count')],['log','تۆمارا ژمارتنێ','clock',isAdmin]].filter(s=>s==='|'||s[3])}
 function recalcAdmin(){const u=curApp();isAdmin=!!(u&&u.status==='active'&&(u.perms||{}).admin)}
 function applyRole(){recalcAdmin();showMe();loadUserAccent();
   document.querySelectorAll('#tabs button').forEach(b=>{const f=TAB_PERM[b.dataset.tab];b.style.display=(f&&f())?'':'none'});
@@ -1616,9 +1644,9 @@ function viewHome(){
     ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
     <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
 function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
-  if(g==='stock')return `<div class="home">${grpAlerts(g)}<div class="bigs">${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
+  if(g==='stock')return `<div class="home">${grpAlerts(g)}${grpMonthly(g)}<div class="bigs">${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
     <span class="bic">${I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`;
-  return `<div class="home">${grpAlerts(g)}
+  return `<div class="home">${grpAlerts(g)}${g==='hall'?grpMonthly(g):''}
   ${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}
   ${its.length?`${A.length?`<div class="grp-t">${G.t} — هەمی بەش</div>`:''}<div class="tiles">${its.map(s=>`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">
       <span class="chev">${I('arrow','sm')}</span><span class="tic">${I(s.ic)}</span><span class="tt">${s.t}</span><span class="ts">${s.s}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`).join('')}</div>`:''}</div>`}
@@ -2570,7 +2598,7 @@ function miLow(x){const m=toNum(x.min);if(m>0&&miQty(x.id)<=m)return true;if(isC
 function miCats(){return [...new Set([...(isCrn()?CRN_CATS:MISC_CATS),...MIv().map(x=>x.cat).filter(Boolean)])]}
 function miF(dir){S.msf=S.msf||{};if(!S.msf[dir])S.msf[dir]={item:'',qty:'',note:'',taker:'',kind:'misc'};return S.msf[dir]}
 function miCanEdit(){return isAdmin||can('inv_in')}
-function miscSubList(){const o=[];if(can('inv_out'))o.push('out');if(can('inv_in'))o.push('in');if(can('inv_view')||can('inv_count'))o.push('stock');if(can('inv_view'))o.push(...(isCrn()?['mlog']:['mday','mlog']));if(miCanEdit()||can('inv_view'))o.push(...(isCrn()?['mreq']:['mreq','items']));return o}
+function miscSubList(){const o=[];if(can('inv_out'))o.push('out');if(can('inv_in'))o.push('in');if(can('inv_view')||can('inv_count'))o.push('stock');if(can('inv_view'))o.push(...(isCrn()?['mlog']:['mday','mlog']));if(can('inv_view'))o.push('mrep');if(can('inv_count'))o.push('mcount');if(miCanEdit()||can('inv_view'))o.push(...(isCrn()?['mreq']:['mreq','items']));return o}
 function miNormItem(x){const o={id:String(x.id),name:String(x.name||''),code:String(x.code||''),unit:String(x.unit||'دانە'),cat:String(x.cat||''),min:toNum(x.min)||0,loc:String(x.loc||'')};if(x.grp)o.grp=String(x.grp);if(toNum(x.roll)>0)o.roll=toNum(x.roll);if(toNum(x.ppr)>0)o.ppr=toNum(x.ppr);if(toNum(x.plen)>0)o.plen=toNum(x.plen);if(typeof x.img==='string'&&x.img.startsWith('data:image/'))o.img=x.img;return o}
 const CRN_G={chem:{t:'کرۆمات و تێزاب',ic:'🧪',units:['کیلۆ','لیتر','جەرکەن','بەرمیل','تەنەکە']},rub:{t:'لاستیک',ic:'⚫'},nyl:{t:'نایلۆن',ic:'🎞'}};
 const CRN_CATS=['تێزاب','کرۆمات','موساعیدێ کرۆماتێ'];
@@ -2637,6 +2665,94 @@ function miRowHtml(t){const x=miItem(t.key);const d=t.at?new Date(t.at):null;
 const MI_HEAD=()=>`<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th class="n">ژمارە</th><th>یەکە</th><th>هۆڵ</th><th>وەرگر</th><th>تۆمارکەر</th><th>تێبینی</th><th></th></tr>`;
 function miRecent(dir){const R=miRows(dir).filter(t=>miMine(t)).slice(0,8);if(!R.length)return '';
   return `<div class="tstep" style="margin-top:16px"><div class="lb">دوماهیک تۆمار</div><div class="tbl-scroll" data-nosrch><table class="txc"><thead>${MI_HEAD()}</thead><tbody>${R.map(miRowHtml).join('')}</tbody></table></div></div>`}
+
+/* ===================== MONTHLY COUNT + MONTHLY REPORT ===================== */
+const KMON=['کانوونا دووێ','شوبات','ئادار','نیسان','گولان','حزیران','تیرمەه','تەباخ','ئەیلوول','چریا ئێکێ','چریا دووێ','کانوونا ئێکێ'];
+const ymNow=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)};
+const ymLbl=ym=>{const [y,m]=ym.split('-');return KMON[+m-1]+' '+y};
+const ymOf=iso=>{const d=new Date(iso);return d.getFullYear()+'-'+p2(d.getMonth()+1)};
+const ymAdd=(ym,n)=>{const [y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+p2(d.getMonth()+1)};
+const ymRange=ym=>{const [y,m]=ym.split('-').map(Number);return [new Date(y,m-1,1).toISOString(),new Date(y,m,1).toISOString()]};
+function cntK(){return S.invKind==='crn'?'crn_'+(S.crnGrp||'chem'):S.invKind}
+const CNT_KINDS={paint:['paint',null,'سبغ','invPaint'],tape:['tape',null,'لسق','invTape'],misc:['misc',null,'کەرەستێن دی','invMisc'],crn_chem:['crn','chem','کرۆمات و تێزاب','invChem'],crn_rub:['crn','rub','لاستیک','invRub'],crn_nyl:['crn','nyl','نایلۆن','invNyl']};
+function cntSecName(){return CNT_KINDS[cntK()][2]}
+function cntItems(){const K=S.invKind;const inv=S.inv||normStock({});
+  if(K==='paint')return [...S.paints].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(c=>{const k=norm(c.name);return {sec:'cart',key:k,name:c.name,sub:[c.pul,c.type==='P'?'Rough':'Normal'].filter(Boolean).join(' · '),unit:'کارتۆن',sw:c.name,kgc:kgcOf({stock:inv},k)}});
+  if(K==='tape'){const ks=new Set(Object.keys(inv.box||{}));['in','out'].forEach(d=>(S.tx[d]||[]).forEach(t=>{if(t.sec==='box'&&t.key)ks.add(t.key)}));
+    return [...ks].map(k=>{const [b,w,t]=k.split('|');const bo=brandObj(b);const bn=bo?bo.name:b;return {sec:'box',key:k,name:`${bn} · ${w}mm · ${t==='P'?'Rough':'Normal'}`,sub:`${boxLen(k)}m${isOldTape(k)?' · Stock':''}`,unit:'کارتۆن',o:[bn,+w,t,boxLen(k)]}})
+      .sort((a,b)=>a.o[0].localeCompare(b.o[0])||a.o[1]-b.o[1]||(a.o[2]>b.o[2]?1:a.o[2]<b.o[2]?-1:0)||a.o[3]-b.o[3])}
+  return [...MIv()].sort(miSort).map(x=>({sec:MX().sec,key:x.id,name:x.name,sub:[x.code,x.loc?'📍 '+x.loc:''].filter(Boolean).join(' · '),unit:x.unit,x}))}
+const cntSys=it=>toNum(((S.inv||{})[it.sec]||{})[it.key]);
+const cntIco=it=>it.x?miIco(it.x):it.sw?sw(it.sw):`<span class="sw big mic">📦</span>`;
+function cntDraft(){const K=cntK();return S.cntDraft[K]=S.cntDraft[K]||{}}
+function cntPersist(){try{localStorage.setItem('bandorder-cntdraft',JSON.stringify(S.cntDraft))}catch(e){}}
+function cntSesFor(K){return (S.cntSessions||[]).filter(c=>c.k===K).sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
+function cntDone(K,ym){return cntSesFor(K).find(c=>c.ym===ym)}
+function cntDec(it){return it.sec==='cart'||it.sec==='box'?1:2}
+function viewCount(){const K=cntK();const L=cntItems();const D=cntDraft();const ym=ymNow();const last=cntDone(K,ym);const f=S.cntF||'';
+  let nC=0,nD=0;L.forEach(it=>{const v=D[it.sec+'|'+it.key];if(v!==undefined&&String(v).trim()!==''){nC++;if(Math.abs(toNum(v)-cntSys(it))>1e-9)nD++}});
+  const H=cntSesFor(K).slice(0,12);
+  return `<div class="cnthead"><div><span class="muted">ژمارتنا مەهانە · ${esc(cntSecName())}</span><h3 style="margin:2px 0">🗓 ${ymLbl(ym)}</h3></div>
+    ${last?`<span class="hst ok">✓ هاتیە ژمارتن ${miDate(new Date(last.at))} · ${esc(uName(last.u))}</span>`:`<span class="hst bad">هێشتا ئەڤ مەهە نەهاتیە ژمارتن</span>`}</div>
+   <div class="info" style="margin:8px 0">ل مەخزەنێ بژمێرە و ژمارا <b>ڕاستەقینە</b> ل بەرامبەر هەر تشتەکی بنڤیسە. ئەگەر وەکی سیستەمی بیت، <b>=</b> بکە. ئەوێن تە نەنڤیسین ناهێنە گوهۆڕین. دەمێ تۆمار دکەی، مەخزەن دبیتە وەکی ژمارتنا تە و جوداهی د ڕاپۆرتا مەهانەدا دیار دبیت.</div>
+   <div class="cprog"><div class="nbar"><i id="cntBar" style="width:${L.length?Math.round(nC/L.length*100):0}%"></i></div><span id="cntProg">${nC} ژ ${L.length} هاتینە ژمارتن · <b style="color:${nD?'var(--bad)':'var(--good)'}">${nD} جوداهی</b></span></div>
+   <div class="row" style="gap:8px;margin:8px 0;flex-wrap:wrap"><input type="search" id="cntQ" value="${esc(S.cntQ||'')}" placeholder="🔍 لێگەڕیان ..." class="grow" style="min-width:180px">
+    <div class="chips" style="margin:0">${[['','هەمی'],['todo','نەژمارتی'],['diff','جوداهی']].map(([v,l])=>`<button type="button" class="chip${f===v?' on':''}" data-act="cntF" data-v="${v}">${l}</button>`).join('')}</div></div>
+   <div class="clist">${L.map(it=>{const mk=it.sec+'|'+it.key;const v=D[mk];const has=v!==undefined&&String(v).trim()!=='';const sy=cntSys(it);const d=has?toNum(v)-sy:0;const st=!has?'todo':Math.abs(d)>1e-9?'diff':'ok';
+     if(f&&f!==st&&!(f==='todo'&&!has))return '';
+     return `<div class="crow ${st}" data-s="${esc(normQ(it.name+' '+it.sub))}" data-mk="${esc(mk)}"><span class="cico">${cntIco(it)}</span>
+      <div class="cnm"><b>${esc(it.name)}</b><small>${esc(it.sub||'')}</small><small>ل سیستەمی: <b>${fmt(sy,cntDec(it))}</b> ${esc(it.unit)}</small></div>
+      <div class="cin"><button type="button" class="btn" data-act="cntEq" data-mk="${esc(mk)}" data-v="${sy}" title="وەکی سیستەمی">=</button><input class="num" inputmode="decimal" data-cnt="${esc(mk)}" data-sys="${sy}" value="${has?esc(v):''}" placeholder="؟"></div>
+      <span class="cdif" dir="ltr">${has?(Math.abs(d)>1e-9?(d>0?'+':'−')+fmt(Math.abs(d),cntDec(it)):'✓'):''}</span></div>`}).join('')||'<div class="muted">چ تشت نینن.</div>'}</div>
+   <div class="cbar2"><button class="btn pri big grow" data-act="cntSave" ${nC?'':'disabled'}>${I('check','sm')} تۆمارکرنا ژمارتنێ (${nC})</button>${nC?`<button class="btn" data-act="cntClear">پاقژکرن</button>`:''}</div>
+   ${H.length?`<h3 style="margin-top:22px">📚 ژمارتنێن بەری نوکە</h3><div class="hlist">${H.map(c=>{const dd=(c.rows||[]).filter(r=>Math.abs(r.cnt-r.sys)>1e-9);return `<div class="hrow"><div class="grow"><b>${ymLbl(c.ym||ymOf(c.at))}</b><div class="muted" style="font-size:.8rem">${miDate(new Date(c.at))} ${p2(new Date(c.at).getHours())}:${p2(new Date(c.at).getMinutes())} · ${esc(uName(c.u))} · ${(c.rows||[]).length} هاتنە ژمارتن · <span style="color:${dd.length?'var(--bad)':'var(--good)'}">${dd.length} جوداهی</span></div></div><button class="btn" data-act="cntView" data-id="${esc(c.id)}">دیتن</button><button class="btn" data-act="cntPdf" data-id="${esc(c.id)}">${I('file','sm')} PDF</button></div>`}).join('')}</div>`:''}`}
+function cntLive(el){const mk=el.dataset.cnt;const D=cntDraft();const v=el.value;if(String(v).trim()==='')delete D[mk];else D[mk]=v;cntPersist();
+  const row=el.closest('.crow');const sy=toNum(el.dataset.sys);const has=String(v).trim()!=='';const d=has?toNum(v)-sy:0;const dec=/^(cart|box)\|/.test(mk)?1:2;
+  if(row){row.classList.remove('todo','diff','ok');row.classList.add(!has?'todo':Math.abs(d)>1e-9?'diff':'ok');row.querySelector('.cdif').textContent=has?(Math.abs(d)>1e-9?(d>0?'+':'−')+fmt(Math.abs(d),dec):'✓'):''}
+  const L=cntItems();let nC=0,nD=0;L.forEach(it=>{const x=D[it.sec+'|'+it.key];if(x!==undefined&&String(x).trim()!==''){nC++;if(Math.abs(toNum(x)-cntSys(it))>1e-9)nD++}});
+  const pg=document.getElementById('cntProg');if(pg)pg.innerHTML=`${nC} ژ ${L.length} هاتینە ژمارتن · <b style="color:${nD?'var(--bad)':'var(--good)'}">${nD} جوداهی</b>`;const br=document.getElementById('cntBar');if(br)br.style.width=(L.length?Math.round(nC/L.length*100):0)+'%';
+  const sb=document.querySelector('[data-act=cntSave]');if(sb){sb.disabled=!nC;sb.innerHTML=`${I('check','sm')} تۆمارکرنا ژمارتنێ (${nC})`}}
+function cntRowsNow(){const K=cntK();const D=cntDraft();return cntItems().filter(it=>{const v=D[it.sec+'|'+it.key];return v!==undefined&&String(v).trim()!==''}).map(it=>({sec:it.sec,key:it.key,name:it.name,unit:it.unit,sys:+cntSys(it).toFixed(4),cnt:toNum(D[it.sec+'|'+it.key])}))}
+function cntSave(){const K=cntK();const rows=cntRowsNow();if(!rows.length){toast('⚠️ هێشتا تە چ تشت نەژمارتیە');return}const dd=rows.filter(r=>Math.abs(r.cnt-r.sys)>1e-9);const ym=ymNow();
+  dialog(`<h3 style="margin-top:0">تۆمارکرنا ژمارتنا ${ymLbl(ym)} — ${esc(cntSecName())}</h3><p>${rows.length} تشت هاتینە ژمارتن. ${dd.length?`<b style="color:var(--bad)">${dd.length}</b> ژ وان جوداهی هەیە و مەخزەن دێ هێتە ڕاستکرن:`:'<b style="color:var(--good)">✓ هەمی وەکی سیستەمی نە.</b>'}</p>
+   ${dd.length?`<div class="tbl-scroll"><table><thead><tr><th>تشت</th><th class="n">سیستەم</th><th class="n">ژمارتن</th><th class="n">جوداهی</th></tr></thead><tbody>${dd.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="n">${fmt(r.sys,2)}</td><td class="n"><b>${fmt(r.cnt,2)}</b></td><td class="n" style="color:${r.cnt<r.sys?'var(--bad)':'var(--good)'}"><bdi dir="ltr">${r.cnt>r.sys?'+':'−'}${fmt(Math.abs(r.cnt-r.sys),2)}</bdi> ${esc(r.unit)}</td></tr>`).join('')}</tbody></table></div>`:''}`,()=>{
+    dd.forEach(r=>setInv(r.sec,r.key,String(r.cnt)));
+    const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const ses={at:new Date().toISOString(),u:myUid(),k:K,ym,rows};
+    if(db)db.doc('invcnt/'+id).set(ses).then(()=>toast('✓ ژمارتن هاتە تۆمارکرن'),()=>toast('⚠️ تۆمارا ژمارتنێ پاشەکەفت نەبوو'));else{S.cntSessions=[{id,...ses},...(S.cntSessions||[])];localSave();toast('✓ ژمارتن هاتە تۆمارکرن')}
+    delete S.cntDraft[K];cntPersist();S.cntF='';render()},'بەلێ، تۆمار بکە','wide')}
+function cntSesHtml(c){const dd=r=>r.cnt-r.sys;return `<table><thead><tr><th>#</th><th>تشت</th><th>یەکە</th><th class="n">سیستەم</th><th class="n">ژمارتن</th><th class="n">جوداهی</th></tr></thead><tbody>${(c.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.unit||'')}</td><td class="n">${fmt(r.sys,2)}</td><td class="n"><b>${fmt(r.cnt,2)}</b></td><td class="n" dir="ltr" style="color:${Math.abs(dd(r))<1e-9?'':dd(r)<0?'#b91c1c':'#15803d'}">${Math.abs(dd(r))<1e-9?'✓':(dd(r)>0?'+':'−')+fmt(Math.abs(dd(r)),2)}</td></tr>`).join('')}</tbody></table>`}
+/* --- stock at a point in time (walks back from now over IN/OUT and counts) --- */
+function invEvIndex(){const ev={};const add=(mk,e)=>{(ev[mk]=ev[mk]||[]).push(e)};
+  ['in','out'].forEach(d=>(S.tx[d]||[]).forEach(t=>{if(t&&t.sec&&t.key&&t.at)add(t.sec+':'+t.key,{at:t.at,k:d,q:toNum(t.qty)})}));
+  (S.invLogAll||S.invLog||[]).forEach(l=>{if(l&&l.at&&l.sec&&l.key!=null&&['cart','box','misc','crn','paint'].includes(l.sec))add(l.sec+':'+l.key,{at:l.at,k:'cnt',from:l.from})});
+  Object.values(ev).forEach(L=>L.sort((a,b)=>b.at.localeCompare(a.at)));return ev}
+function stockAt(EV,sec,key,T){let v=toNum(((S.inv||{})[sec]||{})[key]);for(const e of (EV[sec+':'+key]||[])){if(e.at<=T)break;if(e.k==='in')v-=e.q;else if(e.k==='out')v+=e.q;else v=e.from==null?0:toNum(e.from)}return v}
+function mrepData(ym){const [a,b]=ymRange(ym);const nowI=new Date().toISOString();const end=b>nowI?nowI:b;const EV=invEvIndex();
+  const rows=cntItems().map(it=>{const o=stockAt(EV,it.sec,it.key,a),c=stockAt(EV,it.sec,it.key,end);let I_=0,O=0;const ins=x=>x.sec===it.sec&&x.key===it.key&&x.at>a&&x.at<=end;
+    (S.tx.in||[]).forEach(x=>{if(ins(x))I_+=toNum(x.qty)});(S.tx.out||[]).forEach(x=>{if(ins(x))O+=toNum(x.qty)});const adj=c-o-I_+O;return {...it,o,i:I_,out:O,adj:Math.abs(adj)<1e-6?0:adj,c}});
+  return {ym,a,end,rows,ses:cntDone(cntK(),ym)}}
+function mrepFmt(v,it){return fmt(v,cntDec(it))}
+function viewMRep(){const ym=S.mrepYm||ymNow();const R=mrepData(ym);const all=S.mrepAll;const act=R.rows.filter(r=>r.i||r.out||r.adj);const L=all?R.rows:act;
+  const tI=act.filter(r=>r.i).length,tO=act.filter(r=>r.out).length,tA=act.filter(r=>r.adj).length;const top=[...act].filter(r=>r.out>0).sort((a,b)=>b.out-a.out).slice(0,6);const mx=top.length?top[0].out:1;
+  const U=r=>esc(r.unit);const sg=v=>(v>0?'+':v<0?'−':'')+'';
+  return `<div class="daynav"><button class="btn" data-act="mrepMv" data-d="-1">→</button><b style="font-size:1.1rem;min-width:140px;text-align:center">🗓 ${ymLbl(ym)}</b><button class="btn" data-act="mrepMv" data-d="1" ${ym>=ymNow()?'disabled':''}>←</button>${ym!==ymNow()?`<button class="btn" data-act="mrepMv" data-d="0">ئەڤ مەهە</button>`:''}<span class="grow"></span><button class="btn" data-act="mrepPdf">${I('file','sm')} PDF</button><button class="btn" data-act="mrepXlsx">${I('down','sm')} Excel</button></div>
+   <div class="mstats m4"><div><b style="color:var(--good)">${tI}</b><span>تشت هاتن</span></div><div><b style="color:#c2410c">${tO}</b><span>تشت چوون</span></div><div><b style="color:${tA?'var(--bad)':''}">${tA}</b><span>جوداهیا ژمارتنێ</span></div><div><b>${R.ses?'✓':'—'}</b><span>${R.ses?'هاتیە ژمارتن':'نەهاتیە ژمارتن'}</span></div></div>
+   ${top.length?`<div class="npanel"><div class="nph"><b>📉 زێدەترین بکارئینان د ڤی مەهیدا</b></div>${top.map(r=>`<div class="nrow"><div class="nmid"><div class="nt"><b>${esc(r.name)}</b><span>${mrepFmt(r.out,r)} ${U(r)}</span></div><div class="nbar"><i style="width:${Math.max(3,Math.round(r.out/mx*100))}%;background:#c2410c"></i></div></div></div>`).join('')}</div>`:''}
+   <div class="row" style="justify-content:space-between;align-items:center;margin:10px 0 6px;flex-wrap:wrap;gap:6px"><span class="muted">دەستپێک + هات − چوو ± جوداهیا ژمارتنێ = دوماهی</span><div class="chips" style="margin:0">${[[0,'ئەوێن لڤین ('+act.length+')'],[1,'هەمی ('+R.rows.length+')']].map(([v,l])=>`<button type="button" class="chip${!!all===!!v?' on':''}" data-act="mrepAll" data-v="${v}">${l}</button>`).join('')}</div></div>
+   <div class="mrl"><div class="mrr mrh"><span>تشت</span><span>دەستپێک</span><span>هات</span><span>چوو</span><span>ژمارتن</span><span>دوماهی</span></div>
+   ${L.map(r=>`<div class="mrr${r.adj?' adj':''}"><span class="mrn"><b>${esc(r.name)}</b><small>${esc(r.sub||'')} · ${U(r)}</small></span>
+     <span data-l="دەستپێک">${mrepFmt(r.o,r)}</span><span data-l="هات" class="gi">${r.i?'+'+mrepFmt(r.i,r):'—'}</span><span data-l="چوو" class="go">${r.out?'−'+mrepFmt(r.out,r):'—'}</span>
+     <span data-l="ژمارتن" class="ga" dir="ltr">${r.adj?(r.adj>0?'+':'−')+mrepFmt(Math.abs(r.adj),r):'—'}</span><span data-l="دوماهی" class="gc"><b>${mrepFmt(r.c,r)}</b></span></div>`).join('')||'<div class="muted" style="padding:10px">د ڤی مەهیدا چ لڤین نەبوون.</div>'}</div>`}
+function mrepTableHtml(R,title){const L=R.rows.filter(r=>r.i||r.out||r.adj||r.c||r.o);const f=(v,r)=>fmt(v,cntDec(r));
+  return `<h2>${esc(title)}</h2><table><thead><tr><th>#</th><th>تشت</th><th>یەکە</th><th>دەستپێک</th><th>هات</th><th>چوو</th><th>جوداهیا ژمارتنێ</th><th>دوماهی</th></tr></thead><tbody>${L.map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r.name)}</b>${r.sub?`<div style="font-size:9px;color:#666">${esc(r.sub)}</div>`:''}</td><td>${esc(r.unit)}</td><td>${f(r.o,r)}</td><td>${r.i?'+'+f(r.i,r):''}</td><td>${r.out?'−'+f(r.out,r):''}</td><td dir="ltr">${r.adj?(r.adj>0?'+':'−')+f(Math.abs(r.adj),r):''}</td><td><b>${f(r.c,r)}</b></td></tr>`).join('')||'<tr><td colspan="8">چ تشت نینن.</td></tr>'}</tbody></table>`}
+function mrepPdf(kinds,ym){const now=new Date();const parts=kinds.map(k=>{const [kind,grp,t]=CNT_KINDS[k];return inCtx(kind,grp,()=>{const R=mrepData(ym);return mrepTableHtml(R,t)+(R.ses?`<div class="sub">✓ ژمارتن: ${miDate(new Date(R.ses.at))} — ${esc(uName(R.ses.u))}</div>`:'<div class="sub">⚠️ ئەڤ مەهە نەهاتیە ژمارتن</div>')})});
+  printHtml(`<h1>ڕاپۆرتا مەهانە — ${ymLbl(ym)}</h1><div class="sub">${miDate(now)} ${p2(now.getHours())}:${p2(now.getMinutes())}</div>${parts.join('')}`,'Monthly report '+ym)}
+async function mrepXlsx(){const X=await loadXLSX();const ym=S.mrepYm||ymNow();const R=mrepData(ym);const wb=X.utils.book_new();
+  X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['Item','Detail','Unit','Opening','IN','OUT','Count difference','Closing'],...R.rows.map(r=>[r.name,r.sub||'',r.unit,+r.o.toFixed(3),+r.i.toFixed(3),+r.out.toFixed(3),+r.adj.toFixed(3),+r.c.toFixed(3)])]),ym);
+  await saveFile(`monthly-${cntK()}-${ym}.xlsx`,new Uint8Array(X.write(wb,{bookType:'xlsx',type:'array'})),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+function grpMonthly(g){if(!can('inv_count')&&!can('inv_view'))return '';const ks=g==='stock'?['paint','tape','misc']:['crn_chem','crn_rub','crn_nyl'];const vis=ks.filter(k=>{const t=CNT_KINDS[k][3];return TAB_PERM[t]?TAB_PERM[t]():true});if(!vis.length)return '';const ym=ymNow();
+  return `<div class="mpanel"><div class="nph"><b>🗓 ژمارتنا مەهانە — ${ymLbl(ym)}</b>${can('inv_view')?`<button class="btn" data-act="mrepGrpPdf" data-g="${g}">${I('file','sm')} ڕاپۆرتا مەهانە (هەمی)</button>`:''}</div>
+   <div class="mchips">${vis.map(k=>{const c=cntDone(k,ym);return `<button type="button" class="mchip ${c?'ok':'todo'}" data-act="cntGo" data-k="${k}">${c?'✓':'○'} ${CNT_KINDS[k][2]}<small>${c?miDate(new Date(c.at)):'نەهاتیە ژمارتن'}</small></button>`}).join('')}</div></div>`}
 /* --- menu dashboard --- */
 function crnMenuPanel(){if(!isCrn())return '';const g=S.crnGrp||'chem';
   if(g==='chem'){const L=MIv().filter(x=>miAvg(x.id)>0||x.min);if(!L.length)return '';const D=crnDays();
@@ -2846,7 +2962,7 @@ function miPendingBox(){const O=mrqOpen();if(!O.length)return '';
     return `<div class="mpcard"><div class="mrqh"><b class="ltr">#${r.no}</b><span class="pill" style="background:${(MRQ_ST[r.status]||MRQ_ST.sent)[1]};color:#fff">${(MRQ_ST[r.status]||MRQ_ST.sent)[0]}</span><span class="grow muted" style="font-size:.85rem">${r.to?'بۆ: '+esc(r.to)+' · ':''}<span class="ltr">${esc(r.date||'')}</span></span></div>
       <table class="mptbl"><thead><tr><th>ناڤێ مادێ</th><th>کۆد</th><th class="n">داخوازکری</th><th class="n">گەهشتی</th><th class="n">مای</th></tr></thead><tbody>${R.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td class="ltr muted">${esc(x.code||'')}</td><td class="n">${fmt(toNum(x.qty),2)} <small>${esc(x.unit)}</small></td><td class="n muted">${fmt(toNum(x.got),2)}</td><td class="n"><b style="color:#b45309">${fmt(mrqRem(x),2)}</b></td></tr>`).join('')}</tbody></table>
       <button class="btn pri" data-act="mrqRecv" data-id="${r.id}" style="width:100%;margin-top:8px;min-height:46px">📦 وەرگرتن — چ گەهشتیە؟</button></div>`}).join('')}</div>`}
-function viewMiscBody(){const k=S.invSub;if(k==='out'||k==='in')return viewMiscForm(k);if(k==='stock')return viewMiscStock();if(k==='mlog')return viewMiscLog();if(k==='mday')return viewMiscDay();if(k==='mreq')return viewMiscReq();if(k==='items')return viewMiscItems();return ''}
+function viewMiscBody(){const k=S.invSub;if(k==='mcount')return viewCount();if(k==='mrep')return viewMRep();if(k==='out'||k==='in')return viewMiscForm(k);if(k==='stock')return viewMiscStock();if(k==='mlog')return viewMiscLog();if(k==='mday')return viewMiscDay();if(k==='mreq')return viewMiscReq();if(k==='items')return viewMiscItems();return ''}
 function miPdf(kind){const now=new Date();const stamp=`${miDate(now)} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
   const LOGH='<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th>ژمارە</th><th>یەکە</th><th>هۆڵ</th><th>وەرگر</th><th>تۆمارکەر</th><th>تێبینی</th></tr>';
   const logTr=t=>{const x=miItem(t.key);const d=t.at?new Date(t.at):null;return `<tr><td>${d?miDate(d):''}</td><td>${d?p2(d.getHours())+':'+p2(d.getMinutes()):''}</td><td>${t.dir==='in'?'IN':'OUT'}</td><td>${esc(x?x.name:t.key)}</td><td dir="ltr">${esc(x?x.code:'')}</td><td><b>${t.dir==='in'?'+':'−'}${fmt(t.qty,2)}</b></td><td>${esc(x?x.unit:'')}</td><td>${esc(t.hall||'')}</td><td><b>${esc(t.person||'')}</b></td><td>${esc(uName(t.u))}</td><td>${esc(t.note||'')}</td></tr>`};
@@ -2869,6 +2985,8 @@ function viewInv(){
   else if(S.invSub==='outlog')body=viewOutLog();
   else if(S.invSub==='report')body=viewReport();
   else if(S.invSub==='tstk')body=viewTapeStockMark();
+  else if(S.invSub==='mcount')body=viewCount();
+  else if(S.invSub==='mrep')body=viewMRep();
   else body=`<p class="muted">ئەڤە ئەو گوهۆڕینن یێن ڕاستەوخۆ د تابلۆیا مەخزەنێدا هاتینە کرن (ژمارتنا مەخزەنێ). داخلکرن و دەرئێخستن د تابێن خۆدا دیار دبن.</p><div class="tbl-scroll"><table><thead><tr><th>دەم</th><th>کێ</th><th>چ</th><th class="n">بەری</th><th class="n">نوکە</th></tr></thead><tbody>
     ${S.invLog.filter(l=>(l.sec==='box')===(K==='tape')).map(l=>{const lbl={cart:'کارتۆنێن سبغێ',kgc:'کیلۆ/کارتۆن',inc:'سبغا ل ڕێیە',box:'کارتۆنێن لسقێ',paint:'سبغ (کیلۆ)'}[l.sec]||l.sec;
       const key=String(l.key||'');const nm=l.sec==='box'?key.split('|').map((x,i)=>i===1?x+' mm':i===2?(x==='P'?'Rough':'Normal'):i===3?x+'m':x).join(' · '):key;
@@ -3138,6 +3256,8 @@ function bind(){
     const of=$('#ordFile');if(of)of.onchange=async()=>{const f=of.files[0];if(!f)return;try{const rows=await readFileRows(f);importOrders(p,parseOrders(rows,$('#ordUnit').value))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   }
   if(isInvTab()){
+    m.querySelectorAll('[data-cnt]').forEach(el=>{el.oninput=()=>cntLive(el);el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const A=[...m.querySelectorAll('[data-cnt]')];const n=A[A.indexOf(el)+1];if(n){n.focus();n.select&&n.select()}}}});
+    {const q=m.querySelector('#cntQ');if(q){const ap=()=>{const v=normQ(q.value);S.cntQ=q.value;m.querySelectorAll('.crow').forEach(r=>r.style.display=!v||r.dataset.s.includes(v)?'':'none')};q.oninput=ap;ap()}}
     m.querySelectorAll('[data-invsub]').forEach(b=>b.onclick=()=>{S.invSub=b.dataset.invsub;render();window.scrollTo({top:0})});{const on=m.querySelector('.isubs .on');if(on){const r=on.parentElement,a=on.getBoundingClientRect(),c=r.getBoundingClientRect();r.scrollLeft+=(a.left+a.width/2)-(c.left+c.width/2)}}
     if(!can('inv_count')){m.querySelectorAll('input[data-st],select[data-len]').forEach(el=>el.disabled=true);m.querySelectorAll('[data-act=addLen]').forEach(el=>el.remove())}
     m.querySelectorAll('[data-txk]').forEach(b=>b.onclick=()=>{const [dir,k]=b.dataset.txk.split(':');txF(dir).kind=k;render()});
@@ -3306,7 +3426,7 @@ async function doBackup(auto){const ymd=today().replace(/-/g,'');const fn=`band-
   const ok=await saveFile(fn,txt,'application/json');if(ok!==false||OFFLINE||db){const now=new Date().toISOString();try{localStorage.setItem('bandorder-lastbackup',now)}catch(e){}
     if(db&&isAdmin){S.settings.lastBackup=now;S.settings.lastBackupBy=(curApp()||{}).name||'';save('cfg/settings',100)}
     $('#banner').innerHTML='';toast((auto?'💾 Backup یێ ب خۆ (هەر '+bkDays()+' ڕۆژان): ':'✓ Backup هاتە داگرتن: ')+fn+' — ل جهەکێ پاراستی (فلاش، Google Drive) بپارێزە.');if(S.tab==='settings')render()}}
-function exportData(){return {app:'band-order',version:1,exportedAt:new Date().toISOString(),data:{settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,inv:S.inv,invMeta:S.invMeta,tx:S.tx,manInc:S.manInc||[],miscItems:S.miscItems||[],miscReq:S.miscReq||[],crnItems:S.crnItems||[],crnReq:S.crnReq||[],appUsers:S.appUsers,recovery:S.recovery||null}}}
+function exportData(){return {app:'band-order',version:1,exportedAt:new Date().toISOString(),data:{settings:S.settings,paints:S.paints,profiles:S.profiles,periods:S.periods,inv:S.inv,invMeta:S.invMeta,tx:S.tx,manInc:S.manInc||[],miscItems:S.miscItems||[],miscReq:S.miscReq||[],crnItems:S.crnItems||[],crnReq:S.crnReq||[],cntSessions:S.cntSessions||[],appUsers:S.appUsers,recovery:S.recovery||null}}}
 async function importAll(D){
   const old=Object.keys(S.periods);
   if(D.settings)S.settings={...S.settings,...D.settings};
@@ -3322,6 +3442,7 @@ async function importAll(D){
   if(Array.isArray(D.miscReq))S.miscReq=D.miscReq;
   if(Array.isArray(D.crnItems))S.crnItems=D.crnItems.map(miNormItem);
   if(Array.isArray(D.crnReq))S.crnReq=D.crnReq;
+  if(Array.isArray(D.cntSessions)){S.cntSessions=D.cntSessions;if(db)for(const c of D.cntSessions){const {id,...d}=c;if(id)await db.doc('invcnt/'+id).set(d).catch(()=>{})}}
   if(!db){if(txIn)S.tx={in:txIn.in||[],out:txIn.out||[]};recomputeInv();localSave();toast('✓ Backup هاتە ئینان');render();return}
   setStatus('ئینانا داتایێ...');
   try{
@@ -3573,6 +3694,18 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='profCrn'){profCrnDialog(+t.dataset.i)}
   else if(act==='rubPdf'){rubPdf(p,t.dataset.g)}
   else if(act==='crnDet'){const r=t.parentElement.querySelector(`[data-cd="${t.dataset.i}"]`);if(r)r.classList.toggle('hide')}
+  else if(act==='cntF'){S.cntF=t0.dataset.v;render()}
+  else if(act==='cntEq'){const inp=document.querySelector(`[data-cnt="${CSS.escape(t0.dataset.mk)}"]`);if(inp){inp.value=String(+toNum(t0.dataset.v).toFixed(4));cntLive(inp)}}
+  else if(act==='cntSave'){cntSave()}
+  else if(act==='cntClear'){dialog('ژمارێن تە نڤیسین (هێشتا تۆمار نەکرین) دێ هێنە ژێبرن. باشە؟',()=>{delete S.cntDraft[cntK()];cntPersist();render()},'بەلێ، پاقژ بکە')}
+  else if(act==='cntView'){const c=(S.cntSessions||[]).find(x=>x.id===t0.dataset.id);if(c)dialog(`<h3 style="margin-top:0">ژمارتنا ${ymLbl(c.ym||ymOf(c.at))} — ${esc(cntSecName())}</h3><div class="muted">${miDate(new Date(c.at))} · ${esc(uName(c.u))}</div><div class="tbl-scroll">${cntSesHtml(c)}</div>`,()=>{},'داخستن','wide')}
+  else if(act==='cntPdf'){const c=(S.cntSessions||[]).find(x=>x.id===t0.dataset.id);if(c)printHtml(`<h1>ژمارتنا مەهانە — ${esc(cntSecName())}</h1><div class="sub">${ymLbl(c.ym||ymOf(c.at))} · ${miDate(new Date(c.at))} · ${esc(uName(c.u))}</div>${cntSesHtml(c)}`,'Count '+(c.ym||''))}
+  else if(act==='cntGo'){const [kind,grp,,tab]=CNT_KINDS[t0.dataset.k];if(grp)S.crnGrp=grp;go(tab,can('inv_count')?'mcount':'mrep');render();window.scrollTo({top:0})}
+  else if(act==='mrepMv'){const d=+t0.dataset.d;S.mrepYm=d===0?ymNow():ymAdd(S.mrepYm||ymNow(),d);if(S.mrepYm>ymNow())S.mrepYm=ymNow();render()}
+  else if(act==='mrepAll'){S.mrepAll=t0.dataset.v==='1';render()}
+  else if(act==='mrepPdf'){mrepPdf([cntK()],S.mrepYm||ymNow())}
+  else if(act==='mrepXlsx'){try{await mrepXlsx()}catch(e){toast('⚠️ Excel دروست نەبوو')}}
+  else if(act==='mrepGrpPdf'){const g=t0.dataset.g;const ks=(g==='stock'?['paint','tape','misc']:['crn_chem','crn_rub','crn_nyl']).filter(k=>{const t=CNT_KINDS[k][3];return TAB_PERM[t]?TAB_PERM[t]():true});mrepPdf(ks,S.mrepYm||ymNow())}
   else if(act==='msView'){S.msView=t0.dataset.v;render()}
   else if(act==='rubReq'){const g=t0.dataset.g||'rub';const pp=p||crnP();const {rows}=crnRows(pp);const sh=rows.filter(r=>r.diff<-0.0005&&r.x.grp===g);S.invKind='crn';S.crnGrp=g;const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.plen||z.x.ppr?z.rolls:z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.plen||z.x.ppr?'':z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+pp.name;S.mrqEdit=r;go(g==='nyl'?'invNyl':'invRub','mreq');window.scrollTo({top:0})}
   else if(act==='delProf'){const x=S.profiles[+t.dataset.i];dialog(`<p>پڕۆفایلێ <b class="ltr">${esc(x.code)}</b> ژێببە؟</p>`,()=>{S.profiles.splice(+t.dataset.i,1);save('cfg/profiles',100);render()},'ژێببە')}
