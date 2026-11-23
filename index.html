@@ -1153,7 +1153,7 @@ function hasStock(s){if(!s)return false;return ['cart','box','paint','tape','inc
 function latestStockSeed(){const ps=Object.values(S.periods).filter(p=>hasStock(p.stock)).sort((a,b)=>(b.start||'').localeCompare(a.start||''));return ps.length?JSON.parse(JSON.stringify(ps[0].stock)):{}}
 let resolveInv;const invReady=new Promise(r=>resolveInv=r);let resolvePer;const perReady=new Promise(r=>resolvePer=r);
 const pendingInv=new Set(),invTimers={},invPrev={};let invQ=Promise.resolve();
-const INV_SECS=['cart','kgc','inc','box','paint'];
+const INV_SECS=['cart','kgc','inc','box','paint','misc','crn'];
 function recomputeInv(){
   const b=S.invBase||normStock({});const e=normStock(JSON.parse(JSON.stringify(b)));
   [['in',1],['out',-1]].forEach(([dir,sg])=>(S.tx[dir]||[]).forEach(t=>{if(!t||!t.sec||!t.key)return;const mk=t.sec+':'+t.key;const bAt=(S.invMeta[mk]||{}).at||'';if((t.at||'')<=bAt)return;
@@ -3330,6 +3330,9 @@ function bind(){
       pv.innerHTML=l.length?`✓ <b>${l.length}</b> ڕیز هاتنە ناسین — ${fmt(l.reduce((s,o)=>s+o.qty,0),0)} ${$('#ordUnit').value==='m'?'مەتر':'قەد'}`+(bp?` · <span class="short">${bp} کۆد نەناسراو</span>`:'')+(bc?` · <span class="short">${bc} سبغ نەناسراو</span>`:'')+' — «زێدە بکە» بکە':'<span class="short">چ ڕیز نەهاتنە ناسین</span>'};
     const of=$('#ordFile');if(of)of.onchange=async()=>{const f=of.files[0];if(!f)return;try{const rows=await readFileRows(f);importOrders(p,parseOrders(rows,$('#ordUnit').value))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   }
+    {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
+    {const uq=m.querySelector('#uQ');if(uq)uq.oninput=()=>{S.uQ=uq.value;const q=normQ(uq.value);m.querySelectorAll('.urow').forEach(r=>{r.style.display=!q||normQ(r.querySelector('.uhead').textContent).includes(q)?'':'none'})}}
+    {const pp=m.querySelector('#pPick');if(pp)pp.onchange=()=>{S.cur=pp.value;render();window.scrollTo({top:0})}}
   if(isInvTab()){
     m.querySelectorAll('[data-cnt]').forEach(el=>{el.oninput=()=>cntLive(el);el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const A=[...m.querySelectorAll('[data-cnt]')];const n=A[A.indexOf(el)+1];if(n){n.focus();n.select&&n.select()}}}});
     {const q=m.querySelector('#cntQ');if(q){const ap=()=>{const v=normQ(q.value);S.cntQ=q.value;m.querySelectorAll('.cntrow').forEach(r=>r.style.display=!v||r.dataset.s.includes(v)?'':'none')};q.oninput=ap;ap()}}
@@ -3359,9 +3362,6 @@ function bind(){
     m.querySelectorAll('[data-msf]').forEach(el=>{const h=()=>{const f=miF(el.dataset.msf);f[el.dataset.f]=el.value;const a=m.querySelector('#msAfter');if(a&&el.dataset.f==='qty'){const x=miItem(f.item);const q=x?miInQ(x,f):0;const v=toNum(a.dataset.have)+(a.dataset.dir==='out'?-q:q);a.textContent=fmt(v,x&&x.plen?0:2);a.classList.toggle('neg',v<0)}};el.oninput=h;el.onchange=h});
     m.querySelectorAll('[data-msi]').forEach(el=>{const h=()=>{const x=miItem(el.dataset.msi);if(!x)return;const v=el.value.trim();if(el.dataset.f==='name'&&!v)return;x[el.dataset.f]=el.dataset.f==='unit'?(v||'دانە'):v;save(MX().doc,1200)};el.oninput=h;el.onchange=h});
     {const ps=m.querySelector('#pfSearch');if(ps)ps.oninput=()=>{const qs=normQ(ps.value).trim().split(' ').filter(Boolean);let n=0;m.querySelectorAll('#pfGrid .pcard').forEach(c=>{const ok=qs.every(x=>c.dataset.n.includes(x));c.style.display=ok?'':'none';if(ok)n++});const z=m.querySelector('#pfNone');if(z)z.style.display=n?'none':''}}
-    {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
-    {const uq=m.querySelector('#uQ');if(uq)uq.oninput=()=>{S.uQ=uq.value;const q=normQ(uq.value);m.querySelectorAll('.urow').forEach(r=>{r.style.display=!q||normQ(r.querySelector('.uhead').textContent).includes(q)?'':'none'})}}
-    {const pp=m.querySelector('#pPick');if(pp)pp.onchange=()=>{S.cur=pp.value;render();window.scrollTo({top:0})}}
     m.querySelectorAll('[data-olf]').forEach(el=>el.onchange=()=>{olF()[el.dataset.olf]=el.value;render()});
     m.querySelectorAll('[data-binf]').forEach(el=>el.oninput=()=>{binF()[el.dataset.binf]=el.value});
     m.querySelectorAll('[data-bin]').forEach(el=>{const h=()=>{const f=binF();const r=f.rows[+el.dataset.bin];if(!r)return;r[el.dataset.f]=el.value;
