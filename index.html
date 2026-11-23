@@ -697,7 +697,7 @@ nav.tabs{display:none!important}
 .pwst{display:flex;flex-direction:column;gap:8px}
 .pwr{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;border:1px solid var(--line);border-inline-start:4px solid var(--tc);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;text-align:right}
 .pwr:hover{border-color:var(--tc)}.pwn{display:flex;flex-direction:column;flex:1;min-width:120px}.pwn small{color:var(--muted);font-size:.78rem}.pwr .hsts{margin:0}
-.pwkb{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:4px}.pwkb .chip{flex:none;gap:6px}.pwkb .chip.on{background:var(--tc);border-color:var(--tc)}
+.pwkb{display:flex;flex-wrap:wrap;gap:6px;padding:2px 2px 10px;margin-bottom:4px}.pwkb .chip{flex:none;gap:6px;min-height:38px;padding:6px 12px}.pwkb .chip.on{background:var(--tc);border-color:var(--tc)}
 .dpick{display:flex;flex-direction:column;gap:8px}
 .dpk{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font:inherit;font-size:1rem;cursor:pointer;text-align:right}
 .dpk:hover{border-color:var(--tc)}.dpkt{flex:1;display:flex;flex-direction:column}.dpkt small{color:var(--muted);font-size:.78rem}.dpk>.ico{color:var(--muted)}
@@ -1683,17 +1683,17 @@ const ILLK={in:'in',out:'out',report:'rep',mrep:'rep',mcount:'cnt',stock:'stk',o
 
 const PW_ACT=[['out','دەرئێخستن','out','#c2410c'],['in','داخلکرن','in','#15803d'],['stock','مەخزەن','stk','#0f766e'],['log','تۆمار','clk','#6b6f2a'],['report','ڕاپۆرت','rep','#1f5f9e'],['req','داخوازکرنا کڕینێ','req','#7c3aed']];
 const PW_KIND={invPaint:['سبغ','drop','#0e7478'],invTape:['لسق','tape','#5d4495'],invChem:['کرۆمات و تێزاب','drop','#0369a1'],invRub:['لاستیک','layers','#334155'],invNyl:['نایلۆن','file','#7c3aed']};
-function pwSubOf(tab,act){const crn=!!CRN_TABS[tab];return {out:'out',in:'in',stock:'stock',log:crn?'mlog':'outlog',report:crn?'mrep':'report',req:crn?'mreq':null}[act]}
-function pwActOf(sub){return {out:'out',in:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',report:'report',mrep:'report',mreq:'req'}[sub]||null}
+function pwSubOf(tab,act){const crn=!!CRN_TABS[tab];return {out:'out',in:'in',stock:'stock',log:crn?'mlog':'outlog',report:crn?'mrep':'report',req:crn?'mreq':null,tstk:tab==='invTape'?'tstk':null}[act]}
+function pwActOf(sub){return {out:'out',in:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',report:'report',mrep:'report',mreq:'req',tstk:'tstk'}[sub]||null}
 function pwAvail(tab,act){try{const sub=pwSubOf(tab,act);if(!sub||!TAB_PERM[tab]())return false;const g=CRN_TABS[tab];return g?inCtx('crn',g,()=>miscSubList()).includes(sub):inCtx(tab==='invPaint'?'paint':'tape',null,()=>invSubList()).includes(sub)}catch(e){return false}}
 function pwKinds(act){return Object.keys(PW_KIND).filter(t=>pwAvail(t,act))}
 function pwGo(tab,act){if(CRN_TABS[tab])S.crnGrp=CRN_TABS[tab];S._pw=1;S.fromPwh=act;try{go(tab,pwSubOf(tab,act))}finally{S._pw=0}}
-function pwPick(act){const ks=pwKinds(act);if(!ks.length)return;if(ks.length===1){pwGo(ks[0],act);return}const A=PW_ACT.find(a=>a[0]===act);
+function pwPick(act){const ks=pwKinds(act);if(!ks.length)return;pwGo(ks[0],act);return;const A=PW_ACT.find(a=>a[0]===act);
   dialog(`<h3 style="margin-top:0;display:flex;align-items:center;gap:10px"><span style="width:44px;height:44px;display:inline-flex">${dIll(A[2])}</span>${A[1]} — کیژ؟</h3><div class="dpick">${ks.map(t=>{const [l,ic,c]=PW_KIND[t];return `<button type="button" class="dpk" data-pwt="${t}" style="--tc:${c}"><span class="dpi">${I(ic)}</span><span class="dpkt"><b>${l}</b><small>${tileStat(t).replace(/<[^>]+>/g,' ')}</small></span>${I('arrow','sm')}</button>`}).join('')}</div>`,()=>{},'داخستن');
   document.querySelectorAll('[data-pwt]').forEach(b=>b.onclick=()=>{$('#dlg').innerHTML='';pwGo(b.dataset.pwt,act)})}
 function viewPwh(){const acts=PW_ACT.map(a=>({a,ks:pwKinds(a[0])})).filter(x=>x.ks.length);const its=grpItems('pwh');
   return `<div class="home">${grpAlerts('stock')}<div class="acts">${acts.map(({a,ks})=>`<button class="act" data-act="pwAct" data-a="${a[0]}" style="--tc:${a[3]};--tc-soft:${a[3]}1f"><span class="aic ill">${dIll(a[2])}</span><span class="atx"><b>${a[1]}</b><small>${ks.map(t=>PW_KIND[t][0]).join('، ')}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>
-   <div class="grp-t">ڕەوشا مەخزەنێ</div><div class="pwst">${its.map(s=>`<button class="pwr" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c}"><span class="dpi">${I(s.ic)}</span><span class="pwn"><b>${PW_KIND[s.tab]?PW_KIND[s.tab][0]:s.t}</b><small>${tileStat(s.tab).replace(/<[^>]+>/g,' ')}</small></span>${hubStatus(s.tab)}</button>`).join('')}</div></div>`}
+</div>`}
 function pwKindBar(){const act=S.fromPwh;if(!act||grpOf(S.tab)!=='pwh'||pwActOf(S.invSub)!==act)return '';const ks=pwKinds(act);if(ks.length<2)return '';
   return `<div class="pwkb">${ks.map(t=>{const [l,ic,c]=PW_KIND[t];return `<button type="button" class="chip${t===S.tab?' on':''}" data-act="pwKind" data-t="${t}" style="--tc:${c}">${I(ic,'sm')} ${l}</button>`}).join('')}</div>`}
 function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
