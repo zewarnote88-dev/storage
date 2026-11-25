@@ -787,6 +787,8 @@ html[data-sys=taste] .segm .chip.on{background:var(--ink);border-color:var(--ink
 html[data-sys=taste] .nbar i,html[data-sys=taste] .cbar i{background:#1fbf6b}
 html[data-sys=taste] .isubs button{border-radius:var(--r-btn);transition:border-color var(--m-in)}html[data-sys=taste] .isubs button:hover{border-color:var(--ink)}html[data-sys=taste] .isubs button .ico{color:var(--muted)}
 html[data-sys=taste] .isubs button.on{background:var(--mint);border-color:var(--mint);color:#232323;font-weight:600}html[data-sys=taste] .isubs button.on .ico{color:#232323}
+html[data-sys=taste] .isubs{mask-image:none;-webkit-mask-image:none}
+html[data-sys=taste]:not([data-glass="1"]) .topbar,html[data-sys=taste]:not([data-glass="1"]) .bnav,html[data-sys=taste]:not([data-glass="1"]) .card,html[data-sys=taste]:not([data-glass="1"]) .secbar{backdrop-filter:none;-webkit-backdrop-filter:none}
 @media (prefers-reduced-motion: reduce){html[data-sys=taste] *{transition:none!important;transform:none!important}}
 
 .seclist{display:flex;flex-direction:column;gap:8px}
@@ -928,6 +930,7 @@ let db=null, downloads=null, capInfo={runtime:false,db:false,downloads:false};
 
 /* ======================= Helpers ======================= */
 const $=s=>document.querySelector(s);
+const cmpS=(x,y)=>{x=x||'';y=y||'';return x<y?-1:x>y?1:0};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().replace(/\s+/g,' ').toUpperCase();
 function toNum(v){
@@ -1256,7 +1259,7 @@ function tapeKeys(period){
   return keys;
 }
 function hasStock(s){if(!s)return false;return ['cart','box','paint','tape','inc'].some(k=>Object.values(s[k]||{}).some(v=>toNum(v)>0))}
-function latestStockSeed(){const ps=Object.values(S.periods).filter(p=>hasStock(p.stock)).sort((a,b)=>(b.start||'').localeCompare(a.start||''));return ps.length?JSON.parse(JSON.stringify(ps[0].stock)):{}}
+function latestStockSeed(){const ps=Object.values(S.periods).filter(p=>hasStock(p.stock)).sort((a,b)=>cmpS(b.start,a.start));return ps.length?JSON.parse(JSON.stringify(ps[0].stock)):{}}
 let resolveInv;const invReady=new Promise(r=>resolveInv=r);let resolvePer;const perReady=new Promise(r=>resolvePer=r);
 const pendingInv=new Set(),invTimers={},invPrev={};let invQ=Promise.resolve();
 const INV_SECS=['cart','kgc','inc','box','paint','misc','crn'];
@@ -1664,8 +1667,8 @@ function render0(){
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
   const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_pwh:()=>viewGroup('pwh'),g_hall:()=>viewGroup('hall'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},invMisc:()=>{S.invKind='misc';return viewInv()},invCrn:()=>{S.tab='invChem';S.invKind='crn';S.crnGrp='chem';return viewInv()},invChem:()=>{S.invKind='crn';S.crnGrp='chem';return viewInv()},invRub:()=>{S.invKind='crn';S.crnGrp='rub';return viewInv()},invNyl:()=>{S.invKind='crn';S.crnGrp='nyl';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings,sections:viewSections,layout:viewLayout}[S.tab]||(S.tab.startsWith('g_f_')?()=>viewGroup(S.tab.slice(2)):null)||(CRN_TABS[S.tab]?()=>{S.invKind='crn';S.crnGrp=CRN_TABS[S.tab];return viewInv()}:viewHome);
   if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
-  closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)window.scrollTo(0,__sy);if(S.goQty){S.goQty=0;const an=m.querySelector('#pfAnchor');if(an)setTimeout(()=>{const y=an.getBoundingClientRect().top+window.scrollY-(innerWidth<=640?10:80);window.scrollTo({top:y,behavior:'smooth'})},30)}S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
-  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
+  closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)S.__sy=__sy;else S.__sy=null;if(S.goQty){S.goQty=0;const an=m.querySelector('#pfAnchor');if(an)setTimeout(()=>{const y=an.getBoundingClientRect().top+window.scrollY-(innerWidth<=640?10:80);window.scrollTo({top:y,behavior:'smooth'})},30)}S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
+  bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});centerChipsLater(m);
 }
 /* ======================= Search (all lists) ======================= */
 const tblQ={};
@@ -1675,6 +1678,8 @@ function itemText(el){let s=el.textContent;
   el.querySelectorAll('input:not([type=checkbox]):not([type=search]),textarea').forEach(e=>s+=' '+e.value);
   el.querySelectorAll('select').forEach(e=>{const o=e.options[e.selectedIndex];if(o)s+=' '+o.text});
   return normQ(s)}
+function centerChipsLater(m){if(centerChipsLater.p)return;centerChipsLater.p=requestAnimationFrame(()=>{centerChipsLater.p=0;if(S.__sy!=null){window.scrollTo(0,S.__sy);S.__sy=null}
+  ['.isubs .on','.pwkb .on'].forEach(q=>{const on=m.querySelector(q);if(!on)return;const r=on.parentElement;if(r.scrollWidth<=r.clientWidth+2)return;const a=on.getBoundingClientRect(),c=r.getBoundingClientRect();r.scrollLeft+=(a.left+a.width/2)-(c.left+c.width/2)})})}
 function addSearch(){
   const m=$('#main');let n=0;
   m.querySelectorAll('.tbl-scroll,.plist').forEach(box=>{
@@ -1875,7 +1880,7 @@ function applyLayout(){try{LAYOUT=effLayout();FOLDERS={};GROUPS.forEach(G=>{FOLD
   LAYOUT.custom.forEach(f=>{FOLDERS[f.id]={g:f.id,t:f.t||'فۆلدەر',s:'',ic:'grid',c:'#334155',emo:f.ic||'📁',custom:1}});
   Object.entries(LAYOUT.names).forEach(([id,n])=>{if(FOLDERS[id]&&n){if(n.t)FOLDERS[id].t=n.t;if(n.ic)FOLDERS[id].emo=n.ic}});
   PARENT={};LAYOUT.root.forEach(id=>PARENT[id]=null);Object.entries(LAYOUT.kids).forEach(([f,arr])=>arr.forEach(id=>PARENT[id]=f));
-  SECTIONS.forEach(x=>{x.g=PARENT['t:'+x.tab]||'root'});
+  SECTIONS.forEach(x=>{x.g=PARENT['t:'+x.tab]||'root';if(x.t0===undefined)x.t0=x.t;const n=LAYOUT.names['t:'+x.tab]||{};x.t=n.t||x.t0;x.emo=n.ic||null;if(PW_KIND[x.tab])PW_KIND[x.tab][0]=x.t});
   Object.keys(FOLDERS).forEach(f=>{const k='g_'+f;if(!TAB_PERM[k]||f.startsWith('f_'))TAB_PERM[k]=()=>{const w=wMode();if(w)return false;return fVis(f)};if(f.startsWith('f_'))HASH[k]='folder-'+f.slice(2)})}catch(e){console.error(e)}}
 function kidsOf(f){return (LAYOUT&&LAYOUT.kids[f])||[]}
 function nodeVis(id){if(id.startsWith('t:')){const f=TAB_PERM[id.slice(2)];return !!(f&&f())}return fVis(id.slice(2))}
@@ -1892,21 +1897,29 @@ function nodeCard(id){if(id.startsWith('g:')){const f=id.slice(2),F=FOLDERS[f];i
     const sub=F.custom||f==='pwh'||!F.s?V.map(x=>x.startsWith('g:')?(FOLDERS[x.slice(2)]||{}).t:(SECTIONS.find(z=>z.tab===x.slice(2))||{}).t).filter(Boolean).join('، '):F.s;
     return `<button class="bigc${arrOn()?' arr':''}" data-go="g_${f}" style="--tc:${F.c};--tc-soft:${F.c}22">${arrBar(id)}${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${F.emo?`<span style="font-size:1.7rem">${F.emo}</span>`:I(F.ic)}</span><span class="bt">${esc(F.t)}</span><span class="bs">${esc(sub)}</span><span class="bv">${stat}</span>${f==='pwh'?pwhStatus(V.filter(x=>x.startsWith('t:')).map(x=>({tab:x.slice(2)}))):''}<span class="bgo">${I('arrow','sm')}</span></button>`}
   const x=SECTIONS.find(z=>z.tab===id.slice(2));if(!x)return '';const inv=/^inv/.test(x.tab);
-  return `<button class="bigc${arrOn()?' arr':''}" data-go="${x.tab}"${inv?` data-gsub="${landSub(x.tab)}"`:''} style="--tc:${x.c};--tc-soft:${x.c}22">${arrBar(id)}<span class="bic">${x.custom&&CRN_G[CRN_TABS[x.tab]]?`<span style="font-size:1.7rem">${CRN_G[CRN_TABS[x.tab]].ic}</span>`:x.tab==='settings'?dIll('set'):I(x.ic)}</span><span class="bt">${esc(x.t)}</span><span class="bs">${esc(x.s)}</span><span class="bv">${tileStat(x.tab)}</span>${hubStatus(x.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`}
+  return `<button class="bigc${arrOn()?' arr':''}" data-go="${x.tab}"${inv?` data-gsub="${landSub(x.tab)}"`:''} style="--tc:${x.c};--tc-soft:${x.c}22">${arrBar(id)}<span class="bic">${x.emo?`<span style="font-size:1.7rem">${x.emo}</span>`:x.custom&&CRN_G[CRN_TABS[x.tab]]?`<span style="font-size:1.7rem">${CRN_G[CRN_TABS[x.tab]].ic}</span>`:x.tab==='settings'?dIll('set'):I(x.ic)}</span><span class="bt">${esc(x.t)}</span><span class="bs">${esc(x.s)}</span><span class="bv">${tileStat(x.tab)}</span>${hubStatus(x.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`}
 
 function arrOn(){return isAdmin&&S.arrange}
 function arrBar(id){if(!arrOn())return '';const isF=id.startsWith('g:');const par=PARENT[id]||null;const arr=par?kidsOf(par):(LAYOUT?LAYOUT.root:[]);const i=arr.indexOf(id);
-  return `<span class="arrbar"><span role="button" tabindex="0" class="arrb" data-act="lyMv" data-id="${id}" data-d="-1" ${i<=0?'aria-disabled="true"':''} title="بۆ پێش">→</span><span role="button" tabindex="0" class="arrb" data-act="lyMv" data-id="${id}" data-d="1" ${i>=arr.length-1?'aria-disabled="true"':''} title="بۆ پاش">←</span><span role="button" tabindex="0" class="arrb" data-act="arrTo" data-id="${id}" title="بگوهۆڕە بۆ فۆلدەرەکێ">📁</span>${isF?`<span role="button" tabindex="0" class="arrb" data-act="lyRen" data-f="${id.slice(2)}" title="ناڤ">✏️</span><span role="button" tabindex="0" class="arrb" data-act="lyDel" data-f="${id.slice(2)}" title="ژێبرن">🗑</span>`:''}</span>`}
+  return `<span class="arrbar"><span role="button" tabindex="0" class="arrb" data-act="lyMv" data-id="${id}" data-d="-1" ${i<=0?'aria-disabled="true"':''} title="بۆ پێش">→</span><span role="button" tabindex="0" class="arrb" data-act="lyMv" data-id="${id}" data-d="1" ${i>=arr.length-1?'aria-disabled="true"':''} title="بۆ پاش">←</span><span role="button" tabindex="0" class="arrb" data-act="arrTo" data-id="${id}" title="بگوهۆڕە بۆ فۆلدەرەکێ">📁</span>${isF?`<span role="button" tabindex="0" class="arrb" data-act="lyRen" data-f="${id.slice(2)}" title="ناڤ و ئایکۆن">✏️</span><span role="button" tabindex="0" class="arrb" data-act="lyDel" data-f="${id.slice(2)}" title="ژێبرن">🗑</span>`:`<span role="button" tabindex="0" class="arrb" data-act="lyRenT" data-id="${id}" title="ناڤ و ئایکۆن">✏️</span>`}</span>`}
 function arrHead(){if(!isAdmin)return '';return arrOn()?`<div class="arrhead"><span>✏️ <b>ڕێکخستن:</b> ب → ← ڕێزێ بگوهۆڕە، و ب 📁 تشتەکی ببە بۆ فۆلدەرەکێ.</span><button class="btn" data-act="lyNew">${I('plus','sm')} فۆلدەر</button><button class="btn pri" data-act="arrTog">✓ تەمام</button></div>`:''}
 function arrToDlg(id){const isF=id.startsWith('g:');const bad=isF?new Set([id.slice(2),...descOf(id.slice(2))]):new Set();const cur=PARENT[id]||'';
   const opts=[['','🏠','سەرەکی'],...Object.keys(LAYOUT.kids).filter(f=>!bad.has(f)).map(f=>[f,FOLDERS[f].emo||'📁',FOLDERS[f].t])];
   dialog(`<h3 style="margin-top:0">«${esc(nodeName(id))}» ببە بۆ کیرێ؟</h3><div class="dpick">${opts.map(([v,e,t])=>`<button type="button" class="dpk" data-arrto="${v}" style="--tc:#232323"${v===cur?' disabled':''}><span class="dpi" style="font-size:1.3rem">${e}</span><span class="dpkt"><b>${esc(t)}</b>${v===cur?'<small>نوکە ل ڤێرە یە</small>':''}</span></button>`).join('')}</div>`,()=>{},'داخستن');
   document.querySelectorAll('[data-arrto]').forEach(b=>b.onclick=()=>{$('#dlg').innerHTML='';lyMove(id,b.dataset.arrto||null)})}
+
+function lySecDlg(id){const x=SECTIONS.find(z=>z.tab===id.slice(2));if(!x)return;const ICS=['🎨','🧻','🧪','⚫','🎞','📦','🔩','⚙️','🧰','🛢️','🗓','🕘','📐','👥','📊','🏭','⭐','🗂'];const cur=x.emo||'';
+  dialog(`<h3 style="margin-top:0">گوهۆڕینا «${esc(x.t)}»</h3><label>ناڤ<input id="lyName" value="${esc(x.t)}" placeholder="${esc(x.t0)}"></label><div class="muted" style="font-size:.78rem;margin-top:4px">ناڤێ ئەسلی: ${esc(x.t0)}</div>
+   <label style="margin-top:10px">ئایکۆن</label><div class="secics"><button type="button" class="chip${!cur?' on':''}" data-lic="">${I(x.ic)}</button>${ICS.map(e=>`<button type="button" class="chip${e===cur?' on':''}" data-lic="${e}">${e}</button>`).join('')}</div>
+   <button type="button" class="btn" id="lyDef" style="margin-top:10px">↺ ناڤ و ئایکۆنا ئەسلی</button>`,()=>{
+     const t=$('#lyName').value.trim();const ic=(document.querySelector('[data-lic].on')||{}).dataset?.lic||'';const L=layoutPlain();const n={};if(t&&t!==x.t0)n.t=t;if(ic)n.ic=ic;if(n.t||n.ic)L.names[id]=n;else delete L.names[id];layoutSave(L);toast('✓ هاتە پاشەکەفتکرن')},'پاشەکەفت بکە');
+  document.querySelectorAll('[data-lic]').forEach(b=>b.onclick=()=>document.querySelectorAll('[data-lic]').forEach(z=>z.classList.toggle('on',z===b)));
+  const d=$('#lyDef');if(d)d.onclick=()=>{$('#lyName').value=x.t0;document.querySelectorAll('[data-lic]').forEach(z=>z.classList.toggle('on',z.dataset.lic===''))}}
 /* ---- editor ---- */
 function layoutSave(L){S.settings.layout=L;save('cfg/settings',0);render()}
 function layoutPlain(){const E=LAYOUT;return {root:[...E.root],kids:Object.fromEntries(Object.entries(E.kids).map(([k,v])=>[k,[...v]])),names:{...E.names},folders:E.custom.map(f=>({...f})),removed:[...E.removed]}}
 function nodeName(id){if(id.startsWith('g:')){const F=FOLDERS[id.slice(2)];return F?F.t:id}const x=SECTIONS.find(z=>z.tab===id.slice(2));return x?x.t:id}
-function nodeIco(id){if(id.startsWith('g:')){const F=FOLDERS[id.slice(2)];return F&&F.emo?F.emo:'📁'}const x=SECTIONS.find(z=>z.tab===id.slice(2));if(x&&x.custom&&CRN_G[CRN_TABS[x.tab]])return CRN_G[CRN_TABS[x.tab]].ic;return ({invPaint:'🎨',invTape:'🧻',invChem:'🧪',invRub:'⚫',invNyl:'🎞',invMisc:'📦',period:'🗓',history:'🕘',profiles:'📐',paints:'🎨',tapes:'🧻',users:'👥',settings:'⚙️',sections:'🗂',layout:'🏠'})[id.slice(2)]||'▫️'}
+function nodeIco(id){if(id.startsWith('g:')){const F=FOLDERS[id.slice(2)];return F&&F.emo?F.emo:'📁'}const x=SECTIONS.find(z=>z.tab===id.slice(2));if(x&&x.emo)return x.emo;if(x&&x.custom&&CRN_G[CRN_TABS[x.tab]])return CRN_G[CRN_TABS[x.tab]].ic;return ({invPaint:'🎨',invTape:'🧻',invChem:'🧪',invRub:'⚫',invNyl:'🎞',invMisc:'📦',period:'🗓',history:'🕘',profiles:'📐',paints:'🎨',tapes:'🧻',users:'👥',settings:'⚙️',sections:'🗂',layout:'🏠'})[id.slice(2)]||'▫️'}
 function descOf(f,acc){acc=acc||new Set();kidsOf(f).forEach(id=>{if(id.startsWith('g:')&&!acc.has(id.slice(2))){acc.add(id.slice(2));descOf(id.slice(2),acc)}});return acc}
 function viewLayout(){const E=LAYOUT;const allF=Object.keys(E.kids);
   const row=(id,par,i,n,depth)=>{const isF=id.startsWith('g:');const f=isF?id.slice(2):null;const off=!isF&&!nodeVis(id);const bad=isF?new Set([f,...descOf(f)]):new Set();
@@ -1914,7 +1927,7 @@ function viewLayout(){const E=LAYOUT;const allF=Object.keys(E.kids);
     return `<div class="lyrow${isF?' fold':''}${off?' off':''}" style="--d:${depth}"><span class="lyic">${nodeIco(id)}</span><span class="lynm"><b>${esc(nodeName(id))}</b>${off?'<small>گرتی یان بۆ تە نینە</small>':isF?`<small>${kidsOf(f).length} تشت تێدا</small>`:''}</span>
      <span class="lybtns"><button class="btn" data-act="lyMv" data-id="${id}" data-d="-1" ${i===0?'disabled':''} title="بۆ سەری">↑</button><button class="btn" data-act="lyMv" data-id="${id}" data-d="1" ${i===n-1?'disabled':''} title="بۆ خوارێ">↓</button>
      <select data-lyto="${id}" title="بگوهۆڕە بۆ">${opts.map(([v,l])=>`<option value="${v}"${(par||'')===v?' selected':''}>${esc(l)}</option>`).join('')}</select>
-     ${isF?`<button class="btn" data-act="lyRen" data-f="${f}" title="ناڤ و ئایکۆن">✏️</button><button class="btn" data-act="lyDel" data-f="${f}" title="فۆلدەرێ ژێببە">🗑</button>`:''}</span></div>
+     ${!isF?`<button class="btn" data-act="lyRenT" data-id="${id}" title="ناڤ و ئایکۆن">✏️</button>`:''}${isF?`<button class="btn" data-act="lyRen" data-f="${f}" title="ناڤ و ئایکۆن">✏️</button><button class="btn" data-act="lyDel" data-f="${f}" title="فۆلدەرێ ژێببە">🗑</button>`:''}</span></div>
      ${isF?kidsOf(f).map((k,j,a)=>row(k,f,j,a.length,depth+1)).join(''):''}`};
   return `<div class="card"><h2 style="margin-top:0">🏠 ڕێکخستنا سەرەکی</h2>
    <p class="muted" style="margin-top:-6px">وەکی مۆبایلێ: فۆلدەران دروست بکە و بەشان ببە بۆ هەر جهەکێ تە بڤێت. ب ↑ ↓ ڕێزێ بگوهۆڕە، و ب لیستێ بەشەکی ببە بۆ «سەرەکی» یان بۆ فۆلدەرەکێ. ئەگەر فۆلدەرەک تەنێ ئێک تشت تێدا بیت، دەمێ تو کلیک دکەی ڕاستەوخۆ ئەو تشت ڤەدبیت. ئەڤ ڕێکخستنە بۆ هەمی کەسانە.</p>
@@ -1930,7 +1943,7 @@ function lyFolderDlg(f){const isNew=!f;const F=f?FOLDERS[f]:null;const ICS=['�
 function lyMove(id,to){const L=layoutPlain();const del=a=>{const i=a.indexOf(id);if(i>=0)a.splice(i,1)};del(L.root);Object.values(L.kids).forEach(del);(to?(L.kids[to]=L.kids[to]||[]):L.root).push(id);layoutSave(L)}
 function viewGroup(g){const G=FOLDERS[g]||GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
   if(g!=='pwh'){const V=visKids(g);const big=V.filter(id=>id.startsWith('g:')||/^t:inv/.test(id)),small=V.filter(id=>!big.includes(id));
-    return `<div class="home">${isAdmin&&!arrOn()?`<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn" data-act="arrTog">✏️ ڕێکخستن</button></div>`:''}${arrHead()}${grpAlerts(g==='pwh'?'stock':g)}${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}${big.length?`<div class="bigs">${big.map(nodeCard).join('')}</div>`:''}${small.length?`${big.length||A.length?`<div class="grp-t">${esc(G?G.t:'')}</div>`:''}<div class="tiles">${small.map(id=>{const s=SECTIONS.find(z=>z.tab===id.slice(2));return s?`<button class="tile${arrOn()?' arr':''}" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">${arrBar(id)}<span class="chev">${I('arrow','sm')}</span><span class="tic${s.tab==='settings'?' ill':''}">${s.tab==='settings'?dIll('set'):I(s.ic)}</span><span class="tt">${esc(s.t)}</span><span class="ts">${esc(s.s)}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`:''}).join('')}</div>`:''}</div>`}
+    return `<div class="home">${isAdmin&&!arrOn()?`<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn" data-act="arrTog">✏️ ڕێکخستن</button></div>`:''}${arrHead()}${grpAlerts(g==='pwh'?'stock':g)}${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}${big.length?`<div class="bigs">${big.map(nodeCard).join('')}</div>`:''}${small.length?`${big.length||A.length?`<div class="grp-t">${esc(G?G.t:'')}</div>`:''}<div class="tiles">${small.map(id=>{const s=SECTIONS.find(z=>z.tab===id.slice(2));return s?`<button class="tile${arrOn()?' arr':''}" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f">${arrBar(id)}<span class="chev">${I('arrow','sm')}</span><span class="tic${s.tab==='settings'&&!s.emo?' ill':''}">${s.emo?`<span style="font-size:1.5rem">${s.emo}</span>`:s.tab==='settings'?dIll('set'):I(s.ic)}</span><span class="tt">${esc(s.t)}</span><span class="ts">${esc(s.s)}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`:''}).join('')}</div>`:''}</div>`}
   if(g==='stock_old'){const pw=grpItems('pwh');return `<div class="home">${grpAlerts('stock')}<div class="bigs">${pw.length?`<button class="bigc" data-go="g_pwh" style="--tc:#0e7478;--tc-soft:#0e747822"><span class="bic">${I('drop')}</span><span class="bt">مەخزەنا سبغێ</span><span class="bs">${pw.map(x=>({invPaint:'سبغ',invTape:'لسق',invChem:'کرۆمات',invRub:'لاستیک',invNyl:'نایلۆن'}[x.tab])).join('، ')}</span><span class="bv">${pw.length}<small> بەش</small></span>${pwhStatus(pw)}<span class="bgo">${I('arrow','sm')}</span></button>`:''}${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
     <span class="bic">${s.custom&&CRN_G[CRN_TABS[s.tab]]?`<span style="font-size:1.7rem">${CRN_G[CRN_TABS[s.tab]].ic}</span>`:I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`}
   if(g==='pwh')return viewPwh();
@@ -1948,15 +1961,15 @@ function updateChrome(){
   else{const gt=S.tab.startsWith('g_')?S.tab.slice(2):null;const s=SECTIONS.find(x=>x.tab===S.tab);const G=FOLDERS[gt||(s&&s.g)]||null;
     let back=gt?upTarget(fParent(gt)):upTarget(s?(s.g==='root'?null:s.g):null);let bl=back==='home'?'سەرەکی':(FOLDERS[back.slice(2)]||{}).t||'';let toMenu=false;
     if(isInvTab()&&S.fromPwh&&grpOf(S.tab)==='pwh'){toMenu=false;back=upTarget('pwh');if(back==='home'&&TAB_PERM.g_pwh())back='g_pwh';bl=back==='home'?'سەرەکی':(FOLDERS[back.slice(2)]||{}).t||''}
-    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt&&G?(G.emo?G.emo:I(G.ic))+' '+esc(G.t):(s?I(s.ic)+' '+s.t:'')}</span>`;
+    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt&&G?(G.emo?G.emo:I(G.ic))+' '+esc(G.t):(s?(s.emo||I(s.ic))+' '+esc(s.t):'')}</span>`;
     $('#backBtn').onclick=()=>{if(toMenu){S.invSub='menu';render();window.scrollTo({top:0})}else go(back)}}
   if(locked){bn.innerHTML='';return}
   const ro=rootOf(S.tab);
-  const items=[['home','سەرەکی','grid',S.tab==='home',''],...rootItems().map(x=>x.f?['g_'+x.f,FOLDERS[x.f].t,FOLDERS[x.f].ic,ro==='g:'+x.f,FOLDERS[x.f].emo||'']:[x.t,(SECTIONS.find(z=>z.tab===x.t)||{}).t||'',(SECTIONS.find(z=>z.tab===x.t)||{}).ic||'grid',ro==='t:'+x.t,''])];
+  const items=[['home','سەرەکی','grid',S.tab==='home',''],...rootItems().map(x=>x.f?['g_'+x.f,FOLDERS[x.f].t,FOLDERS[x.f].ic,ro==='g:'+x.f,FOLDERS[x.f].emo||'']:[x.t,(SECTIONS.find(z=>z.tab===x.t)||{}).t||'',(SECTIONS.find(z=>z.tab===x.t)||{}).ic||'grid',ro==='t:'+x.t,(SECTIONS.find(z=>z.tab===x.t)||{}).emo||''])];
   bn.innerHTML=items.map(([t,l,ic,on,emo])=>`<button data-bn="${t}" class="${on?'on':''}">${emo?`<span class="ico bemo">${emo}</span>`:I(ic)}<span>${esc(l)}</span></button>`).join('');
   bn.querySelectorAll('[data-bn]').forEach(b=>b.onclick=()=>{const t=b.dataset.bn;if(/^inv/.test(t))go(t,landSub(t));else go(t)});
 }
-function sortedPeriods(){return Object.values(S.periods).sort((a,b)=>(b.start||'').localeCompare(a.start||'')||(b.createdAt||'').localeCompare(a.createdAt||''))}
+function sortedPeriods(){return Object.values(S.periods).sort((a,b)=>cmpS(b.start,a.start)||cmpS(b.createdAt,a.createdAt))}
 
 function viewPeriods(){
   const list=sortedPeriods();
@@ -2498,7 +2511,7 @@ function rcvAmt(o,f,i,q){const P={stock:S.inv||normStock({})};if(isPaintKind(o.k
 function poRcvCard(o){const id=o.p.id+'~'+o.kind;const f=rcvF(id);const isP=isPaintKind(o.kind);const P={stock:S.inv||normStock({})};const U=isP?'تۆن':'م²';const dec=isP?3:1;
   const tot=o.items.reduce((s,i)=>s+i.qty,0),rc=o.items.reduce((s,i)=>s+Math.min(i.qty,i.rcv),0);const pct=tot>0?Math.min(100,rc/tot*100):0;
   const sup=isP?(o.po.supplier||o.kind.slice(6)):(o.po.supplier||tapeBrandName(o.p,o.kind.slice(5)));
-  const recs=(S.tx.in||[]).filter(t=>t.po&&t.po.pid===o.p.id&&t.po.kind===o.kind).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+  const recs=(S.tx.in||[]).filter(t=>t.po&&t.po.pid===o.p.id&&t.po.kind===o.kind).sort((a,b)=>cmpS(b.at,a.at));
   const remT=o.items.reduce((s,i)=>s+Math.max(0,i.qty-i.rcv),0);const isOpen=!!(S.poOpen||{})[id];
   return `<details class="card pocard" style="background:var(--bg)" data-poid="${esc(id)}" ${isOpen?'open':''}>
    <summary><div class="row" style="align-items:center;gap:10px"><span class="pochev">▸</span><div class="grow"><b class="ltr">${esc(o.po.no||'PO')}</b> · <b class="ltr">${esc(sup||'—')}</b>
@@ -2561,7 +2574,7 @@ function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(
   ${batchIn()}
   ${done.length?`<details style="margin:8px 0"><summary>داخوازیێن تەمام بووین (${done.length})</summary>${done.map(poRcvCard).join('')}</details>`:''}
   ${isAdmin?txList('in'):''}`}
-function txList(dir){const L=[...(S.tx[dir]||[])].filter(t=>!XSEC[t.sec]&&(t.sec==='box')===(S.invKind==='tape')).sort((a,b)=>(b.at||'').localeCompare(a.at||'')).slice(0,60);
+function txList(dir){const tp=S.invKind==='tape';const L=(S.tx[dir]||[]).filter(t=>t&&!XSEC[t.sec]&&(t.sec==='box')===tp).sort((a,b)=>cmpS(b.at,a.at)).slice(0,60);
   return `<div class="tbl-scroll"><table><thead><tr><th>دەم</th><th>کێ</th><th>چ</th><th class="n">کارتۆن</th><th>تێبینی</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
   ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
   </tbody></table></div>`}
@@ -2684,7 +2697,7 @@ function userEvents(){const ev=[];
   (S.tx.in||[]).forEach(t=>ev.push({at:t.at,u:t.u,kind:'in',txt:txLabel(t.sec,t.key),q:'+'+(t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)+(XSEC[t.sec]?' '+((xItem(t.sec,t.key)||{}).unit||''):'')),note:t.note||''}));
   (S.tx.out||[]).forEach(t=>ev.push({at:t.at,u:t.u,kind:'out',txt:txLabel(t.sec,t.key),q:'−'+(t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)+(XSEC[t.sec]?' '+((xItem(t.sec,t.key)||{}).unit||''):'')),note:t.note||''}));
   (S.invLog||[]).forEach(l=>ev.push({at:l.at,u:l.u,kind:'count',txt:txLabel(l.sec==='box'?'box':'cart',l.key)+(l.sec==='kgc'?' (kg/carton)':l.sec==='inc'?' (ل ڕێیە)':''),q:`${l.from??'—'} → ${l.to??'—'}`,note:''}));
-  return ev.sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
+  return ev.sort((a,b)=>cmpS(b.at,a.at))}
 async function saveAppUsers(){if(!db){localSave();setStatus('✓ بکارهێنەر هاتنە پاشەکەفتکرن');return}try{await db.doc('perm/appusers').set({list:S.appUsers,recovery:S.recovery||null});setStatus('✓ بکارهێنەر هاتنە پاشەکەفتکرن')}catch(e){setStatus('⚠️ پاشەکەفت نەبوو: '+(e&&e.code||e),true)}}
 function viewUsers(){
   if(!isAdmin)return '<div class="card muted">ئەڤ پشکە تەنێ بۆ بەرپرسی یە.</div>';
@@ -2943,7 +2956,7 @@ function miWhoStep(f){const halls=miPast('hall'),people=[...new Set([...miPast('
    <div class="mi-head" style="margin:0"><label>🏭 ناڤێ هۆڵێ<input data-msf="out" data-f="hall" list="msHalls" value="${esc(f.hall||'')}" placeholder="بۆ نموونە: هۆڵا 2">
    ${halls.length?`<span class="chips" style="margin-top:2px">${halls.slice(0,6).map(h=>`<button type="button" class="chip${f.hall===h?' on':''}" data-act="msHall" data-v="${esc(h)}">${esc(h)}</button>`).join('')}</span>`:''}</label>
    <label>👤 ناڤێ کەسی<input data-msf="out" data-f="person" list="msPeople" value="${esc(f.person||'')}" placeholder="ناڤێ وی کەسێ دبەت"></label></div></div>`}
-function miRows(dir){return ['in','out'].filter(d=>!dir||d===dir).flatMap(d=>(S.tx[d]||[]).filter(t=>t.sec===MX().sec&&(!isCrn()||((xItem('crn',t.key)||{}).grp||'chem')===S.crnGrp)).map(t=>({...t,dir:d}))).sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
+function miRows(dir){return ['in','out'].filter(d=>!dir||d===dir).flatMap(d=>(S.tx[d]||[]).filter(t=>t.sec===MX().sec&&(!isCrn()||((xItem('crn',t.key)||{}).grp||'chem')===S.crnGrp)).map(t=>({...t,dir:d}))).sort((a,b)=>cmpS(b.at,a.at))}
 const p2=n=>String(n).padStart(2,'0');
 const miDate=d=>`${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
 function miRowHtml(t){const x=miItem(t.key);const d=t.at?new Date(t.at):null;
@@ -2977,7 +2990,7 @@ const cntSys=it=>toNum(((S.inv||{})[it.sec]||{})[it.key]);
 const cntIco=it=>it.x?miIco(it.x):it.sw?sw(it.sw):`<span class="sw big mic">📦</span>`;
 function cntDraft(){const K=cntK();return S.cntDraft[K]=S.cntDraft[K]||{}}
 function cntPersist(){try{localStorage.setItem('bandorder-cntdraft',JSON.stringify(S.cntDraft))}catch(e){}}
-function cntSesFor(K){return (S.cntSessions||[]).filter(c=>c.k===K).sort((a,b)=>(b.at||'').localeCompare(a.at||''))}
+function cntSesFor(K){return (S.cntSessions||[]).filter(c=>c.k===K).sort((a,b)=>cmpS(b.at,a.at))}
 function cntDone(K,ym){return cntSesFor(K).find(c=>c.ym===ym)}
 function cntDec(it){return it.sec==='cart'||it.sec==='box'?1:2}
 function viewCount(){const K=cntK();const L=cntItems();const D=cntDraft();const ym=ymNow();const last=cntDone(K,ym);const f=S.cntF||'';
@@ -3016,7 +3029,7 @@ function cntSesHtml(c){const dd=r=>r.cnt-r.sys;return `<table><thead><tr><th>#</
 function invEvIndex(){const ev={};const add=(mk,e)=>{(ev[mk]=ev[mk]||[]).push(e)};
   ['in','out'].forEach(d=>(S.tx[d]||[]).forEach(t=>{if(t&&t.sec&&t.key&&t.at)add(t.sec+':'+t.key,{at:t.at,k:d,q:toNum(t.qty)})}));
   (S.invLogAll||S.invLog||[]).forEach(l=>{if(l&&l.at&&l.sec&&l.key!=null&&['cart','box','misc','crn','paint'].includes(l.sec))add(l.sec+':'+l.key,{at:l.at,k:'cnt',from:l.from})});
-  Object.values(ev).forEach(L=>L.sort((a,b)=>b.at.localeCompare(a.at)));return ev}
+  Object.values(ev).forEach(L=>L.sort((a,b)=>cmpS(b.at,a.at)));return ev}
 function stockAt(EV,sec,key,T){let v=toNum(((S.inv||{})[sec]||{})[key]);for(const e of (EV[sec+':'+key]||[])){if(e.at<=T)break;if(e.k==='in')v-=e.q;else if(e.k==='out')v+=e.q;else v=e.from==null?0:toNum(e.from)}return v}
 function mrepData(ym){const [a,b]=ymRange(ym);const nowI=new Date().toISOString();const end=b>nowI?nowI:b;const EV=invEvIndex();
   const rows=cntItems().map(it=>{const o=stockAt(EV,it.sec,it.key,a),c=stockAt(EV,it.sec,it.key,end);let I_=0,O=0;const ins=x=>x.sec===it.sec&&x.key===it.key&&x.at>a&&x.at<=end;
@@ -3565,7 +3578,7 @@ function bind(){
   if(isInvTab()){
     m.querySelectorAll('[data-cnt]').forEach(el=>{el.oninput=()=>cntLive(el);el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const A=[...m.querySelectorAll('[data-cnt]')];const n=A[A.indexOf(el)+1];if(n){n.focus();n.select&&n.select()}}}});
     {const q=m.querySelector('#cntQ');if(q){const ap=()=>{const v=normQ(q.value);S.cntQ=q.value;m.querySelectorAll('.cntrow').forEach(r=>r.style.display=!v||r.dataset.s.includes(v)?'':'none')};q.oninput=ap;ap()}}
-    m.querySelectorAll('[data-invsub]').forEach(b=>b.onclick=()=>{S.invSub=b.dataset.invsub;render();window.scrollTo({top:0})});{const o2=m.querySelector('.pwkb .on');if(o2){const r=o2.parentElement,a=o2.getBoundingClientRect(),c=r.getBoundingClientRect();r.scrollLeft+=(a.left+a.width/2)-(c.left+c.width/2)}}{const on=m.querySelector('.isubs .on');if(on){const r=on.parentElement,a=on.getBoundingClientRect(),c=r.getBoundingClientRect();r.scrollLeft+=(a.left+a.width/2)-(c.left+c.width/2)}}
+    m.querySelectorAll('[data-invsub]').forEach(b=>b.onclick=()=>{S.invSub=b.dataset.invsub;render();window.scrollTo({top:0})});
     if(!can('inv_count')){m.querySelectorAll('input[data-st],select[data-len]').forEach(el=>el.disabled=true);m.querySelectorAll('[data-act=addLen]').forEach(el=>el.remove())}
     m.querySelectorAll('[data-txk]').forEach(b=>b.onclick=()=>{const [dir,k]=b.dataset.txk.split(':');txF(dir).kind=k;render()});
     m.querySelectorAll('input[data-rcv]').forEach(el=>el.oninput=()=>{const id=el.dataset.rcv,k=el.dataset.k;const f=rcvF(id);f.q[k]=el.value;
@@ -4020,6 +4033,7 @@ $('#main').addEventListener('click',async e=>{
     dialog(`<p>بەشێ «${esc(c.name)}» دێ هێتە ژێبرن. باشە؟</p>`,()=>{S.settings.customSecs=(S.settings.customSecs||[]).filter(x=>x.id!==c.id);const o={...(S.settings.secOff||{})};delete o['invC_'+c.id];S.settings.secOff=o;save('cfg/settings',0);render();toast('🗑 هاتە ژێبرن')},'بەلێ، ژێببە')}
   else if(act==='lyMv'){const id=t0.dataset.id,d=+t0.dataset.d;const L=layoutPlain();const arr=[L.root,...Object.values(L.kids)].find(a=>a.includes(id));if(arr){const i=arr.indexOf(id),j=i+d;if(j>=0&&j<arr.length){[arr[i],arr[j]]=[arr[j],arr[i]];layoutSave(L)}}}
   else if(act==='lyNew'){lyFolderDlg(null)}
+  else if(act==='lyRenT'){lySecDlg(t0.dataset.id)}
   else if(act==='arrTog'){S.arrange=!S.arrange;render()}
   else if(act==='arrTo'){arrToDlg(t0.dataset.id)}
   else if(act==='lyRen'){lyFolderDlg(t0.dataset.f)}
