@@ -795,6 +795,15 @@ html[data-sys=taste] .isubs button.on{background:var(--mint);border-color:var(--
 .secnm{flex:1;min-width:140px;display:flex;flex-direction:column}.secnm small{color:var(--muted);font-size:.78rem}
 .secst{font-size:.8rem;font-weight:600;padding:3px 10px;border-radius:999px}.secst.ok{background:var(--good-soft);color:var(--good)}.secst.bad{background:var(--bad-soft);color:var(--bad)}
 .secics{display:flex;flex-wrap:wrap;gap:6px}.secics .chip{font-size:1.2rem;min-width:46px;justify-content:center}
+
+.lylist{display:flex;flex-direction:column;gap:6px}
+.lyhead{font-weight:600;color:var(--muted);font-size:.85rem;margin:2px 2px 2px}
+.lyrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;margin-inline-start:calc(var(--d)*22px);border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lyrow.fold{background:var(--card2)}.lyrow.off{opacity:.6}
+.lyic{font-size:1.3rem;width:32px;text-align:center}.lynm{flex:1;min-width:120px;display:flex;flex-direction:column}.lynm small{color:var(--muted);font-size:.74rem}
+.lybtns{display:flex;gap:4px;align-items:center;flex-wrap:nowrap}.lybtns .btn{min-height:36px;padding:4px 10px}.lybtns select{min-height:36px;max-width:170px}
+.bemo{display:inline-flex!important;align-items:center;justify-content:center;font-size:1.15rem;line-height:1}
+@media (max-width:640px){.lyrow{margin-inline-start:calc(var(--d)*12px)}.lybtns{width:100%}.lybtns select{flex:1;max-width:none}.lybtns .btn{padding:4px 9px}}
 /* ===== Professional print layout (all PDF/print reports) ===== */
 @media print{
  @page{size:A4;margin:12mm 11mm 14mm;@bottom-center{content:"لاپەڕ " counter(page) " / " counter(pages);font:8pt 'Noto Sans Arabic',Tahoma,sans-serif;color:#777}}
@@ -1157,7 +1166,7 @@ async function initDb(){
   let f1=false,f2=false,f3=false,f4=false;
   db.doc('cfg/settings').onSnapshot(s=>{
     if(!dirty['cfg/settings']&&!writing['cfg/settings']&&s.exists){const d=s.data();S.settings={lead:d.lead&&typeof d.lead==='object'?Object.fromEntries(Object.entries(d.lead).map(([k,v])=>[norm(k),toNum(v)])):{PULVER:15,IBA:12},noBrand:d.noBrand&&typeof d.noBrand==='object'?{name:String(d.noBrand.name??''),factor:toNum(d.noBrand.factor)||1,normal:d.noBrand.normal!==false}:{name:'Alko',factor:0.5,normal:true},lenUnit:d.lenUnit==='m'?'m':'mm',ratio:toNum(d.ratio)||16,bar:toNum(d.bar)||6,wSpots:toNum(d.wSpots)||4,wTurns:toNum(d.wTurns)||3.5,wWidth:toNum(d.wWidth)||40,rollLen:toNum(d.rollLen)||300,rollLens:Array.isArray(d.rollLens)&&d.rollLens.length?d.rollLens.map(toNum).filter(x=>x>0):[300,400,500],rpb:{40:11,56:8,75:6,100:4,...(d.rpb||{})},co:{name:'',addr:'',phone:'',...(d.co||{})},sfP:d.sfP!==undefined?(toNum(d.sfP)||1):1.1,sfT:d.sfT!==undefined?(toNum(d.sfT)||1):1.1,paintCos:Array.isArray(d.paintCos)?d.paintCos.map(String):['Pulver','IBA'],seedP1:!!d.seedP1,brands:Array.isArray(d.brands)?d.brands.map(b=>typeof b==='string'?{name:b,items:null}:{name:String(b.name||''),items:Array.isArray(b.items)?b.items.map(String):null}):[],stockTape:Array.isArray(d.stockTape)?d.stockTape.map(String):[],bkDays:toNum(d.bkDays)||15,lastBackup:String(d.lastBackup||''),lastBackupBy:String(d.lastBackupBy||'')};
-      S.settings.secOff=d.secOff&&typeof d.secOff==='object'?{...d.secOff}:{};S.settings.customSecs=Array.isArray(d.customSecs)?d.customSecs.filter(c=>c&&c.id&&c.name).map(c=>({id:String(c.id),name:String(c.name),ic:String(c.ic||'📦'),where:c.where==='pwh'?'pwh':'stock',...(c.at?{at:c.at}:{})})):[];
+      S.settings.secOff=d.secOff&&typeof d.secOff==='object'?{...d.secOff}:{};S.settings.layout=d.layout&&typeof d.layout==='object'?JSON.parse(JSON.stringify(d.layout)):undefined;if(!S.settings.layout)delete S.settings.layout;S.settings.customSecs=Array.isArray(d.customSecs)?d.customSecs.filter(c=>c&&c.id&&c.name).map(c=>({id:String(c.id),name:String(c.name),ic:String(c.ic||'📦'),where:c.where==='pwh'?'pwh':'stock',...(c.at?{at:c.at}:{})})):[];
       S.settings.tapes=Array.isArray(d.tapes)&&d.tapes.length?d.tapes.map(t=>({w:toNum(t.w),rpb:toNum(t.rpb)||1,on:t.on!==false,sub:toNum(t.sub)})):Object.entries(S.settings.rpb).map(([w,r])=>({w:toNum(w),rpb:toNum(r),on:true,sub:0})).sort((a,b)=>a.w-b.w)}
     if(!f1&&!s.metadata.fromCache){f1=true;done()}else if(S.loaded)softRender();
   },onErr);
@@ -1393,7 +1402,7 @@ async function doLogin(){if(SB_ON){location.reload();return}const un=norm($('#lg
 function canInv(){return can('inv_view')||can('inv_out')||can('inv_in')||can('inv_count')}
 /* کیژ مەخزەن: ئەگەر چ ژ هەردووکان نەهاتبیتە نیشانکرن = هەردوو */
 function canKind(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;const p=u.perms||{};if(p.admin)return true;{const w=wMode();if(w)return (k==='paint'&&w.includes('invPaint'))||(k==='tape'&&w.includes('invTape'))||(k==='crn'&&(w.includes('invRub')||w.includes('invNyl')))}if(!p.inv_paint&&!p.inv_tape&&!p.inv_misc&&!p.inv_crn)return true;return !!p['inv_'+k]}
-const TAB_PERM={home:()=>true,g_stock:()=>grpItems('stock').length>0||grpItems('pwh').length>0,g_pwh:()=>grpItems('pwh').length>0,g_hall:()=>grpItems('hall').length>0,g_work:()=>grpItems('work').length>0,g_data:()=>grpItems('data').length>0,g_admin:()=>grpItems('admin').length>0,period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),invMisc:()=>canInv()&&canKind('misc'),invCrn:()=>canInv()&&canKind('crn'),invChem:()=>canInv()&&canKind('crn'),invRub:()=>canInv()&&canKind('crn'),invNyl:()=>canInv()&&canKind('crn'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin,sections:()=>isAdmin};
+const TAB_PERM={home:()=>true,g_stock:()=>fVis('stock'),g_pwh:()=>fVis('pwh'),g_hall:()=>grpItems('hall').length>0,g_work:()=>fVis('work'),g_data:()=>fVis('data'),g_admin:()=>fVis('admin'),period:()=>can('periods'),invPaint:()=>canInv()&&canKind('paint'),invTape:()=>canInv()&&canKind('tape'),invMisc:()=>canInv()&&canKind('misc'),invCrn:()=>canInv()&&canKind('crn'),invChem:()=>canInv()&&canKind('crn'),invRub:()=>canInv()&&canKind('crn'),invNyl:()=>canInv()&&canKind('crn'),history:()=>can('history'),profiles:()=>can('master')||can('m_profiles'),paints:()=>can('master')||can('m_paints'),tapes:()=>can('master')||can('m_tapes'),settings:()=>can('master')||can('m_settings'),users:()=>isAdmin,sections:()=>isAdmin,layout:()=>isAdmin};
 ['invPaint','invTape','invMisc','invChem','invRub','invNyl'].forEach(k=>{const f=TAB_PERM[k];TAB_PERM[k]=()=>!secOff(k)&&f()});
 Object.keys(TAB_PERM).forEach(k=>{const f=TAB_PERM[k];TAB_PERM[k]=()=>{const w=wMode();if(w)return w.includes(k);return f()}});
 function firstTab(){return ['home','period','invPaint','invTape','invRub','invNyl','invChem','invMisc','history','profiles','paints','tapes','settings','users'].find(t=>TAB_PERM[t]())||null}
@@ -1637,13 +1646,13 @@ function toast(msg){const b=$('#banner');b.innerHTML=`<div class="${String(msg).
 
 /* ======================= Render ======================= */
 function render(){
-  regCustom();
+  regCustom();applyLayout();
   {const f=TAB_PERM[S.tab];if(!(f&&f())){const t=firstTab();if(t)S.tab=t}}
   if(!isAdmin&&S.loaded&&(!curApp()||!firstTab())){document.querySelectorAll('#tabs button').forEach(b=>b.style.display='none');$('#main').innerHTML=(S.permLoaded||!db)?gateView():'<div class="card muted">ل بارکرنێ...</div>';updateChrome();const lf=$('#loginForm');if(lf)lf.onsubmit=e=>{e.preventDefault();doLogin()};const sf=$('#setupForm');if(sf)sf.onsubmit=e=>{e.preventDefault();doSetup()};const rf=$('#recForm');if(rf)rf.onsubmit=e=>{e.preventDefault();doRecover()};const rl=$('#recLink');if(rl)rl.onclick=e=>{e.preventDefault();S.showRec=!S.showRec;render()};return}
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
   const m=$('#main');
   if(!S.loaded){m.innerHTML='<div class="card muted">ل بارکرنێ...</div>';return}
-  const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_pwh:()=>viewGroup('pwh'),g_hall:()=>viewGroup('hall'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},invMisc:()=>{S.invKind='misc';return viewInv()},invCrn:()=>{S.tab='invChem';S.invKind='crn';S.crnGrp='chem';return viewInv()},invChem:()=>{S.invKind='crn';S.crnGrp='chem';return viewInv()},invRub:()=>{S.invKind='crn';S.crnGrp='rub';return viewInv()},invNyl:()=>{S.invKind='crn';S.crnGrp='nyl';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings,sections:viewSections}[S.tab]||(CRN_TABS[S.tab]?()=>{S.invKind='crn';S.crnGrp=CRN_TABS[S.tab];return viewInv()}:viewHome);
+  const v={home:viewHome,g_stock:()=>viewGroup('stock'),g_pwh:()=>viewGroup('pwh'),g_hall:()=>viewGroup('hall'),g_work:()=>viewGroup('work'),g_data:()=>viewGroup('data'),g_admin:()=>viewGroup('admin'),period:viewPeriods,invPaint:()=>{S.invKind='paint';return viewInv()},invTape:()=>{S.invKind='tape';return viewInv()},invMisc:()=>{S.invKind='misc';return viewInv()},invCrn:()=>{S.tab='invChem';S.invKind='crn';S.crnGrp='chem';return viewInv()},invChem:()=>{S.invKind='crn';S.crnGrp='chem';return viewInv()},invRub:()=>{S.invKind='crn';S.crnGrp='rub';return viewInv()},invNyl:()=>{S.invKind='crn';S.crnGrp='nyl';return viewInv()},users:viewUsers,history:viewHistory,profiles:viewProfiles,paints:viewPaints,tapes:viewTapes,settings:viewSettings,sections:viewSections,layout:viewLayout}[S.tab]||(S.tab.startsWith('g_f_')?()=>viewGroup(S.tab.slice(2)):null)||(CRN_TABS[S.tab]?()=>{S.invKind='crn';S.crnGrp=CRN_TABS[S.tab];return viewInv()}:viewHome);
   if(S.loaded&&!window.__fixW&&(isAdmin||curApp())&&Object.keys(S.periods).length){window.__fixW=true;setTimeout(fixLearnedW,800)}
   closePick();const __sy=window.scrollY,__same=S.__lt===S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');m.innerHTML=v();if(__same)window.scrollTo(0,__sy);if(S.goQty){S.goQty=0;const an=m.querySelector('#pfAnchor');if(an)setTimeout(()=>{const y=an.getBoundingClientRect().top+window.scrollY-(innerWidth<=640?10:80);window.scrollTo({top:y,behavior:'smooth'})},30)}S.__lt=S.tab+'|'+(S.sub||'')+'|'+(S.invSub||'');
   bind();fillNames();updateChrome();addSearch();m.querySelectorAll('input[data-pick]').forEach(attachPick);m.querySelectorAll('input[data-lead]').forEach(el=>el.oninput=()=>{S.settings.lead=S.settings.lead||{};S.settings.lead[norm(el.dataset.lead)]=toNum(el.value);save('cfg/settings')});{const on=m.querySelector('.isubs button.on');if(on){const st=on.parentElement;const r=on.getBoundingClientRect(),q=st.getBoundingClientRect();st.scrollLeft+= (r.left+r.width/2)-(q.left+q.width/2)}}
@@ -1698,10 +1707,11 @@ const SECTIONS=[
   {tab:'paints',t:'جۆرێن سبغێ',s:'Normal / Rough، کۆمپانی',ic:'drop',c:'#2a6a66',g:'data'},
   {tab:'tapes',t:'جۆرێن لسقێ',s:'پانی، کۆمپانی، ڕۆل',ic:'tape',c:'#3a5b82',g:'data'},
   {tab:'users',t:'بکارهێنەر',s:'Login، دەستوور، چالاکی',ic:'users',c:'#9a3b5a',g:'admin'},
+  {tab:'layout',t:'ڕێکخستنا سەرەکی',s:'فۆلدەر، ڕێز و جهێ بەشان',ic:'grid',c:'#334155',g:'admin'},
   {tab:'sections',t:'بەشێن مەخزەنێ',s:'ڤەکرن، گرتن و زێدەکرنا بەشان',ic:'grid',c:'#334155',g:'admin'},
   {tab:'settings',t:'ڕێکخستن',s:'Safety factor، Backup، ڕەنگ',ic:'sliders',c:'#55606a',g:'admin'}];
-const HASH={sections:'sections',home:'home',g_stock:'stock',g_pwh:'paint-store',g_hall:'hall',g_work:'work',g_data:'info',g_admin:'admin',invPaint:'paint',invTape:'tape',invMisc:'other',invCrn:'chromate',invChem:'chromate',invRub:'rubber',invNyl:'nylon',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
-function go(tab,sub){if(!S._pw)S.fromPwh=null;if(sub){const k=tab==='invTape'?'tape':tab==='invMisc'?'misc':CRN_TABS[tab]?'crn_'+CRN_TABS[tab]:tab==='invCrn'?'crn_chem':'paint';S.invSubK[k]=sub}S.tab=tab;try{const hh='#'+(HASH[tab]||'home');if(location.hash!==hh)history.pushState(null,'',hh)}catch(e){}render();window.scrollTo({top:0})}
+const HASH={layout:'layout',sections:'sections',home:'home',g_stock:'stock',g_pwh:'paint-store',g_hall:'hall',g_work:'work',g_data:'info',g_admin:'admin',invPaint:'paint',invTape:'tape',invMisc:'other',invCrn:'chromate',invChem:'chromate',invRub:'rubber',invNyl:'nylon',period:'periods',history:'history',profiles:'profiles',paints:'paint-types',tapes:'tape-types',users:'users',settings:'prefs'};
+function go(tab,sub){if(tab&&tab.startsWith('g_')&&LAYOUT){const t2=skipDown(tab);if(t2!==tab){tab=t2;if(/^inv/.test(tab)&&!sub)sub='menu'}}if(!S._pw)S.fromPwh=null;if(sub){const k=tab==='invTape'?'tape':tab==='invMisc'?'misc':CRN_TABS[tab]?'crn_'+CRN_TABS[tab]:tab==='invCrn'?'crn_chem':'paint';S.invSubK[k]=sub}S.tab=tab;try{const hh='#'+(HASH[tab]||'home');if(location.hash!==hh)history.pushState(null,'',hh)}catch(e){}render();window.scrollTo({top:0})}
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
 window.addEventListener('popstate',()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h)||'home';if(t!==S.tab){S.tab=t;render()}});
 function tileStat(tab){try{
@@ -1759,15 +1769,13 @@ function grpStat(g){try{
   if(g==='work'){const l=sortedPeriods()[0];return l?`<span style="font-size:.95rem">${esc(l.name)}</span>`:'<small>هێشتا چ ماوە نینن</small>'}
   if(g==='data')return `${S.profiles.length} <small>پڕۆفایل</small> · ${S.paints.length} <small>سبغ</small>`;
   if(g==='admin')return `${(S.appUsers||[]).length} <small>بکارهێنەر</small>`}catch(e){}return ''}
-function visGroups(){return GROUPS.filter(G=>!G.sub&&(grpItems(G.g).length||(G.g==='stock'&&grpItems('pwh').length)))}
+function visGroups(){return rootItems().filter(x=>x.f).map(x=>FOLDERS[x.f])}
 function viewHome(){
   const u=curApp();const nm=(u&&(u.name||u.username))||(me&&me.name)||'';const d=new Date();
   const days=['یەکشەمب','دووشەمب','سێشەمب','چارشەمب','پێنجشەمب','ئەینی','شەمبی'];
-  const G=visGroups();
+  const RI=rootItems();
   return `<div class="home"><div class="hero"><div><h2>${nm?'سڵاو، '+esc(nm):'بخێر بێی'} 👋</h2><div class="muted">${days[d.getDay()]} · <span class="ltr">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</span></div></div>${u?`<button class="btn" data-act="myProfile" style="margin-inline-start:auto">👤 پرۆفایلا من</button>`:''}</div>
-  <div class="bigs">${G.map(x=>{const b=grpBadge(x.g);return `<button class="bigc" data-go="g_${x.g}" style="--tc:${x.c};--tc-soft:${x.c}22">
-    ${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${I(x.ic)}</span>
-    <span class="bt">${x.t}</span><span class="bs">${x.s}</span><span class="bv">${grpStat(x.g)}</span><span class="bgo">${I('arrow','sm')}</span></button>`}).join('')}</div></div>`}
+  <div class="bigs">${RI.map(x=>nodeCard(x.f?'g:'+x.f:'t:'+x.t)).join('')}</div></div>`}
 function dIll(k){const box=(a,b,c)=>`<polygon points="30,6 54,18 30,30 6,18" fill="${a}"/><polygon points="6,18 30,30 30,56 6,44" fill="${b}"/><polygon points="54,18 30,30 30,56 54,44" fill="${c}"/><polygon points="18,12 42,24 42,30 18,18" fill="#fff" opacity=".28"/>`;
   const badge=(bg,d)=>`<circle cx="49" cy="47" r="12" fill="${bg}" stroke="#fff" stroke-width="3"/><path d="${d}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
   if(k==='in')return `<svg viewBox="0 0 64 64" class="dill">${box('#5aa2ff','#2f6fe0','#4a8cf5')}${badge('#1f62e8','M49 40v13M43.5 48l5.5 5.5 5.5-5.5')}</svg>`;
@@ -1785,7 +1793,7 @@ const PW_KIND={invPaint:['سبغ','drop','#0e7478'],invTape:['لسق','tape','#a
 function pwSubOf(tab,act){const crn=!!CRN_TABS[tab];return {out:'out',in:'in',stock:'stock',log:crn?'mlog':'outlog',report:crn?'mrep':'report',req:crn?'mreq':null,tstk:tab==='invTape'?'tstk':null}[act]}
 function pwActOf(sub){return {out:'out',in:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',report:'report',mrep:'report',mreq:'req',tstk:'tstk'}[sub]||null}
 function pwAvail(tab,act){try{const sub=pwSubOf(tab,act);if(!sub||!TAB_PERM[tab]())return false;const g=CRN_TABS[tab];return g?inCtx('crn',g,()=>miscSubList()).includes(sub):inCtx(tab==='invPaint'?'paint':'tape',null,()=>invSubList()).includes(sub)}catch(e){return false}}
-function pwKinds(act){return Object.keys(PW_KIND).filter(t=>pwAvail(t,act))}
+function pwKinds(act){return Object.keys(PW_KIND).filter(t=>grpOf(t)==='pwh'&&pwAvail(t,act))}
 function pwGo(tab,act){if(CRN_TABS[tab])S.crnGrp=CRN_TABS[tab];S._pw=1;S.fromPwh=act;try{go(tab,pwSubOf(tab,act))}finally{S._pw=0}}
 function pwPick(act){const ks=pwKinds(act);if(!ks.length)return;pwGo(ks[0],act);return;const A=PW_ACT.find(a=>a[0]===act);
   dialog(`<h3 style="margin-top:0;display:flex;align-items:center;gap:10px"><span style="width:44px;height:44px;display:inline-flex">${dIll(A[2])}</span>${A[1]} — کیژ؟</h3><div class="dpick">${ks.map(t=>{const [l,ic,c]=PW_KIND[t];return `<button type="button" class="dpk" data-pwt="${t}" style="--tc:${c}"><span class="dpi">${I(ic)}</span><span class="dpkt"><b>${l}</b><small>${tileStat(t).replace(/<[^>]+>/g,' ')}</small></span>${I('arrow','sm')}</button>`}).join('')}</div>`,()=>{},'داخستن');
@@ -1808,7 +1816,7 @@ function regCustom(){try{
   Object.keys(PW_KIND).forEach(k=>{if(k.startsWith('invC_'))delete PW_KIND[k]});
   const at=SECTIONS.findIndex(x=>x.tab==='invMisc')+1;
   customSecs().forEach((c,i)=>{const tab='invC_'+c.id,g='c_'+c.id;CRN_TABS[tab]=g;CRN_G[g]={t:c.name,ic:c.ic||'📦',units:MISC_UNITS};
-    SECTIONS.splice(at+i,0,{tab,t:c.name,s:'داخلکرن، دەرئێخستن، مەخزەن، تۆمار',ic:'box',c:'#334155',g:c.where==='pwh'?'pwh':'stock',custom:1});
+    SECTIONS.splice(at+i,0,{tab,t:c.name,s:'داخلکرن، دەرئێخستن، مەخزەن، تۆمار',ic:'box',c:'#334155',g:c.where==='pwh'?'pwh':'stock',g0:c.where==='pwh'?'pwh':'stock',custom:1});
     HASH[tab]='s-'+c.id;if(c.where==='pwh')PW_KIND[tab]=[c.name,'box','#334155'];
     TAB_PERM[tab]=()=>{const w=wMode();if(w)return w.includes(tab);return !secOff(tab)&&canInv()&&canKind('crn')}})}catch(e){console.error(e)}}
 function secHasData(g){return (S.crnItems||[]).some(x=>x.grp===g)}
@@ -1836,8 +1844,74 @@ function secDialog(c){const isNew=!c;c=c||{name:'',ic:'📦',where:'stock'};
   document.querySelectorAll('[data-sic]').forEach(b=>b.onclick=()=>document.querySelectorAll('[data-sic]').forEach(x=>x.classList.toggle('on',x===b)));
   document.querySelectorAll('[data-swh]').forEach(b=>b.onclick=()=>document.querySelectorAll('[data-swh]').forEach(x=>x.classList.toggle('on',x===b)));
   setTimeout(()=>{const n=$('#secName');if(n)n.focus()},50)}
-function viewGroup(g){const G=GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
-  if(g==='stock'){const pw=grpItems('pwh');return `<div class="home">${grpAlerts('stock')}<div class="bigs">${pw.length?`<button class="bigc" data-go="g_pwh" style="--tc:#0e7478;--tc-soft:#0e747822"><span class="bic">${I('drop')}</span><span class="bt">مەخزەنا سبغێ</span><span class="bs">${pw.map(x=>({invPaint:'سبغ',invTape:'لسق',invChem:'کرۆمات',invRub:'لاستیک',invNyl:'نایلۆن'}[x.tab])).join('، ')}</span><span class="bv">${pw.length}<small> بەش</small></span>${pwhStatus(pw)}<span class="bgo">${I('arrow','sm')}</span></button>`:''}${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
+
+/* ===== home layout: folders like a phone (admin arranges) ===== */
+let FOLDERS={},PARENT={},LAYOUT=null;
+function defLayout(){const kids={stock:['g:pwh'],pwh:[],work:[],data:[],admin:[]};SECTIONS.forEach(s=>{if(s.g0===undefined)s.g0=s.g;if(kids[s.g0])kids[s.g0].push('t:'+s.tab)});return {root:['g:stock','g:work','g:data','g:admin'],kids}}
+function effLayout(){const D=defLayout();const L=(S.settings||{}).layout||{};const removed=new Set(L.removed||[]);const custom=(L.folders||[]).filter(f=>f&&f.id);
+  const allF=new Set([...Object.keys(D.kids).filter(f=>!removed.has(f)),...custom.map(f=>f.id)]);const allT=new Set(SECTIONS.map(x=>'t:'+x.tab));
+  const seen=new Set(),kids={};allF.forEach(f=>kids[f]=[]);
+  const valid=id=>id.startsWith('t:')?allT.has(id):id.startsWith('g:')&&allF.has(id.slice(2));
+  const take=(arr,self)=>(arr||[]).filter(id=>valid(id)&&id!==self&&!seen.has(id)&&(seen.add(id),true));
+  const root=take(L.root);Object.entries(L.kids||{}).forEach(([f,arr])=>{if(allF.has(f))kids[f].push(...take(arr,'g:'+f))});
+  const put=(id,par)=>{if(!valid(id)||seen.has(id))return;seen.add(id);if(par&&allF.has(par))kids[par].push(id);else root.push(id)};
+  D.root.forEach(id=>put(id,null));Object.entries(D.kids).forEach(([f,arr])=>arr.forEach(id=>{const par=removed.has(f)?null:f;put(id,par)}));allF.forEach(f=>put('g:'+f,null));
+  /* break cycles: anything not reachable from the root goes to the root */
+  const reach=new Set();const walk=arr=>arr.forEach(id=>{if(reach.has(id))return;reach.add(id);if(id.startsWith('g:'))walk(kids[id.slice(2)]||[])});walk(root);
+  [...seen].forEach(id=>{if(!reach.has(id)){Object.values(kids).forEach(a=>{const i=a.indexOf(id);if(i>=0)a.splice(i,1)});root.push(id);reach.add(id);if(id.startsWith('g:'))walk(kids[id.slice(2)]||[])}});
+  return {root,kids,names:L.names||{},custom,removed}}
+function applyLayout(){try{LAYOUT=effLayout();FOLDERS={};GROUPS.forEach(G=>{FOLDERS[G.g]={...G}});
+  LAYOUT.custom.forEach(f=>{FOLDERS[f.id]={g:f.id,t:f.t||'فۆلدەر',s:'',ic:'grid',c:'#334155',emo:f.ic||'📁',custom:1}});
+  Object.entries(LAYOUT.names).forEach(([id,n])=>{if(FOLDERS[id]&&n){if(n.t)FOLDERS[id].t=n.t;if(n.ic)FOLDERS[id].emo=n.ic}});
+  PARENT={};LAYOUT.root.forEach(id=>PARENT[id]=null);Object.entries(LAYOUT.kids).forEach(([f,arr])=>arr.forEach(id=>PARENT[id]=f));
+  SECTIONS.forEach(x=>{x.g=PARENT['t:'+x.tab]||'root'});
+  Object.keys(FOLDERS).forEach(f=>{const k='g_'+f;if(!TAB_PERM[k]||f.startsWith('f_'))TAB_PERM[k]=()=>{const w=wMode();if(w)return false;return fVis(f)};if(f.startsWith('f_'))HASH[k]='folder-'+f.slice(2)})}catch(e){console.error(e)}}
+function kidsOf(f){return (LAYOUT&&LAYOUT.kids[f])||[]}
+function nodeVis(id){if(id.startsWith('t:')){const f=TAB_PERM[id.slice(2)];return !!(f&&f())}return fVis(id.slice(2))}
+function fVis(f,d){if((d||0)>8)return false;return kidsOf(f).some(id=>id.startsWith('t:')?nodeVis(id):fVis(id.slice(2),(d||0)+1))}
+function visKids(f){return kidsOf(f).filter(nodeVis)}
+function rootItems(){return ((LAYOUT&&LAYOUT.root)||[]).filter(nodeVis).map(id=>id.startsWith('g:')?{f:id.slice(2)}:{t:id.slice(2)})}
+function fParent(f){return PARENT['g:'+f]||null}
+/* a folder with one thing inside opens that thing; going back skips it too */
+function skipDown(tab){let g=0;while(tab.startsWith('g_')&&g++<8){const V=visKids(tab.slice(2));if(V.length!==1)break;tab=V[0].startsWith('g:')?'g_'+V[0].slice(2):V[0].slice(2)}return tab}
+function upTarget(f){let g=0;while(f&&g++<8){if(visKids(f).length>1&&TAB_PERM['g_'+f]&&TAB_PERM['g_'+f]())return 'g_'+f;f=fParent(f)}return 'home'}
+function rootOf(tab){let id=tab.startsWith('g_')?'g:'+tab.slice(2):'t:'+tab;let g=0;while(PARENT[id]&&g++<10)id='g:'+PARENT[id];return id}
+function nodeCard(id){if(id.startsWith('g:')){const f=id.slice(2),F=FOLDERS[f];if(!F)return '';const V=visKids(f);const b=f==='stock'||f==='pwh'?grpBadge('stock'):grpBadge(f);
+    const stat=f==='pwh'?`${V.length}<small> بەش</small>`:(grpStat(f)||`${V.length}<small> تشت</small>`);
+    const sub=F.custom||f==='pwh'||!F.s?V.map(x=>x.startsWith('g:')?(FOLDERS[x.slice(2)]||{}).t:(SECTIONS.find(z=>z.tab===x.slice(2))||{}).t).filter(Boolean).join('، '):F.s;
+    return `<button class="bigc" data-go="g_${f}" style="--tc:${F.c};--tc-soft:${F.c}22">${b?`<span class="bdg">${b}</span>`:''}<span class="bic">${F.emo?`<span style="font-size:1.7rem">${F.emo}</span>`:I(F.ic)}</span><span class="bt">${esc(F.t)}</span><span class="bs">${esc(sub)}</span><span class="bv">${stat}</span>${f==='pwh'?pwhStatus(V.filter(x=>x.startsWith('t:')).map(x=>({tab:x.slice(2)}))):''}<span class="bgo">${I('arrow','sm')}</span></button>`}
+  const x=SECTIONS.find(z=>z.tab===id.slice(2));if(!x)return '';const inv=/^inv/.test(x.tab);
+  return `<button class="bigc" data-go="${x.tab}"${inv?' data-gsub="menu"':''} style="--tc:${x.c};--tc-soft:${x.c}22"><span class="bic">${x.custom&&CRN_G[CRN_TABS[x.tab]]?`<span style="font-size:1.7rem">${CRN_G[CRN_TABS[x.tab]].ic}</span>`:x.tab==='settings'?dIll('set'):I(x.ic)}</span><span class="bt">${esc(x.t)}</span><span class="bs">${esc(x.s)}</span><span class="bv">${tileStat(x.tab)}</span>${hubStatus(x.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`}
+/* ---- editor ---- */
+function layoutSave(L){S.settings.layout=L;save('cfg/settings',0);render()}
+function layoutPlain(){const E=LAYOUT;return {root:[...E.root],kids:Object.fromEntries(Object.entries(E.kids).map(([k,v])=>[k,[...v]])),names:{...E.names},folders:E.custom.map(f=>({...f})),removed:[...E.removed]}}
+function nodeName(id){if(id.startsWith('g:')){const F=FOLDERS[id.slice(2)];return F?F.t:id}const x=SECTIONS.find(z=>z.tab===id.slice(2));return x?x.t:id}
+function nodeIco(id){if(id.startsWith('g:')){const F=FOLDERS[id.slice(2)];return F&&F.emo?F.emo:'📁'}const x=SECTIONS.find(z=>z.tab===id.slice(2));if(x&&x.custom&&CRN_G[CRN_TABS[x.tab]])return CRN_G[CRN_TABS[x.tab]].ic;return ({invPaint:'🎨',invTape:'🧻',invChem:'🧪',invRub:'⚫',invNyl:'🎞',invMisc:'📦',period:'🗓',history:'🕘',profiles:'📐',paints:'🎨',tapes:'🧻',users:'👥',settings:'⚙️',sections:'🗂',layout:'🏠'})[id.slice(2)]||'▫️'}
+function descOf(f,acc){acc=acc||new Set();kidsOf(f).forEach(id=>{if(id.startsWith('g:')&&!acc.has(id.slice(2))){acc.add(id.slice(2));descOf(id.slice(2),acc)}});return acc}
+function viewLayout(){const E=LAYOUT;const allF=Object.keys(E.kids);
+  const row=(id,par,i,n,depth)=>{const isF=id.startsWith('g:');const f=isF?id.slice(2):null;const off=!isF&&!nodeVis(id);const bad=isF?new Set([f,...descOf(f)]):new Set();
+    const opts=[['','🏠 سەرەکی'],...allF.filter(x=>!bad.has(x)).map(x=>[x,'📁 '+FOLDERS[x].t])];
+    return `<div class="lyrow${isF?' fold':''}${off?' off':''}" style="--d:${depth}"><span class="lyic">${nodeIco(id)}</span><span class="lynm"><b>${esc(nodeName(id))}</b>${off?'<small>گرتی یان بۆ تە نینە</small>':isF?`<small>${kidsOf(f).length} تشت تێدا</small>`:''}</span>
+     <span class="lybtns"><button class="btn" data-act="lyMv" data-id="${id}" data-d="-1" ${i===0?'disabled':''} title="بۆ سەری">↑</button><button class="btn" data-act="lyMv" data-id="${id}" data-d="1" ${i===n-1?'disabled':''} title="بۆ خوارێ">↓</button>
+     <select data-lyto="${id}" title="بگوهۆڕە بۆ">${opts.map(([v,l])=>`<option value="${v}"${(par||'')===v?' selected':''}>${esc(l)}</option>`).join('')}</select>
+     ${isF?`<button class="btn" data-act="lyRen" data-f="${f}" title="ناڤ و ئایکۆن">✏️</button><button class="btn" data-act="lyDel" data-f="${f}" title="فۆلدەرێ ژێببە">🗑</button>`:''}</span></div>
+     ${isF?kidsOf(f).map((k,j,a)=>row(k,f,j,a.length,depth+1)).join(''):''}`};
+  return `<div class="card"><h2 style="margin-top:0">🏠 ڕێکخستنا سەرەکی</h2>
+   <p class="muted" style="margin-top:-6px">وەکی مۆبایلێ: فۆلدەران دروست بکە و بەشان ببە بۆ هەر جهەکێ تە بڤێت. ب ↑ ↓ ڕێزێ بگوهۆڕە، و ب لیستێ بەشەکی ببە بۆ «سەرەکی» یان بۆ فۆلدەرەکێ. ئەگەر فۆلدەرەک تەنێ ئێک تشت تێدا بیت، دەمێ تو کلیک دکەی ڕاستەوخۆ ئەو تشت ڤەدبیت. ئەڤ ڕێکخستنە بۆ هەمی کەسانە.</p>
+   <div class="lylist"><div class="lyhead">🏠 سەرەکی</div>${E.root.map((id,i,a)=>row(id,null,i,a.length,0)).join('')}</div>
+   <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn pri" data-act="lyNew">${I('plus','sm')} فۆلدەرەکێ نوی</button><button class="btn" data-act="lyReset">↺ زڤڕاندن بۆ شێوەیێ ئێکەم</button></div></div>`}
+function lyFolderDlg(f){const isNew=!f;const F=f?FOLDERS[f]:null;const ICS=['📁','📦','🏭','🎨','🧰','🗂','⚙️','🧪','📊','🗓','👥','⭐'];const cur=F?(F.emo||'📁'):'📁';
+  dialog(`<h3 style="margin-top:0">${isNew?'فۆلدەرەکێ نوی':'گوهۆڕینا فۆلدەری'}</h3><label>ناڤ<input id="lyName" value="${esc(F?F.t:'')}" placeholder="بۆ نموونە: مەخزەن"></label>
+   <label style="margin-top:10px">ئایکۆن</label><div class="secics">${ICS.map(e=>`<button type="button" class="chip${e===cur?' on':''}" data-lic="${e}">${e}</button>`).join('')}</div><div id="lyErr" style="color:var(--bad);min-height:18px;margin-top:6px"></div>`,()=>{
+     const t=$('#lyName').value.trim();if(!t){$('#lyErr').textContent='⚠️ ناڤەکی بنڤیسە';return false}const ic=(document.querySelector('[data-lic].on')||{}).dataset?.lic||'📁';const L=layoutPlain();
+     if(isNew){const id='f_'+Date.now().toString(36);L.folders.push({id,t,ic});L.kids[id]=[];L.root.push('g:'+id)}else{const c=L.folders.find(x=>x.id===f);if(c){c.t=t;c.ic=ic}else L.names[f]={t,ic}}
+     layoutSave(L);toast('✓ هاتە پاشەکەفتکرن')},isNew?'دروست بکە':'پاشەکەفت بکە');
+  document.querySelectorAll('[data-lic]').forEach(b=>b.onclick=()=>document.querySelectorAll('[data-lic]').forEach(x=>x.classList.toggle('on',x===b)));setTimeout(()=>{const n=$('#lyName');if(n)n.focus()},50)}
+function lyMove(id,to){const L=layoutPlain();const del=a=>{const i=a.indexOf(id);if(i>=0)a.splice(i,1)};del(L.root);Object.values(L.kids).forEach(del);(to?(L.kids[to]=L.kids[to]||[]):L.root).push(id);layoutSave(L)}
+function viewGroup(g){const G=FOLDERS[g]||GROUPS.find(x=>x.g===g);const A=grpActions(g);const its=grpItems(g);
+  if(g!=='pwh'){const V=visKids(g);const big=V.filter(id=>id.startsWith('g:')||/^t:inv/.test(id)),small=V.filter(id=>!big.includes(id));
+    return `<div class="home">${grpAlerts(g==='pwh'?'stock':g)}${A.length?`<div class="acts">${A.map(a=>`<button class="act" data-go="${a.go}"${a.sub?` data-gsub="${a.sub}"`:''} style="--tc:${a.c};--tc-soft:${a.c}1f"><span class="aic">${I(a.ic)}</span><span class="atx"><b>${a.t}</b><small>${a.s}</small></span><span class="ago">${I('arrow','sm')}</span></button>`).join('')}</div>`:''}${big.length?`<div class="bigs">${big.map(nodeCard).join('')}</div>`:''}${small.length?`${big.length||A.length?`<div class="grp-t">${esc(G?G.t:'')}</div>`:''}<div class="tiles">${small.map(id=>{const s=SECTIONS.find(z=>z.tab===id.slice(2));return s?`<button class="tile" data-go="${s.tab}" style="--tc:${s.c};--tc-soft:${s.c}1f"><span class="chev">${I('arrow','sm')}</span><span class="tic${s.tab==='settings'?' ill':''}">${s.tab==='settings'?dIll('set'):I(s.ic)}</span><span class="tt">${esc(s.t)}</span><span class="ts">${esc(s.s)}</span><span class="tv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}</button>`:''}).join('')}</div>`:''}</div>`}
+  if(g==='stock_old'){const pw=grpItems('pwh');return `<div class="home">${grpAlerts('stock')}<div class="bigs">${pw.length?`<button class="bigc" data-go="g_pwh" style="--tc:#0e7478;--tc-soft:#0e747822"><span class="bic">${I('drop')}</span><span class="bt">مەخزەنا سبغێ</span><span class="bs">${pw.map(x=>({invPaint:'سبغ',invTape:'لسق',invChem:'کرۆمات',invRub:'لاستیک',invNyl:'نایلۆن'}[x.tab])).join('، ')}</span><span class="bv">${pw.length}<small> بەش</small></span>${pwhStatus(pw)}<span class="bgo">${I('arrow','sm')}</span></button>`:''}${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
     <span class="bic">${s.custom&&CRN_G[CRN_TABS[s.tab]]?`<span style="font-size:1.7rem">${CRN_G[CRN_TABS[s.tab]].ic}</span>`:I(s.ic)}</span><span class="bt">${s.t}</span><span class="bs">داخلکرن، دەرئێخستن، تۆمار، ڕاپۆرت</span><span class="bv">${tileStat(s.tab)}</span>${hubStatus(s.tab)}<span class="bgo">${I('arrow','sm')}</span></button>`).join('')}</div></div>`}
   if(g==='pwh')return viewPwh();
   if(g==='pwh_old')return `<div class="home">${grpAlerts('stock')}<div class="bigs">${its.map(s=>`<button class="bigc" data-go="${s.tab}" data-gsub="menu" style="--tc:${s.c};--tc-soft:${s.c}22">
@@ -1851,16 +1925,16 @@ function updateChrome(){
   {const w=S.loaded&&wMode();if(w){bn.innerHTML='';document.body.classList.add('wmode');const WL={invPaint:'🎨 سبغ',invTape:'🧻 لسق',invRub:'⚫ لاستیک',invNyl:'🎞 نایلۆن'};sb.innerHTML=w.length>1?`<div class="wsw">${w.map(t=>`<button class="${S.tab===t?'on':''}" data-wt="${t}">${WL[t]}</button>`).join('')}</div>`:`<span class="ttl">${WL[w[0]]} — دەرئێخستن</span>`;sb.querySelectorAll('[data-wt]').forEach(b=>b.onclick=()=>{if(CRN_TABS[b.dataset.wt])S.crnGrp=CRN_TABS[b.dataset.wt];go(b.dataset.wt,'out')});return}document.body.classList.remove('wmode')}
   const locked=!isAdmin&&S.loaded&&(!curApp()||!firstTab());
   if(locked||S.tab==='home'){sb.innerHTML='';}
-  else{const gt=S.tab.startsWith('g_')?S.tab.slice(2):null;const s=SECTIONS.find(x=>x.tab===S.tab);const G=GROUPS.find(x=>x.g===(gt||(s&&s.g)));
-    let back=gt?(gt==='pwh'?'g_stock':'home'):(G&&TAB_PERM['g_'+G.g]()?'g_'+G.g:'home');let bl=back==='home'?'سەرەکی':back==='g_stock'?'مەخزەن':G.t;let toMenu=false;
+  else{const gt=S.tab.startsWith('g_')?S.tab.slice(2):null;const s=SECTIONS.find(x=>x.tab===S.tab);const G=FOLDERS[gt||(s&&s.g)]||null;
+    let back=gt?upTarget(fParent(gt)):upTarget(s?(s.g==='root'?null:s.g):null);let bl=back==='home'?'سەرەکی':(FOLDERS[back.slice(2)]||{}).t||'';let toMenu=false;
     if(isInvTab()&&S.invSub!=='menu'&&invSubList().length>1){toMenu=true;bl=s?s.t:bl}
-    if(isInvTab()&&S.fromPwh&&grpOf(S.tab)==='pwh'){toMenu=false;back='g_pwh';bl='مەخزەنا سبغێ'}
-    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt?I(G.ic)+' '+G.t:(s?I(s.ic)+' '+s.t:'')}</span>`;
+    if(isInvTab()&&S.fromPwh&&grpOf(S.tab)==='pwh'){toMenu=false;back=upTarget('pwh');if(back==='home'&&TAB_PERM.g_pwh())back='g_pwh';bl=back==='home'?'سەرەکی':(FOLDERS[back.slice(2)]||{}).t||''}
+    sb.innerHTML=`<button class="back" id="backBtn">${I('arrow','sm')} ${bl}</button><span class="ttl">${gt&&G?(G.emo?G.emo:I(G.ic))+' '+esc(G.t):(s?I(s.ic)+' '+s.t:'')}</span>`;
     $('#backBtn').onclick=()=>{if(toMenu){S.invSub='menu';render();window.scrollTo({top:0})}else go(back)}}
   if(locked){bn.innerHTML='';return}
-  let cg=S.tab.startsWith('g_')?S.tab.slice(2):grpOf(S.tab);if(cg==='pwh'||cg==='hall')cg='stock';
-  const items=[['home','سەرەکی','grid',S.tab==='home'],...visGroups().map(G=>['g_'+G.g,G.t,G.ic,cg===G.g])];
-  bn.innerHTML=items.map(([t,l,ic,on])=>`<button data-bn="${t}" class="${on?'on':''}">${I(ic)}<span>${l}</span></button>`).join('');
+  const ro=rootOf(S.tab);
+  const items=[['home','سەرەکی','grid',S.tab==='home',''],...rootItems().map(x=>x.f?['g_'+x.f,FOLDERS[x.f].t,FOLDERS[x.f].ic,ro==='g:'+x.f,FOLDERS[x.f].emo||'']:[x.t,(SECTIONS.find(z=>z.tab===x.t)||{}).t||'',(SECTIONS.find(z=>z.tab===x.t)||{}).ic||'grid',ro==='t:'+x.t,''])];
+  bn.innerHTML=items.map(([t,l,ic,on,emo])=>`<button data-bn="${t}" class="${on?'on':''}">${emo?`<span class="ico bemo">${emo}</span>`:I(ic)}<span>${esc(l)}</span></button>`).join('');
   bn.querySelectorAll('[data-bn]').forEach(b=>b.onclick=()=>go(b.dataset.bn));
 }
 function sortedPeriods(){return Object.values(S.periods).sort((a,b)=>(b.start||'').localeCompare(a.start||'')||(b.createdAt||'').localeCompare(a.createdAt||''))}
@@ -3464,6 +3538,7 @@ function bind(){
       pv.innerHTML=l.length?`✓ <b>${l.length}</b> ڕیز هاتنە ناسین — ${fmt(l.reduce((s,o)=>s+o.qty,0),0)} ${$('#ordUnit').value==='m'?'مەتر':'قەد'}`+(bp?` · <span class="short">${bp} کۆد نەناسراو</span>`:'')+(bc?` · <span class="short">${bc} سبغ نەناسراو</span>`:'')+' — «زێدە بکە» بکە':'<span class="short">چ ڕیز نەهاتنە ناسین</span>'};
     const of=$('#ordFile');if(of)of.onchange=async()=>{const f=of.files[0];if(!f)return;try{const rows=await readFileRows(f);importOrders(p,parseOrders(rows,$('#ordUnit').value))}catch(e){toast('⚠️ فایل نەهاتە خواندن. پەیست بکە ل جهێ وێ.')}};
   }
+    m.querySelectorAll('[data-lyto]').forEach(el=>el.onchange=()=>lyMove(el.dataset.lyto,el.value||null));
     {const cq=m.querySelector('#custQ');if(cq)cq.onchange=cq.onsearch=()=>{S.custQ=cq.value;render()}}
     {const uq=m.querySelector('#uQ');if(uq)uq.oninput=()=>{S.uQ=uq.value;const q=normQ(uq.value);m.querySelectorAll('.urow').forEach(r=>{r.style.display=!q||normQ(r.querySelector('.uhead').textContent).includes(q)?'':'none'})}}
     {const pp=m.querySelector('#pPick');if(pp)pp.onchange=()=>{S.cur=pp.value;render();window.scrollTo({top:0})}}
@@ -3923,6 +3998,12 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='secEdit'){const c=customSecs().find(x=>x.id===t0.dataset.id);if(c)secDialog(c)}
   else if(act==='secDel'){const c=customSecs().find(x=>x.id===t0.dataset.id);if(!c)return;if(secHasData('c_'+c.id)){dialog(`<p>بەشێ «${esc(c.name)}» کەرەستە تێدا هەنە. دا داتا نەچن، ل جهێ ژێبرنێ <b>بگرە</b>.</p>`,()=>{},'باشە');return}
     dialog(`<p>بەشێ «${esc(c.name)}» دێ هێتە ژێبرن. باشە؟</p>`,()=>{S.settings.customSecs=(S.settings.customSecs||[]).filter(x=>x.id!==c.id);const o={...(S.settings.secOff||{})};delete o['invC_'+c.id];S.settings.secOff=o;save('cfg/settings',0);render();toast('🗑 هاتە ژێبرن')},'بەلێ، ژێببە')}
+  else if(act==='lyMv'){const id=t0.dataset.id,d=+t0.dataset.d;const L=layoutPlain();const arr=[L.root,...Object.values(L.kids)].find(a=>a.includes(id));if(arr){const i=arr.indexOf(id),j=i+d;if(j>=0&&j<arr.length){[arr[i],arr[j]]=[arr[j],arr[i]];layoutSave(L)}}}
+  else if(act==='lyNew'){lyFolderDlg(null)}
+  else if(act==='lyRen'){lyFolderDlg(t0.dataset.f)}
+  else if(act==='lyDel'){const f=t0.dataset.f;const F=FOLDERS[f];dialog(`<p>فۆلدەرێ «${esc(F.t)}» دێ هێتە ژێبرن. ئەو تشتێن تێدا (${kidsOf(f).length}) دێ چنە ${fParent(f)?'فۆلدەرێ سەری':'سەرەکی'}. باشە؟</p>`,()=>{const L=layoutPlain();const par=fParent(f);const ins=L.kids[f]||[];const host=par?L.kids[par]:L.root;const pos=host.indexOf('g:'+f);host.splice(pos<0?host.length:pos,pos<0?0:1,...ins);delete L.kids[f];
+      if(L.folders.some(x=>x.id===f))L.folders=L.folders.filter(x=>x.id!==f);else L.removed=[...new Set([...(L.removed||[]),f])];layoutSave(L);toast('🗑 فۆلدەر هاتە ژێبرن')},'بەلێ، ژێببە')}
+  else if(act==='lyReset'){dialog('ڕێکخستنا سەرەکی دێ زڤڕیتە شێوەیێ ئێکەم. باشە؟',()=>{delete S.settings.layout;save('cfg/settings',0);render();toast('↺ هاتە زڤڕاندن')},'بەلێ')}
   else if(act==='msView'){S.msView=t0.dataset.v;render()}
   else if(act==='rubReq'){const g=t0.dataset.g||'rub';const pp=p||crnP();const {rows}=crnRows(pp);const sh=rows.filter(r=>r.diff<-0.0005&&r.x.grp===g);S.invKind='crn';S.crnGrp=g;const r=mrqNew();r.rows=sh.map(z=>{const row=mrqRow(z.x,z.x.plen||z.x.ppr?z.rolls:z.x.roll?z.rolls*z.x.roll:Math.ceil(-z.diff));row.note=z.x.plen||z.x.ppr?'':z.x.roll?z.rolls+' ڕۆل':'';return row});r.note='بۆ ماوەیا '+pp.name;S.mrqEdit=r;go(g==='nyl'?'invNyl':'invRub','mreq');window.scrollTo({top:0})}
   else if(act==='delProf'){const x=S.profiles[+t.dataset.i];dialog(`<p>پڕۆفایلێ <b class="ltr">${esc(x.code)}</b> ژێببە؟</p>`,()=>{S.profiles.splice(+t.dataset.i,1);save('cfg/profiles',100);render()},'ژێببە')}
