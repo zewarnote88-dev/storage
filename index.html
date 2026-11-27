@@ -1086,6 +1086,22 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
  #printArea .alkopo .atb tfoot td{background:#ededed!important;font-weight:700;border-top:1px solid #8c8c8c!important}
  #printArea .alkopo .aft{margin-top:auto;border-top:1px solid #8c8c8c;padding-top:6px;text-align:center;font-family:'Times New Roman',serif;font-size:11pt}
 }
+/* ---- side rail: icons only, opens on hover ---- */
+@media (min-width:1001px){
+ html[data-sys=plant] body.hasnav{padding-right:80px}
+ html[data-sys=plant] body.hasnav .bnav{width:80px;padding:16px 10px;overflow-x:hidden;transition:width .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
+ html[data-sys=plant] body.hasnav .bnav:hover,html[data-sys=plant] body.hasnav .bnav:focus-within{width:260px;box-shadow:-14px 0 36px rgba(0,0,0,.28)}
+ html[data-sys=plant] body.hasnav .sbrand{padding:2px 9px 18px;gap:12px;flex-wrap:nowrap;white-space:nowrap}
+ html[data-sys=plant] body.hasnav .sbrand>div:not(.logo),html[data-sys=plant] body.hasnav .sbl,html[data-sys=plant] body.hasnav .bnav button>span:not(.ico){opacity:0;transition:opacity .15s}
+ html[data-sys=plant] body.hasnav .bnav:hover .sbrand>div:not(.logo),html[data-sys=plant] body.hasnav .bnav:hover .sbl,html[data-sys=plant] body.hasnav .bnav:hover button>span:not(.ico),
+ html[data-sys=plant] body.hasnav .bnav:focus-within .sbrand>div:not(.logo),html[data-sys=plant] body.hasnav .bnav:focus-within .sbl,html[data-sys=plant] body.hasnav .bnav:focus-within button>span:not(.ico){opacity:1;transition-delay:.06s}
+ html[data-sys=plant] body.hasnav .bnav button{padding:13px 17px;gap:16px;white-space:nowrap;border-radius:12px;font-size:1rem;transition:background-color .15s,color .15s,transform .15s}
+ html[data-sys=plant] body.hasnav .bnav button .ico{width:24px;height:24px;flex:none;transition:transform .18s cubic-bezier(.2,.8,.2,1)}
+ html[data-sys=plant] body.hasnav .bnav button:hover .ico{transform:scale(1.22)}
+ html[data-sys=plant] body.hasnav .bnav button:hover{font-size:1.06rem}
+ html[data-sys=plant] body.hasnav .bnav button.on .ico{transform:scale(1.1)}
+}
+@media (min-width:1001px) and (prefers-reduced-motion:reduce){html[data-sys=plant] body.hasnav .bnav,html[data-sys=plant] body.hasnav .bnav *{transition:none!important}html[data-sys=plant] body.hasnav .bnav button:hover .ico{transform:none}}
 /* ===== Professional print layout (all PDF/print reports) — palette: graphite / teal (paint) / amber (tape) / cobalt ===== */
 @media print{
  @page{size:A4;margin:11mm 11mm 15mm;@bottom-left{content:counter(page) " / " counter(pages);font:7.5pt 'Rubik',Vazirmatn,sans-serif;color:#707c87}@bottom-right{content:"حیسابێ سبغ و لسقێ";font:7.5pt Vazirmatn,'Noto Sans Arabic',sans-serif;color:#707c87}}
