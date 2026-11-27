@@ -931,6 +931,13 @@ html[data-sys=plant] .bnav button.on .ico{background:color-mix(in srgb,var(--sig
 .donut span{width:84px;height:84px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center}
 .donut b{font-family:var(--num,inherit);font-size:1.2rem}.donut small{color:var(--muted);font-size:.75rem}
 .lg{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:.82rem}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:5px;vertical-align:middle}.lg b{font-family:var(--num,inherit)}
+
+.hkpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.dcharts.one{grid-template-columns:1fr}.dcharts.one .donut{width:150px;height:150px}
+.dsel{display:inline-flex;gap:2px;padding:3px;margin:0 0 10px;background:var(--card2);border:1px solid var(--line);border-radius:10px}
+.dsel button{border:0;background:none;color:var(--muted);font:inherit;font-size:.85rem;padding:6px 14px;border-radius:7px;cursor:pointer;min-height:34px}
+.dsel button:hover{color:var(--ink)}.dsel button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.dsel button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 @media (max-width:760px){.hkpis{grid-template-columns:1fr 1fr;gap:10px}.hkpi .kv{font-size:1.4rem}.dcharts{grid-template-columns:1fr}}
 /* ---- plant v3: app shell — light top bar, graphite side rail on desktop ---- */
 html[data-sys=plant] .topbar{background:color-mix(in srgb,var(--card) 92%,transparent);color:var(--ink);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px)}
@@ -2042,14 +2049,18 @@ function hIll(k){const sh='<ellipse cx="32" cy="58" rx="20" ry="3" fill="#000" o
  return dIll(k)}
 const ILL_TAB={invPaint:'drop',invTape:'tape',invChem:'chem',invRub:'rub',invNyl:'nyl',invMisc:'box',period:'cal',history:'hist',profiles:'prof',paints:'drop',tapes:'tape',users:'usr',layout:'grid',sections:'grid',settings:'set'};
 const ILL_GRP={stock:'wh',pwh:'drop',hall:'chem',work:'cal',data:'lay',admin:'usr'};
-function homeDash(){try{if(!(isAdmin||(canInv()&&canKind('paint'))))return '';const r=reportData();if(!r.paints.length&&!r.tapes.length)return '';
- const today=new Date().toISOString().slice(0,10);const outs=((S.tx&&S.tx.out)||[]).filter(t=>String(t.at||'').slice(0,10)===today);
+function dashPref(){const kp=isAdmin||canKind('paint'),kt=isAdmin||canKind('tape');let v=null;try{v=localStorage.getItem(accKey()+'-dash')}catch(e){}
+ if(v==='paint'&&!kp)v=null;if(v==='tape'&&!kt)v=null;if(v==='both'&&!(kp&&kt))v=null;return v||(kp&&kt?'both':kp?'paint':'tape')}
+function homeDash(){try{if(!(isAdmin||(canInv()&&(canKind('paint')||canKind('tape')))))return '';const r=reportData();if(!r.paints.length&&!r.tapes.length)return '';
+ const kp=isAdmin||canKind('paint'),kt=isAdmin||canKind('tape'),dp=dashPref(),sP=dp!=='tape',sT=dp!=='paint';
+ const sel=kp&&kt?`<div class="dsel" role="group" aria-label="چ نیشان بدەت">${[['both','هەردوو'],['paint','سبغ'],['tape','لسق']].map(([v,l])=>`<button type="button" data-act="dashSel" data-v="${v}" class="${dp===v?'on':''}" aria-pressed="${dp===v}">${l}</button>`).join('')}</div>`:'';
+ const today=new Date().toISOString().slice(0,10);const outs=((S.tx&&S.tx.out)||[]).filter(t=>String(t.at||'').slice(0,10)===today&&(sP&&sT?true:sP?t.sec==='cart'||t.sec==='kgc':t.sec==='box'||t.sec==='inc'));
  const pl=sortedPeriods()[0];let short=0;try{if(pl){const c=compute(pl);short=c.paintShortN+c.tapeShortN}}catch(e){}
  const top=r.paints.slice().sort((a,b)=>b.kg-a.kg).slice(0,6);const mx=Math.max(1,...top.map(x=>x.kg));
  const nP=r.m2N+r.m2S*0,tot=Math.max(1,r.m2N+r.m2P+r.m2S),pN=r.m2N/tot*100,pP=r.m2P/tot*100;
  const kpi=(c,lbl,v,u,go,sub)=>`<button class="hkpi" style="--tc:${c}" data-go="${go}"${sub?` data-gsub="${sub}"`:''}><span class="kl">${lbl}</span><span class="kv">${v}<small>${u}</small></span></button>`;
- return `<section class="dash"><div class="hkpis">${kpi('#0e7c76','سبغ ل مەخزەنێ',fmt(r.totKg,0),'کیلۆ','invPaint','stock')}${kpi('#c27c0e','لسق ل مەخزەنێ',fmt(r.totM2,0),'م²','invTape','stock')}${kpi('#2f5fd0','دەرئێخستنێن ئەڤرۆ',outs.length,'جار','invPaint','outlog')}${kpi(short?'#c2410c':'#15803d','کێماسی د ماوەیێ دا',short,pl?esc(pl.name):'','period')}</div></section>`+'\u0001'+`<section class="dash"><div class="dcharts">${top.length?`<div class="dch"><h3>زێدەترین سبغ ل مەخزەنێ</h3>${top.map(x=>`<div class="hb"><span class="hbn ltr">${esc(x.name)}</span><span class="hbt"><i style="width:${(x.kg/mx*100).toFixed(1)}%"></i></span><b class="ltr">${fmt(x.kg,0)}</b></div>`).join('')}</div>`:''}
- ${r.tapes.length?`<div class="dch"><h3>لسق ل گۆر جۆری (م²)</h3><div class="donut" style="background:conic-gradient(#2f5fd0 0 ${pN}%,#c27c0e ${pN}% ${pN+pP}%,#94a3b8 ${pN+pP}% 100%)"><span><b class="ltr">${fmt(r.totM2,0)}</b><small>م²</small></span></div><div class="lg"><span><i style="background:#2f5fd0"></i>Normal <b class="ltr">${fmt(r.m2N,0)}</b></span><span><i style="background:#c27c0e"></i>Rough <b class="ltr">${fmt(r.m2P,0)}</b></span>${r.m2S?`<span><i style="background:#94a3b8"></i>کەڤن <b class="ltr">${fmt(r.m2S,0)}</b></span>`:''}</div></div>`:''}</div></section>`}catch(e){return ''}}
+ return `<section class="dash">${sel}<div class="hkpis">${sP?kpi('#0e7c76','سبغ ل مەخزەنێ',fmt(r.totKg,0),'کیلۆ','invPaint','stock'):''}${sT?kpi('#c27c0e','لسق ل مەخزەنێ',fmt(r.totM2,0),'م²','invTape','stock'):''}${kpi('#2f5fd0','دەرئێخستنێن ئەڤرۆ',outs.length,'جار',sP?'invPaint':'invTape','outlog')}${kpi(short?'#c2410c':'#15803d','کێماسی د ماوەیێ دا',short,pl?esc(pl.name):'','period')}</div></section>`+'\u0001'+`<section class="dash"><div class="dcharts${sP&&sT?'':' one'}">${sP&&top.length?`<div class="dch"><h3>زێدەترین سبغ ل مەخزەنێ</h3>${top.map(x=>`<div class="hb"><span class="hbn ltr">${esc(x.name)}</span><span class="hbt"><i style="width:${(x.kg/mx*100).toFixed(1)}%"></i></span><b class="ltr">${fmt(x.kg,0)}</b></div>`).join('')}</div>`:''}
+ ${sT&&r.tapes.length?`<div class="dch"><h3>لسق ل گۆر جۆری (م²)</h3><div class="donut" style="background:conic-gradient(#2f5fd0 0 ${pN}%,#c27c0e ${pN}% ${pN+pP}%,#94a3b8 ${pN+pP}% 100%)"><span><b class="ltr">${fmt(r.totM2,0)}</b><small>م²</small></span></div><div class="lg"><span><i style="background:#2f5fd0"></i>Normal <b class="ltr">${fmt(r.m2N,0)}</b></span><span><i style="background:#c27c0e"></i>Rough <b class="ltr">${fmt(r.m2P,0)}</b></span>${r.m2S?`<span><i style="background:#94a3b8"></i>کەڤن <b class="ltr">${fmt(r.m2S,0)}</b></span>`:''}</div></div>`:''}</div></section>`}catch(e){return ''}}
 const ILLK={in:'in',out:'out',report:'rep',mrep:'rep',mcount:'cnt',stock:'stk',outlog:'clk',log:'clk',mlog:'clk',mday:'clk',mreq:'req',items:'stk'};
 
 const PW_ACT=[['out','دەرئێخستن','out','#c2410c'],['in','داخلکرن','in','#15803d'],['stock','مەخزەن','stk','#0f766e'],['log','تۆمار','clk','#6b6f2a'],['report','ڕاپۆرت','rep','#1f5f9e'],['req','داخوازکرنا کڕینێ','req','#0e7490']];
@@ -4343,6 +4354,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='lyNew'){lyFolderDlg(null)}
   else if(act==='lyRenT'){lySecDlg(t0.dataset.id)}
   else if(act==='arrTog'){S.arrange=!S.arrange;render()}
+  else if(act==='dashSel'){try{localStorage.setItem(accKey()+'-dash',t0.dataset.v)}catch(e){}render()}
   else if(act==='arrTo'){arrToDlg(t0.dataset.id)}
   else if(act==='lyRen'){lyFolderDlg(t0.dataset.f)}
   else if(act==='lyDel'){const f=t0.dataset.f;const F=FOLDERS[f];dialog(`<p>فۆلدەرێ «${esc(F.t)}» دێ هێتە ژێبرن. ئەو تشتێن تێدا (${kidsOf(f).length}) دێ چنە ${fParent(f)?'فۆلدەرێ سەری':'سەرەکی'}. باشە؟</p>`,()=>{const L=layoutPlain();const par=fParent(f);const ins=L.kids[f]||[];const host=par?L.kids[par]:L.root;const pos=host.indexOf('g:'+f);host.splice(pos<0?host.length:pos,pos<0?0:1,...ins);delete L.kids[f];
