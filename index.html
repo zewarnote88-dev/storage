@@ -2948,20 +2948,23 @@ function rcvReportHtml(L,d,fat){const groups={};L.forEach(x=>{(groups[x.fat||'']
   <p style="margin-top:14px;font-size:9pt">ب فاتۆرێ هاتە بەراوردکرن: &nbsp; ☐ هەمی دروستە &nbsp;&nbsp; ☐ جوداهی هەیە: ..............................................................</p></div>`}
 /* ---- arrivals: what came in, day by day and invoice by invoice ---- */
 function rcvDay(x){return x.rdate||ymdLocal(new Date(x.at))}
-function rcvGroups(){const ss=rcvSecs();const by={};(S.tx.in||[]).forEach(x=>{if(ss&&!ss.includes(x.sec))return;const d=rcvDay(x);(by[d]=by[d]||[]).push(x)});return Object.entries(by).sort((a,b)=>a[0]<b[0]?1:-1)}
+function rcvGroups(arch){const ss=rcvSecs();const by={};(S.tx.in||[]).forEach(x=>{if(ss&&!ss.includes(x.sec))return;if(arch!==undefined&&!!x.ok!==arch)return;const d=rcvDay(x);(by[d]=by[d]||[]).push(x)});return Object.entries(by).sort((a,b)=>a[0]<b[0]?1:-1)}
 function rcvCanEdit(){return isAdmin||can('inv_in')}
-function viewRcv(){const G=rcvGroups();const isP=S.invKind==='paint';const lim=S.rcvLim||30;
- if(!G.length)return `<div class="card"><p class="muted">هێشتا چ تشت نەهاتینە داخلکرن.</p></div>`;
- const open=S.rcvOpen||G[0][0];
- return `<div class="card"><h2 style="margin-top:0">${I('file')} گەهشتن <small class="muted" style="font-weight:400">— هەر ڕۆژەکێ چ گەهشتیە، و ب کیژ فاتۆرێ</small></h2>
- <div class="rcvlist">${G.slice(0,lim).map(([d,L])=>{let kg=0,ct=0;L.forEach(x=>{const q=rcvQty(x);kg+=q[2];ct+=q[3]});const fs=[...new Set(L.map(x=>x.fat||''))];const on=d===open;
+function viewRcv(){const arch=S.rcvArch==='ok';const G=rcvGroups(arch);const nP=rcvGroups(false).length;const isP=S.invKind==='paint';const lim=S.rcvLim||30;
+ const seg=segMode('rcvArch',[['','⏳ چاڤەڕێی پشکنینێ ('+nP+')'],['ok','✓ یێن OK کرین']]);
+ const top=`<h2 style="margin-top:0">${I('file')} گەهشتن <small class="muted" style="font-weight:400">— ${arch?'ئەوێن پشکنین و OK کرین':'ل گەل فاتۆرێ بەراورد بکە، پاشی OK بکە'}</small></h2>${seg}`;
+ if(!G.length)return `<div class="card">${top}<p class="muted" style="margin:14px 0 0">${arch?'هێشتا چ تشت نەهاتینە OK کرن.':'✓ هەمی گەهشتن هاتینە پشکنین — چ تشت ل هیڤیێ نینە.'}</p></div>`;
+ const open=G.some(g=>g[0]===S.rcvOpen)||S.rcvOpen==='-'?S.rcvOpen:G[0][0];
+ return `<div class="card">${top}
+ <div class="rcvlist" style="margin-top:12px">${G.slice(0,lim).map(([d,L])=>{let kg=0,ct=0;L.forEach(x=>{const q=rcvQty(x);kg+=q[2];ct+=q[3]});const fs=[...new Set(L.map(x=>x.fat||''))];const on=d===open;
   const head=`<button type="button" class="rcvh${on?' on':''}" data-act="rcvOpen" data-d="${d}"><span class="rcvd ltr">${dmy(d)}</span><span class="rcvn"><b>${L.length}</b> ${isP?'سبغ گەهشتن':'جۆرێن لسقێ گەهشتن'}</span><span class="rcvq">${kg?`<span><b class="ltr">${fmt(kg,0)}</b> کیلۆ</span>`:''}${ct?`<span><b class="ltr">${fmt(ct,1)}</b> کارتۆن</span>`:''}</span><span class="rcvf">${fs.map(f=>`<span class="pill">${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b>':'بێ فاتۆرە'}</span>`).join(' ')}</span>${I(on?'up':'down','sm')}</button>`;
   if(!on)return `<div class="rcvday">${head}</div>`;
   const inv=fs.map(f=>{const R=L.filter(x=>(x.fat||'')===f).sort((a,b)=>cmpS(a.at,b.at));
    return `<div class="rcvinv"><div class="rcvih"><b>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'}</b> <span class="muted">${R.length} ڕیز</span><span class="grow"></span>
-    ${rcvCanEdit()?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button></div>
+    ${rcvCanEdit()?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button>${rcvCanEdit()?(arch?`<button class="btn" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="0">↩ بزڤڕینە بۆ پشکنینێ</button>`:`<button class="btn pri" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="1">✓ OK — دروستە</button>`):''}</div>${arch&&R[0]&&R[0].ok?`<div class="muted" style="font-size:.8rem;margin:-4px 0 6px">✓ OK: ${esc(uName(R[0].ok.by)||'')} · <span class="ltr">${new Date(R[0].ok.at).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>`:''}
     <div class="tblwrap"><table><thead><tr><th>#</th><th>کەرەستە</th><th class="n">بڕ</th><th class="n">یەکەیا دی</th><th>جهـ</th><th>تێبینی</th><th>تۆمارکەر</th><th>دەم</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>${R.map((x,i)=>{const q=rcvQty(x);return `<tr><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b>${x.edited?' <span class="pill" title="هاتیە گوهۆڕین">✎</span>':''}</td><td class="n"><b>${q[0]}</b></td><td class="n muted">${q[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td>${isAdmin?`<td style="white-space:nowrap"><button class="btn" style="padding:4px 8px" data-act="txEdit" data-dir="in" data-id="${esc(x.id)}" title="گوهۆڕین">✎</button> <button class="btn" style="padding:4px 8px" data-act="txDel" data-dir="in" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}).join('')}</tbody></table></div></div>`}).join('');
   return `<div class="rcvday on">${head}<div class="rcvbody">${inv}${fs.length>1?`<div style="text-align:left;margin-top:8px"><button class="btn" data-act="rcvPrint" data-d="${d}" data-f="*">📄 ڕاپۆرتا هەمی ڕۆژێ</button></div>`:''}</div></div>`}).join('')}</div>
+ ${!arch&&isAdmin&&G.some(g=>g[0]<today())?`<div style="text-align:left;margin-top:10px"><button class="btn" data-act="rcvOkOld">✓ هەمی گەهشتنێن بەری ئەڤرۆ OK بکە</button></div>`:''}
  ${G.length>lim?`<div style="text-align:center;margin-top:10px"><button class="btn" data-act="rcvMore">پتر نیشان بدە (${G.length-lim} ڕۆژێن دی)</button></div>`:''}
  ${isAdmin?'':'<p class="muted" style="font-size:.82rem;margin:10px 0 0">بۆ گوهۆڕینا بڕ یان ژێبرنا ڕیزەکێ، داخوازێ ژ بەرپرسی بکە.</p>'}</div>`}
 async function txPatchIn(t,patch){const d={...t,...patch};delete d.id;d.edited={by:myUid(),at:new Date().toISOString()};
@@ -4438,9 +4441,14 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);const sum=kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن';S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${sum})`);render();
       const fat=docs[0].fat||'',dt=docs[0].rdate;
       dialog(`<h3 style="margin-top:0">✓ ${docs.length} ڕیز هاتنە داخلکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p><p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی کا هەمی تشت ب دروستی گەهشتینە.</p>`,()=>{printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},'📄 ڕاپۆرتا وەرگرتنێ')}}
+  else if(act==='rcvOk'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f,v=t0.dataset.v==='1';const L=rcvTx(d).filter(x=>(x.fat||'')===f&&!!x.ok!==v);if(!L.length)return;
+    const go2=async()=>{let ok=0;for(const t of L){const p=v?{ok:{by:myUid(),at:new Date().toISOString()}}:{ok:null};if(await txPatchIn(t,p))ok++}if(!db){S.tx.in.forEach(x=>{if(x.ok===null)delete x.ok});recomputeInv();localSave()}toast(v?`✓ OK بوو — ${ok} ڕیز چوونە «یێن OK کرین»`:'↩ زڤڕین بۆ پشکنینێ');render()};
+    if(v)dialog(`<h3 style="margin-top:0">✓ OK — هەمی دروستە؟</h3><p>${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b> · ':''}<span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز</p><p class="muted">پشتی OK، ئەڤ فاتۆرە ژ لیستا «چاڤەڕێی پشکنینێ» دچیت. هەردەم دشێی ل «یێن OK کرین» ببینی یان بزڤڕینی.</p>`,()=>{go2()},'✓ OK');else go2()}
+  else if(act==='rcvOkOld'&&isAdmin){const ss=rcvSecs();const L=(S.tx.in||[]).filter(x=>(!ss||ss.includes(x.sec))&&!x.ok&&rcvDay(x)<today());if(!L.length)return;
+    dialog(`<h3 style="margin-top:0">✓ OK کرنا گەهشتنێن کەڤن</h3><p>${L.length} ڕیز ژ ${new Set(L.map(rcvDay)).size} ڕۆژان (بەری ئەڤرۆ) دێ بنە OK و ژ لیستا پشکنینێ دچن.</p><p class="muted">ئەوێن ئەڤرۆ وەکی خۆ دمینن. هەردەم دشێی ل «یێن OK کرین» بزڤڕینی.</p>`,()=>{(async()=>{let ok=0;const at=new Date().toISOString();for(const t of L){if(await txPatchIn(t,{ok:{by:myUid(),at}}))ok++}if(!db){recomputeInv();localSave()}toast(`✓ ${ok} ڕیز OK بوون`);render()})()},'✓ OK')}
   else if(act==='rcvOpen'){S.rcvOpen=S.rcvOpen===t0.dataset.d?'-':t0.dataset.d;render()}
   else if(act==='rcvMore'){S.rcvLim=(S.rcvLim||30)+30;render()}
-  else if(act==='rcvPrint'){const d=t0.dataset.d,f=t0.dataset.f;let L=rcvTx(d);if(f!=='*')L=L.filter(x=>(x.fat||'')===f);if(L.length)printHtml(rcvReportHtml(L,d,f==='*'?'':f),'receipt-'+d+(f&&f!=='*'?'-'+f:''))}
+  else if(act==='rcvPrint'){const d=t0.dataset.d,f=t0.dataset.f;let L=rcvTx(d).filter(x=>!!x.ok===(S.rcvArch==='ok'));if(f!=='*')L=L.filter(x=>(x.fat||'')===f);if(L.length)printHtml(rcvReportHtml(L,d,f==='*'?'':f),'receipt-'+d+(f&&f!=='*'?'-'+f:''))}
   else if(act==='rcvFat'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f;const L=rcvTx(d).filter(x=>(x.fat||'')===f);
     dialog(`<h3 style="margin-top:0">✎ ژمارا فاتۆرێ</h3><p class="muted"><span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز${f?' · نوکە: <b class="ltr">'+esc(f)+'</b>':''}</p><label>ژمارا فاتۆرێ یا دروست<br><input id="rcvNF" class="ltr" value="${esc(f)}" style="width:100%" placeholder="123"></label>`,
       ()=>{const nf=$('#rcvNF').value.trim();if(nf===f)return;(async()=>{let ok=0;for(const t of L){if(await txPatchIn(t,{fat:nf}))ok++}if(!db){recomputeInv();localSave()}toast(ok===L.length?`✓ ژمارا فاتۆرێ هاتە گوهۆڕین (${ok} ڕیز)`:`⚠️ ${L.length-ok} ڕیز نەهاتنە گوهۆڕین`);render()})()},'پاشەکەفت بکە');setTimeout(()=>{const i=$('#rcvNF');if(i){i.focus();i.select()}},50)}
@@ -4618,7 +4626,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128103119';
+const APP_BUILD='20261128104442';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
