@@ -1202,6 +1202,25 @@ details.logedit{margin-top:14px}details.logedit>summary{cursor:pointer;font-weig
  #printArea .rcvgt span{font-size:9pt;color:var(--ink2);font-weight:700}#printArea .rcvgt b{font-size:17pt;color:var(--rpd)}#printArea .rcvgt small{font-size:9pt;color:var(--ink2)}
 
 }
+
+/* ---- mobile alignment pass ---- */
+@media (max-width:640px){
+ .isubs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible!important;padding:2px 0 8px!important;mask-image:none!important;-webkit-mask-image:none!important}
+ .isubs button{flex:initial;min-width:0;flex-direction:column;justify-content:center;gap:3px;padding:8px 4px!important;font-size:.76rem;line-height:1.2;text-align:center;white-space:normal}
+ .isubs button span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+ .invcard>h2,.card>h2{justify-content:flex-start}
+ .tapeform>.btn.pri,.tapeform>.btn.big,.crnf>.btn.big,.mpcard>.btn.pri{width:100%}
+ .invcard .row>.btn.pri{flex:1 1 auto}
+ .segm{width:100%}.segm .chip{flex:1;justify-content:center}
+ .useg{width:100%}
+ .info,.note{text-align:start}
+ .mrqa,.rcvact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mrqa .btn,.rcvact .btn{width:100%;justify-content:center}
+ .pogrid{grid-template-columns:1fr 1fr}
+ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .fbar{grid-template-columns:1fr!important}.fbar .fpdf .btn{width:100%;justify-content:center}
+ .daynav{flex-wrap:wrap;justify-content:center}
+ .mi-head{grid-template-columns:1fr!important}
+}
 </style>
 </head>
 <body>
@@ -1715,6 +1734,13 @@ function myUid(){const u=curApp();return u?'a:'+u.id:(me.id||null)}
 function myStatus(){if(isAdmin)return 'admin';if(!curApp())return 'none';const u=curApp();return u?(u.status||'active'):'none'}
 function wMode(){if(isAdmin)return null;const u=typeof curApp==='function'&&curApp();if(!u||u.status!=='active')return null;const p=u.perms||{};if(p.admin)return null;const L=[...(p.w_paint?['invPaint']:[]),...(p.w_tape?['invTape']:[]),...(p.w_saj?['invRub','invNyl']:[])];return L.length?L:null}
 function can(k){if(isAdmin)return true;const u=curApp();if(!u||u.status!=='active')return false;{const w=wMode();if(w)return k==='inv_out'}return !!((u.perms||{})[k]||(u.perms||{}).admin)}
+async function verifyMyPw(pw){const u=curApp();if(!u)return !S.appUsers||!S.appUsers.length;
+  if(SB_ON&&sb){try{const salt=await rpc('app_salt',{p_username:u.username});const oh=await hashPw(pw,salt);const r=await rpc('app_update_self',{p_token:getTok(),p_old_hash:oh,p_name:u.name||'',p_username:u.username,p_new_salt:'',p_new_hash:''});return !(r&&r.error)}catch(e){return false}}
+  if(!u.hash)return true;try{return (await hashPw(pw,u.salt))===u.hash}catch(e){return false}}
+function pwGate(msg,go){if(!isAdmin){toast('⚠️ تەنێ بەرپرس دشێت ڤێ بکەت');return}
+  dialog(`<h3 style="margin-top:0">🔒 پەیڤا نهێنی یا بەرپرسی</h3><p>${msg}</p><p class="muted" style="font-size:.85rem">ئەڤ کەرەستە OK بوویە و ل مەخزەنێ یە. بۆ ژێبرنێ پەیڤا نهێنی یا خۆ بنڤیسە.</p><input id="pwGate" type="password" autocomplete="current-password" style="width:100%" placeholder="پەیڤا نهێنی"><div id="pwGateErr" class="muted" style="color:var(--bad);margin-top:6px"></div>`,
+   ()=>{const pw=$('#pwGate').value;if(!pw){$('#pwGateErr').textContent='⚠️ پەیڤا نهێنی بنڤیسە';return false}const b=$('#dlgOk');if(b)b.disabled=true;
+     verifyMyPw(pw).then(ok=>{if(!ok){$('#pwGateErr').textContent='⚠️ پەیڤا نهێنی خەلەتە';if(b)b.disabled=false;return}$('#dlg').innerHTML='';go()});return false},'ژێببە');setTimeout(()=>{const i=$('#pwGate');if(i)i.focus()},50)}
 async function hashPw(pw,salt){const enc=new TextEncoder();const key=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
   const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:120000,hash:'SHA-256'},key,256);return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 function rndHex(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,'0')).join('')}
@@ -3027,16 +3053,16 @@ function viewRcv(){const arch=S.rcvArch==='ok';const q=normQ(S.rcvQ||'');const G
   if(!on)return `<div class="rcvday">${head}</div>`;
   const inv=fs.map(f=>{const R=L.filter(x=>(x.fat||'')===f).sort((a,b)=>(a.bx||0)-(b.bx||0)||cmpS(a.at,b.at));const m2R=R.reduce((s,x)=>s+rcvQty(x)[4],0);
    return `<div class="rcvinv"><div class="rcvih"><b>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'}</b> <span class="muted">${R.length} ڕیز${m2R?` · <b class="ltr">${fmt(m2R,0)}</b> م²`:''}</span>${!arch&&R.some(x=>x.pend)?'<span class="pill pendp">⏳ هێشتا نەچوویە سەر مەخزەنێ</span>':''}<span class="grow"></span>
-    ${rcvCanEdit()?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}${!arch&&isP&&rcvCanEdit()&&R.some(x=>x.pend)?`<button class="btn" data-act="rcvAdd" data-d="${d}" data-f="${esc(f)}">➕ ڕیزەک</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button>${rcvCanEdit()?(arch?`<button class="btn" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="0">↩ بزڤڕینە بۆ پشکنینێ</button>`:`<button class="btn pri" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="1">✓ OK — دروستە</button>`):''}</div>${arch&&R[0]&&R[0].ok?`<div class="muted" style="font-size:.8rem;margin:-4px 0 6px">✓ OK: ${esc(uName(R[0].ok.by)||'')} · <span class="ltr">${new Date(R[0].ok.at).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>`:''}
+    ${rcvCanEdit()&&!arch?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}${!arch&&isP&&rcvCanEdit()&&R.some(x=>x.pend)?`<button class="btn" data-act="rcvAdd" data-d="${d}" data-f="${esc(f)}">➕ ڕیزەک</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button>${rcvCanEdit()?(arch?`<span class="pill" style="background:#15803d;color:#fff">🔒 OK بوویە — ناهێتە گوهۆڕین</span>`:`<button class="btn pri" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="1">✓ OK — دروستە</button>`):''}</div>${arch&&R[0]&&R[0].ok?`<div class="muted" style="font-size:.8rem;margin:-4px 0 6px">✓ OK: ${esc(uName(R[0].ok.by)||'')} · <span class="ltr">${new Date(R[0].ok.at).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>`:''}
     <div class="tblwrap"><table><thead><tr><th>#</th><th>کەرەستە</th><th class="n">بڕ</th><th class="n">یەکەیا دی</th><th>جهـ</th><th>تێبینی</th><th>تۆمارکەر</th><th>دەم</th>${isAdmin||(!arch&&rcvCanEdit())?'<th></th>':''}</tr></thead><tbody>${R.map((x,i)=>{const qq=rcvQty(x);const hl=q&&rcvMatch(x,q)?' class="rcvhit"':'';
      if(!arch&&x.pend&&!x.ok&&rcvCanEdit()&&(x.sec==='cart'||x.sec==='box')){const P=x.sec==='cart';const kg=P?(x.kg!=null?toNum(x.kg):toNum(x.qty)*kgcOf({stock:S.inv},x.key)):0;
       return `<tr${hl}><td>${i+1}</td><td>${P?`<input class="rcvin" list="rcvPL" data-rcve="item" data-id="${esc(x.id)}" value="${esc((paintDef(x.key)||{}).name||x.key)}">`:`<b>${esc(txLabel(x.sec,x.key))}</b>${x.bx?` <span class="pill">📦 ${x.bx}</span>`:''}`}</td><td class="n"><span class="rcvqw"><input class="num rcvin rcvq" inputmode="decimal" data-rcve="q" data-id="${esc(x.id)}" value="${+(P?kg:toNum(x.qty)).toFixed(3)}"><small>${P?'کیلۆ':'کارتۆن'}</small></span></td><td class="n muted">${qq[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td><td style="white-space:nowrap"><button class="btn" style="padding:4px 8px" data-act="rcvDel" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td></tr>`}
-     const q2=qq;return `<tr${hl}><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b>${x.bx?` <span class="pill">📦 ${x.bx}</span>`:''}${x.edited?' <span class="pill" title="هاتیە گوهۆڕین">✎</span>':''}</td><td class="n"><b>${q2[0]}</b></td><td class="n muted">${q2[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td>${isAdmin||(!arch&&rcvCanEdit())?`<td style="white-space:nowrap"><button class="btn" style="padding:4px 8px" data-act="txEdit" data-dir="in" data-id="${esc(x.id)}" title="گوهۆڕین">✎</button> <button class="btn" style="padding:4px 8px" data-act="txDel" data-dir="in" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}).join('')}</tbody></table></div></div>`}).join('');
+     const q2=qq;return `<tr${hl}><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b>${x.bx?` <span class="pill">📦 ${x.bx}</span>`:''}${x.edited?' <span class="pill" title="هاتیە گوهۆڕین">✎</span>':''}</td><td class="n"><b>${q2[0]}</b></td><td class="n muted">${q2[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td>${isAdmin||(!arch&&rcvCanEdit())?`<td style="white-space:nowrap">${x.ok?'🔒 ':`<button class="btn" style="padding:4px 8px" data-act="txEdit" data-dir="in" data-id="${esc(x.id)}" title="گوهۆڕین">✎</button> `}<button class="btn" style="padding:4px 8px" data-act="txDel" data-dir="in" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}).join('')}</tbody></table></div></div>`}).join('');
   return `<div class="rcvday on">${head}<div class="rcvbody">${inv}${fs.length>1?`<div style="text-align:left;margin-top:8px"><button class="btn" data-act="rcvPrint" data-d="${d}" data-f="*">📄 ڕاپۆرتا هەمی ڕۆژێ</button></div>`:''}</div></div>`}).join('')}</div>
  ${!arch&&isAdmin&&G.some(g=>g[0]<today())?`<div style="text-align:left;margin-top:10px"><button class="btn" data-act="rcvOkOld">✓ هەمی گەهشتنێن بەری ئەڤرۆ OK بکە</button></div>`:''}
  ${G.length>lim?`<div style="text-align:center;margin-top:10px"><button class="btn" data-act="rcvMore">پتر نیشان بدە (${G.length-lim} ڕۆژێن دی)</button></div>`:''}
  ${isAdmin?'':'<p class="muted" style="font-size:.82rem;margin:10px 0 0">بۆ گوهۆڕینا بڕ یان ژێبرنا ڕیزەکێ، داخوازێ ژ بەرپرسی بکە.</p>'}</div>`}
-async function txPatchIn(t,patch){const d={...t,...patch};delete d.id;d.edited={by:myUid(),at:new Date().toISOString()};
+async function txPatchIn(t,patch){if(t&&t.ok&&!('ok' in patch)){toast('🔒 OK بوویە — ناهێتە گوهۆڕین');return false}const d={...t,...patch};delete d.id;d.edited={by:myUid(),at:new Date().toISOString()};
  if(!db){const i=S.tx.in.findIndex(x=>x.id===t.id);if(i>=0)S.tx.in[i]={...d,id:t.id};return true}
  try{await db.doc('invin/'+t.id).set(d);return true}catch(e){return false}}
 function batchIn(){const f=binF();const isP=S.invKind==='paint';const brands=S.settings.brands||[];const ws=tapeWidths();
@@ -4626,8 +4652,8 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='ptype'&&p){p.ptype=p.ptype||{};p.ptype[t0.dataset.k]=t0.dataset.v;save('periods/'+p.id,100);render()}
   else if(act==='poEarly'&&isAdmin){const id=t0.dataset.id;const o=openPos().find(x=>x.p.id+'~'+x.kind===id);if(!o)return;o.po.early=true;savePoOwner(o);render();toast('✅ نوکە دشێی داخل بکەی')}
   else if(act==='rcvUndo'&&isAdmin){const id=t0.dataset.id;const t=(S.tx.in||[]).find(x=>x.id===id);if(!t)return;
-    dialog(`<p>ئەڤ گەهشتنە ژێببە؟ (<b>${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'}</b> ${esc(txLabel(t.sec,t.key))})</p><p class="muted">دێ ژ مەخزەنێ کێم بیت و دیسا وەک «ل ڕێیە / هێشتا نەگەهشتیە» دیار بیت.</p>`,async()=>{
-      if(!db){S.tx.in=S.tx.in.filter(x=>x.id!==id);recomputeInv();localSave();render();return}try{await db.doc('invin/'+id).delete();toast('↩️ هاتە ژێبرن — هێشتا نەگەهشتیە')}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
+    (t.ok?(m,go)=>pwGate(m,go):(m,go)=>go())(`ژێبرنا گەهشتنا ${esc(txLabel(t.sec,t.key))}`,()=>dialog(`<p>ئەڤ گەهشتنە ژێببە؟ (<b>${t.kg?fmt(t.kg,1)+' کیلۆ':fmt(t.qty,1)+' کارتۆن'}</b> ${esc(txLabel(t.sec,t.key))})</p><p class="muted">دێ ژ مەخزەنێ کێم بیت و دیسا وەک «ل ڕێیە / هێشتا نەگەهشتیە» دیار بیت.</p>`,async()=>{
+      if(!db){S.tx.in=S.tx.in.filter(x=>x.id!==id);recomputeInv();localSave();render();return}try{await db.doc('invin/'+id).delete();toast('↩️ هاتە ژێبرن — هێشتا نەگەهشتیە')}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە'))}
   else if(act==='resPdf'&&p){printHtml(resPrintHtml(p,t0.dataset.what),`results-${t0.dataset.what}-${p.start}_${p.end}`)}
   else if(act==='custCancel'&&p){const k=t0.dataset.k;p.cancel=p.cancel||[];const on=p.cancel.includes(k);
     const doIt=()=>{p.cancel=on?p.cancel.filter(x=>x!==k):[...p.cancel,k];save('periods/'+p.id,100);render();toast(on?`↩️ داخوازی ${k} زڤڕی د حیسابێ دا`:`❌ داخوازی ${k} هاتە بەتالکرن — ژ حیسابێ سبغ و لسقێ دەرکەفت`)};
@@ -4654,7 +4680,7 @@ $('#main').addEventListener('click',async e=>{
       const fat=docs[0].fat||'',dt=docs[0].rdate;
       dialog(`<h3 style="margin-top:0">${pend?'⏳':'✓'} ${docs.length} ڕیز هاتنە تۆمارکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p>${pend?`<p>هێشتا <b>نەچوونە سەر مەخزەنێ</b>. ل بەشا <b>گەهشتن</b> ل گەل فاتۆرێ بەراورد بکە، ئەگەر خەلەتی هەبیت ل وێرێ چاک بکە، پاشی <b>✓ OK</b> بکە دا بچنە سەر مەخزەنێ.</p>`:'<p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی.</p>'}<button type="button" class="btn" id="rcvDlgRep">📄 ڕاپۆرتا وەرگرتنێ</button>`,()=>{if(pend){S.rcvArch='';S.rcvOpen=dt;go(K0==='tape'?'invTape':'invPaint','rcv')}else printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},pend?'📋 بچە «گەهشتن»':'📄 ڕاپۆرتا وەرگرتنێ');
       const rb=$('#rcvDlgRep');if(rb){if(!pend)rb.remove();else rb.onclick=()=>printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))}}}
-  else if(act==='rcvOk'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f,v=t0.dataset.v==='1';const L=rcvTx(d).filter(x=>(x.fat||'')===f&&!!x.ok!==v);if(!L.length)return;
+  else if(act==='rcvOk'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f,v=t0.dataset.v==='1';if(!v){toast('🔒 ئەو کەرەستێن OK بووین نازڤڕن');return}const L=rcvTx(d).filter(x=>(x.fat||'')===f&&!!x.ok!==v);if(!L.length)return;
     const go2=async()=>{let ok=0;for(const t of L){const p=v?{ok:{by:myUid(),at:new Date().toISOString()}}:{ok:null};if(await txPatchIn(t,p))ok++}if(!db){S.tx.in.forEach(x=>{if(x.ok===null)delete x.ok});recomputeInv();localSave()}const np=L.filter(x=>x.pend).length;toast(v?(np?`✓ OK بوو — ${ok} ڕیز چوونە سەر مەخزەنێ`:`✓ OK بوو — ${ok} ڕیز چوونە «یێن OK کرین»`):(np?'↩ زڤڕین بۆ پشکنینێ — ژ مەخزەنێ هاتنە دەرئێخستن هەتا OK':'↩ زڤڕین بۆ پشکنینێ'));render()};
     if(v)dialog(`<h3 style="margin-top:0">✓ OK — هەمی دروستە؟</h3><p>${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b> · ':''}<span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز</p>${L.some(x=>x.pend)?'<p><b>پشتی OK، ئەڤ کەرەستە دچنە سەر مەخزەنێ.</b></p>':''}<p class="muted">ئەڤ فاتۆرە ژ لیستا «چاڤەڕێی پشکنینێ» دچیت. هەردەم دشێی ل «یێن OK کرین» ببینی یان بزڤڕینی.</p>`,()=>{go2()},'✓ OK');else go2()}
   else if(act==='rcvOkOld'&&isAdmin){const ss=rcvSecs();const L=(S.tx.in||[]).filter(x=>(!ss||ss.includes(x.sec))&&!x.ok&&rcvDay(x)<today());if(!L.length)return;
@@ -4669,7 +4695,7 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='rcvOpen'){S.rcvOpen=S.rcvOpen===t0.dataset.d?'-':t0.dataset.d;render()}
   else if(act==='rcvMore'){S.rcvLim=(S.rcvLim||30)+30;render()}
   else if(act==='rcvPrint'){const d=t0.dataset.d,f=t0.dataset.f;let L=rcvTx(d).filter(x=>!!x.ok===(S.rcvArch==='ok'));if(f!=='*')L=L.filter(x=>(x.fat||'')===f);if(L.length)printHtml(rcvReportHtml(L,d,f==='*'?'':f),'receipt-'+d+(f&&f!=='*'?'-'+f:''))}
-  else if(act==='rcvFat'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f;const L=rcvTx(d).filter(x=>(x.fat||'')===f);
+  else if(act==='rcvFat'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f;const L=rcvTx(d).filter(x=>(x.fat||'')===f&&!x.ok);if(!L.length){toast('🔒 OK بوویە — ژمارا فاتۆرێ ناهێتە گوهۆڕین');return}
     dialog(`<h3 style="margin-top:0">✎ ژمارا فاتۆرێ</h3><p class="muted"><span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز${f?' · نوکە: <b class="ltr">'+esc(f)+'</b>':''}</p><label>ژمارا فاتۆرێ یا دروست<br><input id="rcvNF" class="ltr" value="${esc(f)}" style="width:100%" placeholder="123"></label>`,
       ()=>{const nf=$('#rcvNF').value.trim();if(nf===f)return;(async()=>{let ok=0;for(const t of L){if(await txPatchIn(t,{fat:nf}))ok++}if(!db){recomputeInv();localSave()}toast(ok===L.length?`✓ ژمارا فاتۆرێ هاتە گوهۆڕین (${ok} ڕیز)`:`⚠️ ${L.length-ok} ڕیز نەهاتنە گوهۆڕین`);render()})()},'پاشەکەفت بکە');setTimeout(()=>{const i=$('#rcvNF');if(i){i.focus();i.select()}},50)}
   else if(act==='rcvRep'){const d0=today();const pick=()=>{const d=$('#rcvD').value;const L=rcvTx(d);const fs=[...new Set(L.map(x=>x.fat||''))];
@@ -4739,8 +4765,8 @@ $('#main').addEventListener('click',async e=>{
     let tk={};if(isTankX(x)){const per=tkPer(x,f,dir),kg=tkKg(x,f,dir);if(tkMode(x,f,dir)==='tank'&&dir==='in'&&!(per>0)){toast('⚠️ کێشا هەر تانکەکێ بنڤیسە');return}tk={kgq:+kg.toFixed(3),...(per>0?{tanks:+(kg/per).toFixed(3),tkg:per}:{})};if(dir==='in'&&per>0&&toNum(x.tank)!==per){x.tank=per;save(MX().doc,0)}}
     const doc={at:new Date().toISOString(),u:meU,sec:MX().sec,key:x.id,qty:+qty.toFixed(4),...tk,...(hall?{hall}:{}),...(person?{person}:{}),...(loc?{loc}:{}),note:String(f.note||'').trim()};
     if(await addTx(dir,[doc])){f.qty='';delete f.tkg;f.note='';f.person='';f.loc='';f.locFor='';toast(`✓ ${dir==='in'?'داخلکرن':'دەرئێخستن'}: ${tk.kgq!==undefined?fmt(tk.kgq,1)+' '+baseU(x)+(tk.tanks?' ('+fmt(tk.tanks,2)+' تانک)':''):fmt(qty,2)+' '+x.unit} ${x.name}${tkShow(x)?' — ل مەخزەنێ: '+tankSplit(x,miQty(x.id)):''}${person?' — بۆ '+esc(person):''}${hall?' ('+esc(hall)+')':''}${loc?' 📍 '+esc(loc):''}`);render()}}
-  else if(act==='txEdit'&&isAdmin){txEdit(t0.dataset.dir,t0.dataset.id)}
-  else if(act==='txDel'&&isAdmin){const dir=t0.dataset.dir,id=t0.dataset.id;dialog('<p>ئەڤ تۆمارە ژێببە؟ مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</p>',async()=>{
+  else if(act==='txEdit'&&isAdmin){const tt=(S.tx[t0.dataset.dir]||[]).find(x=>x.id===t0.dataset.id);if(t0.dataset.dir==='in'&&tt&&tt.ok){toast('🔒 ئەڤ کەرەستە OK بوویە — ناهێتە گوهۆڕین');return}txEdit(t0.dataset.dir,t0.dataset.id)}
+  else if(act==='txDel'&&isAdmin){const dir=t0.dataset.dir,id=t0.dataset.id;const tt=(S.tx[dir]||[]).find(x=>x.id===id);(dir==='in'&&tt&&tt.ok?(m,go)=>pwGate(m,go):dialog)(dir==='in'&&tt&&tt.ok?`ژێبرنا «${esc(txLabel(tt.sec,tt.key))}» ژ مەخزەنێ؟`:'<p>ئەڤ تۆمارە ژێببە؟ مەخزەن دێ ل دویڤ هێتە ڕاستکرن.</p>',async()=>{
       undoTxDel(dir,(S.tx[dir]||[]).find(x=>x.id===id));
       if(!db){S.tx[dir]=S.tx[dir].filter(x=>x.id!==id);recomputeInv();localSave();render();return}
       try{await db.doc((dir==='in'?'invin/':'invout/')+id).delete()}catch(e){toast('⚠️ ژێبرن نەبوو')}},'ژێببە')}
@@ -4849,7 +4875,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='202611282000';
+const APP_BUILD='202611282008';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
