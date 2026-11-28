@@ -3820,13 +3820,20 @@ const MRQ_ST={draft:['ڕەشنڤیس','#6b7280'],sent:['هاتیە هنارتن'
 function mrqSugg(x){const m=toNum(x.min),q=miQty(x.id);return Math.max(1,Math.ceil(m*2-q))}
 function viewMiscReq(){const ed=S.mrqEdit;if(ed)return viewMrqEdit(ed);const L=mrqList();const can_=miCanEdit();
   return `${can_?`<div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn pri" data-act="mrqNew">➕ داخوازیەکا نوو</button><button class="btn" data-act="mrqNewLow">⚠️ داخوازی ژ کەرەستێن کێم (${MIv().filter(miLow).length})</button></div>`:''}
-   <div class="mrqs">${L.map(r=>{const st=MRQ_ST[r.status]||MRQ_ST.draft;const n=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0).length;
+   ${isCrn()?mrqTiles(L):`<div class="mrqs">${L.map(r=>mrqCard(r,can_)).join('')||'<div class="muted">هێشتا چ داخوازی نینن. داخوازیەکێ چێبکە و بۆ وی کەسێ دکڕیت بهنێرە (PDF یان WhatsApp).</div>'}</div>`}`}
+function mrqTiles(L){const k=S.mrqSel&&L.some(r=>r.id===S.mrqSel)?S.mrqSel:'';if(!L.length)return '<div class="muted">هێشتا چ داخوازی نینن. داخوازیەکێ چێبکە و بۆ کۆمپانیێ بهنێرە (PDF یان Word).</div>';
+  const tile=r=>{const st=MRQ_ST[r.status]||MRQ_ST.draft;const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);const kg=R.filter(x=>x.unit==='کیلۆ').reduce((a,x)=>a+toNum(x.qty),0);
+    return `<button type="button" class="pocd${k===r.id?' on':''}${r.status==='sent'||r.status==='partial'?' need':''}" style="--tc:${st[1]}" data-act="mrqPick" data-id="${esc(r.id)}">
+     <span class="pocic">${I('file')}</span><span class="pocb"><b>داخوازی <span class="ltr">#${r.no}</span></b><span class="pocs muted ltr" style="text-align:right">${esc(r.date?dmy(r.date):'')}</span><span class="pocs" style="color:${st[1]};font-weight:700">${st[0]}</span><span class="poca">${R.length} کەرەستە${kg?' · '+fmt(kg,0)+' کیلۆ':''}</span></span><span class="pocgo">${k===r.id?'▾':'‹'}</span></button>`};
+  const r=k&&L.find(z=>z.id===k);
+  return `<div class="pogrid">${L.map(tile).join('')}</div>${r?`<div id="mrqDet" style="margin-top:12px">${mrqCard(r,miCanEdit())}</div>`:'<div class="muted" style="text-align:center;padding:16px">☝️ ل سەر داخوازیەکێ لێ بدە دا ڤەبیت.</div>'}`}
+function mrqCard(r,can_){const st=MRQ_ST[r.status]||MRQ_ST.draft;const n=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0).length;
      return `<div class="mrq"><div class="mrqh"><b class="ltr">#${r.no}</b><span class="pill" style="background:${st[1]};color:#fff">${st[0]}</span><span class="grow"></span><span class="muted ltr">${esc(r.date||'')}</span></div>
       <div class="muted" style="font-size:.85rem">${r.to?'بۆ: <b>'+esc(r.to)+'</b> · ':''}${n} کەرەستە${r.by?' · ژ لایێ '+esc(r.by):''}</div>
       <div class="muted" style="font-size:.82rem;margin-top:4px">${(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0).slice(0,4).map(x=>esc(x.name)+' '+(toNum(x.got)?fmt(toNum(x.got),2)+'/':'')+fmt(toNum(x.qty),2)+' '+esc(x.unit)+(x.done?' ✓':'')).join('، ')}${n>4?' …':''}</div>
       ${(r.recv||[]).length?`<div style="font-size:.8rem;margin-top:4px">${r.recv.map(v=>`📦 <span class="ltr">${esc(miDate(new Date(v.at)))}</span> — وەرگر: <b>${esc(v.by)}</b> (${v.items.length} کەرەستە)`).join('<br>')}</div>`:''}
       <div class="mrqa">${can_&&r.status!=='received'?`<button class="btn" data-act="mrqOpen" data-id="${r.id}">✏️ گوهۆڕین</button>`:''}<button class="btn" data-act="mrqPdf" data-id="${r.id}">${I('file','sm')} PDF</button><button class="btn" data-act="mrqShare" data-id="${r.id}">📤 هنارتن</button>
-       ${can_&&r.status!=='received'&&r.status!=='draft'?`<button class="btn pri" data-act="mrqRecv" data-id="${r.id}">📦 گەهشت</button>`:''}${can_?`<button class="btn" data-act="mrqDel" data-id="${r.id}" title="ژێبرن">🗑</button>`:''}</div></div>`}).join('')||'<div class="muted">هێشتا چ داخوازی نینن. داخوازیەکێ چێبکە و بۆ وی کەسێ دکڕیت بهنێرە (PDF یان WhatsApp).</div>'}</div>`}
+       ${can_&&r.status!=='received'&&r.status!=='draft'?`<button class="btn pri" data-act="mrqRecv" data-id="${r.id}">📦 گەهشت</button>`:''}${can_?`<button class="btn" data-act="mrqDel" data-id="${r.id}" title="ژێبرن">🗑</button>`:''}</div></div>`}
 function viewMrqEdit(r){const L=[...MIv()].sort(miSort);
   return `<datalist id="mrqItems">${L.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist><datalist id="mrqCodes">${L.filter(x=>x.code).map(x=>`<option value="${esc(x.code)}">${esc(x.name)}</option>`).join('')}</datalist><datalist id="mrqUnits">${MISC_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>
    <div class="row" style="margin-bottom:8px"><b class="grow" style="font-size:1.1rem">داخوازیا ژمارە <span class="ltr">#${r.no}</span></b><button class="btn" data-act="mrqBack">← زڤڕین</button></div>
@@ -4654,6 +4661,7 @@ $('#main').addEventListener('click',async e=>{
     const bad=R.find(x=>!(toNum(x.qty)>0));if(bad){toast('⚠️ ژمارا «'+bad.name+'» بنڤیسە');return}
     R.forEach(x=>{delete x.cu;if(!x.unit)x.unit='دانە'});r.rows=R;if(r.status==='draft'||!r.status)r.status=t0.dataset.s;const i=MR().findIndex(x=>x.id===r.id);if(i>=0)MR()[i]=r;else MR().push(r);save(MX().rdoc,100);S.mrqEdit=null;render();
     toast('✓ داخوازی #'+r.no+' هاتە پاشەکەفتکرن');if(t0.dataset.s==='sent')setTimeout(()=>mrqShare(r),150)}
+  else if(act==='mrqPick'){S.mrqSel=S.mrqSel===t0.dataset.id?'':t0.dataset.id;render();if(S.mrqSel)setTimeout(()=>{const d=document.getElementById('mrqDet');if(d)d.scrollIntoView({behavior:'smooth',block:'start'})},60)}
   else if(act==='mrqPdf'){const r=MR().find(x=>x.id===t0.dataset.id);if(r)(isCrn()?mrqExport:mrqPdf)(r)}
   else if(act==='mrqShare'){const r=MR().find(x=>x.id===t0.dataset.id);if(r)mrqShare(r)}
   else if(act==='mrqRecv'){const r=MR().find(x=>x.id===t0.dataset.id);if(r)mrqRecv(r)}
@@ -4789,7 +4797,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='202611281934';
+const APP_BUILD='202611281937';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
