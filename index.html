@@ -3931,11 +3931,19 @@ function mrqRecv(r){const R=(r.rows||[]).map((x,i)=>({...x,i})).filter(x=>x.name
     r.recv=r.recv||[];r.recv.push({at,by,items:got});
     r.status=r.rows.filter(x=>x.name&&toNum(x.qty)>0).every(x=>x.done)?'received':'partial';save(MX().rdoc,100);
     addTx('in',docs).then(ok=>{if(ok){toast(`✓ ${docs.length} کەرەستە هاتنە داخلکرن — وەرگر: ${by}${created?' ('+created+' کەرەستێن نوو)':''}`);render()}})},'داخلکرن بۆ مەخزەنێ','wide')}
-function miPendingBox(){const O=mrqOpen();if(!O.length)return '';
+function miPendingBox(){const O=mrqOpen();if(!O.length)return '';if(isCrn())return mpTiles(O);
   return `<div class="mpend"><div class="lb" style="font-weight:800">📦 ل ڕێ — داخوازیێن هێشتا نەگەهشتین (${O.length})</div>${O.map(r=>{const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0&&!x.done);
     return `<div class="mpcard"><div class="mrqh"><b class="ltr">#${r.no}</b><span class="pill" style="background:${(MRQ_ST[r.status]||MRQ_ST.sent)[1]};color:#fff">${(MRQ_ST[r.status]||MRQ_ST.sent)[0]}</span><span class="grow muted" style="font-size:.85rem">${r.to?'بۆ: '+esc(r.to)+' · ':''}<span class="ltr">${esc(r.date||'')}</span></span></div>
       <table class="mptbl"><thead><tr><th>ناڤێ مادێ</th><th>کۆد</th><th class="n">داخوازکری</th><th class="n">گەهشتی</th><th class="n">مای</th></tr></thead><tbody>${R.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td class="ltr muted">${esc(x.code||'')}</td><td class="n">${fmt(toNum(x.qty),2)} <small>${esc(x.unit)}</small></td><td class="n muted">${fmt(toNum(x.got),2)}</td><td class="n"><b style="color:#b45309">${fmt(mrqRem(x),2)}</b></td></tr>`).join('')}</tbody></table>
       <button class="btn pri" data-act="mrqRecv" data-id="${r.id}" style="width:100%;margin-top:8px;min-height:46px">📦 وەرگرتن — چ گەهشتیە؟</button></div>`}).join('')}</div>`}
+function mpDet(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0&&!x.done);
+  return `<div class="mpcard"><table class="mptbl"><thead><tr><th>کۆد</th><th>ناڤێ مادێ</th><th class="n">داخوازکری</th><th class="n">گەهشتی</th><th class="n">مای</th></tr></thead><tbody>${R.map(x=>`<tr><td class="ltr"><b>${esc(x.code||'—')}</b></td><td>${esc(x.name)}</td><td class="n">${fmt(toNum(x.qty),2)} <small>${esc(x.unit)}</small></td><td class="n muted">${fmt(toNum(x.got),2)}</td><td class="n"><b style="color:#b45309">${fmt(mrqRem(x),2)}</b></td></tr>`).join('')}</tbody></table>
+   <button class="btn pri" data-act="mrqRecv" data-id="${r.id}" style="width:100%;margin-top:8px;min-height:46px">📦 وەرگرتن — چ گەهشتیە؟</button></div>`}
+function mpTiles(O){const k=S.mpSel&&O.some(r=>r.id===S.mpSel)?S.mpSel:'';
+  const tile=r=>{const st=MRQ_ST[r.status]||MRQ_ST.sent;const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0&&!x.done);const rem=R.filter(x=>x.unit==='کیلۆ').reduce((a,x)=>a+mrqRem(x),0);
+    return `<button type="button" class="pocd need${k===r.id?' on':''}" style="--tc:#b45309" data-act="mpPick" data-id="${esc(r.id)}"><span class="pocic">${I('box')}</span><span class="pocb"><b>داخوازی <span class="ltr">#${r.no}</span></b><span class="pocs muted ltr" style="text-align:right">${esc(r.date?dmy(r.date):'')}</span><span class="pocs" style="color:${st[1]};font-weight:700">${st[0]}</span><span class="poca">${R.length} کەرەستە ماینە${rem?' · '+fmt(rem,0)+' کیلۆ':''}</span></span><span class="pocgo">${k===r.id?'▾':'‹'}</span></button>`};
+  const r=k&&O.find(z=>z.id===k);
+  return `<div class="mpend"><div class="lb" style="font-weight:800">📦 ل ڕێ — داخوازیێن هێشتا نەگەهشتین (${O.length})</div><div class="pogrid">${O.map(tile).join('')}</div>${r?`<div id="mpDet" style="margin-top:10px">${mpDet(r)}</div>`:''}</div>`}
 function viewMiscBody(){const k=S.invSub;if(k==='mrep')return viewMRep();if(k==='stock'&&isCrn()){const rp=can('inv_view');return (rp?segMode('stkMode',[['','📦 مەخزەن'],['m','📄 ڕاپۆرت']]):'')+(rp&&S.stkMode==='m'?viewMRep():viewMiscStock())}if(k==='out'||k==='in')return viewMiscForm(k);if(k==='stock')return viewMiscStock();if(k==='mlog')return viewMiscLog();if(k==='mday')return viewMiscDay();if(k==='mreq')return viewMiscReq();if(k==='items')return viewMiscItems();return ''}
 function miPdf(kind){const now=new Date();const stamp=`${miDate(now)} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
   const LOGH='<tr><th>ڕۆژ</th><th>دەم</th><th></th><th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th>ژمارە</th><th>یەکە</th><th>هۆڵ</th><th>وەرگر</th><th>تۆمارکەر</th><th>تێبینی</th></tr>';
@@ -4661,6 +4669,7 @@ $('#main').addEventListener('click',async e=>{
     const bad=R.find(x=>!(toNum(x.qty)>0));if(bad){toast('⚠️ ژمارا «'+bad.name+'» بنڤیسە');return}
     R.forEach(x=>{delete x.cu;if(!x.unit)x.unit='دانە'});r.rows=R;if(r.status==='draft'||!r.status)r.status=t0.dataset.s;const i=MR().findIndex(x=>x.id===r.id);if(i>=0)MR()[i]=r;else MR().push(r);save(MX().rdoc,100);S.mrqEdit=null;render();
     toast('✓ داخوازی #'+r.no+' هاتە پاشەکەفتکرن');if(t0.dataset.s==='sent')setTimeout(()=>mrqShare(r),150)}
+  else if(act==='mpPick'){S.mpSel=S.mpSel===t0.dataset.id?'':t0.dataset.id;render()}
   else if(act==='mrqPick'){S.mrqSel=S.mrqSel===t0.dataset.id?'':t0.dataset.id;render();if(S.mrqSel)setTimeout(()=>{const d=document.getElementById('mrqDet');if(d)d.scrollIntoView({behavior:'smooth',block:'start'})},60)}
   else if(act==='mrqPdf'){const r=MR().find(x=>x.id===t0.dataset.id);if(r)(isCrn()?mrqExport:mrqPdf)(r)}
   else if(act==='mrqShare'){const r=MR().find(x=>x.id===t0.dataset.id);if(r)mrqShare(r)}
@@ -4797,7 +4806,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='202611281937';
+const APP_BUILD='202611281942';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
