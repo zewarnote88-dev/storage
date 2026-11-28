@@ -1109,8 +1109,9 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
 /* ===== Professional print layout (all PDF/print reports) — palette: graphite / teal (paint) / amber (tape) / cobalt ===== */
 @media print{
  @page{size:A4;margin:11mm 11mm 15mm;@bottom-left{content:counter(page) " / " counter(pages);font:7.5pt 'Rubik',Vazirmatn,sans-serif;color:#707c87}@bottom-right{content:"حیسابێ سبغ و لسقێ";font:7.5pt Vazirmatn,'Noto Sans Arabic',sans-serif;color:#707c87}}
- html,body{background:#fff!important}
- #printArea{--rp:#0e7c76;--rpd:#005b56;--rpt:#e8f6f4;--rpl:#bfe5e0;--ink:#1f2a33;--ink2:#434f58;--mut:#707c87;--ln:#d4e0e9;--zb:#f5f8fa;
+ html,body,html[data-theme],html[data-sys]{background:#fff!important;color-scheme:light}
+ #printArea{--bg:#fff;--card:#fff;--card2:#f5f8fa;--field:#fff;--muted:#56636e;--line:#d4e0e9;--line2:#b9c3cc;--td-line:#e3e8ec;--th-ink:#56636e;--row-hover:transparent;background:#fff;color-scheme:light;
+  --rp:#0e7c76;--rpd:#005b56;--rpt:#e8f6f4;--rpl:#bfe5e0;--ink:#1f2a33;--ink2:#434f58;--mut:#707c87;--ln:#d4e0e9;--zb:#f5f8fa;
   font-family:Vazirmatn,'Noto Sans Arabic','Segoe UI',Tahoma,sans-serif!important;font-size:8.8pt!important;line-height:1.5;color:var(--ink)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  #printArea[data-k=tape]{--rp:#c27c0e;--rpd:#793b00;--rpt:#fdf3e3;--rpl:#f1d6a8}
  #printArea[data-k=gen]{--rp:#2f5fd0;--rpd:#1741aa;--rpt:#eaf0fc;--rpl:#c7d6f6}
@@ -1139,7 +1140,7 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
  #printArea thead{display:table-header-group}
  #printArea th{background:var(--ink)!important;color:#fff!important;font-family:Vazirmatn,sans-serif;font-weight:600;font-size:7.9pt!important;padding:6px 7px!important;border:none!important;text-align:right;white-space:nowrap}
  #printArea th:first-child{border-top-right-radius:7px}#printArea th:last-child{border-top-left-radius:7px}
- #printArea td{padding:5px 7px!important;border:none!important;border-bottom:1px solid var(--ln)!important;vertical-align:middle;text-align:right;color:var(--ink)}
+ #printArea td{background:#fff;padding:5px 7px!important;border:none!important;border-bottom:1px solid var(--ln)!important;vertical-align:middle;text-align:right;color:var(--ink)}
  #printArea tbody tr:nth-child(even) td{background:var(--zb)}
  #printArea td b{color:var(--ink);font-weight:700}
  #printArea tr.shr td{background:#fdecec!important}
@@ -4584,7 +4585,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128073058';
+const APP_BUILD='20261128102548';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
