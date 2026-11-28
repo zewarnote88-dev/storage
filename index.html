@@ -1105,6 +1105,7 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
 .tankrow{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}.tankrow label{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px;font-size:.88rem;color:var(--muted)}
 .tankrow .qin{display:flex;align-items:center;gap:6px}.tankrow .qin input{flex:1;font-size:1.3rem;font-weight:700;text-align:center;min-height:52px}.tankrow .tx{font-size:1.4rem;color:var(--muted);padding-bottom:12px}
 .mitk{flex-basis:100%;font-size:.85rem;color:var(--muted);margin-top:2px}.tanktot{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:.95rem}.tanktot b{font-family:var(--num,inherit);font-size:1.15rem}
+.updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:90;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);font-weight:600}@media (min-width:1001px){.updbar{bottom:24px}}@media print{.updbar{display:none}}
 /* ===== Professional print layout (all PDF/print reports) — palette: graphite / teal (paint) / amber (tape) / cobalt ===== */
 @media print{
  @page{size:A4;margin:11mm 11mm 15mm;@bottom-left{content:counter(page) " / " counter(pages);font:7.5pt 'Rubik',Vazirmatn,sans-serif;color:#707c87}@bottom-right{content:"حیسابێ سبغ و لسقێ";font:7.5pt Vazirmatn,'Noto Sans Arabic',sans-serif;color:#707c87}}
@@ -4566,6 +4567,11 @@ $('#main').addEventListener('click',async e=>{
 
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+/* ---- update check: tell the user when a newer version is on the server ---- */
+const APP_BUILD='20261128071241';
+async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
+  if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
+setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
 render();
 initDb();
 </script>
