@@ -332,7 +332,7 @@ h3.dsec{margin:16px 0 6px;font-size:1rem}h3.dsec.in{color:var(--good)}h3.dsec.ou
 @media (max-width:640px){.mrqrow{grid-template-columns:24px 1fr 1fr 36px}.mrqrow .mrqname{grid-column:2/4}.mrqrow .x{grid-row:1;grid-column:4}.mrqrow .mrqcode{grid-column:2/4}.mrqrow .mrqq{grid-column:2}.mrqrow .mrqu{grid-column:3}.mrqrow .mrqnote{grid-column:2/4}}
 .mrqpdf .mrqtop{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #222;padding-bottom:8px;margin-bottom:10px}
 .mrqpdf .mrqco{font-size:18px;font-weight:800;letter-spacing:.3px;margin-bottom:2px}
-.mrqpdf img.mrqimg{width:64px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #ccc}
+.mrqpdf img.mrqimg{width:96px;height:96px;object-fit:contain;background:#fff;border-radius:4px;border:1px solid #ccc}
 .mrqpdf .mrqbox{border:1.5px solid #222;border-radius:6px;padding:6px 12px;font-size:12px;line-height:1.7}
 .mrqpdf table.mrqmeta{border:none;margin-bottom:10px}.mrqpdf table.mrqmeta td{border:none;padding:4px 6px;font-size:12px}
 .mrqpdf .mrqsig{display:flex;justify-content:space-between;gap:20px;margin-top:40px;text-align:center;font-size:12px}
@@ -813,7 +813,7 @@ html[data-sys=taste]:not([data-glass="1"]) .topbar,html[data-sys=taste]:not([dat
 .arrb{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 8px;border-radius:8px;background:var(--ink);color:var(--card);font-weight:700;font-size:.95rem;cursor:pointer;user-select:none}
 .arrb[aria-disabled=true]{opacity:.3;pointer-events:none}.arrb:hover{background:color-mix(in srgb,var(--ink) 82%,var(--card))}
 .bigc.arr .bdg,.bigc.arr .bgo,.tile.arr .chev{display:none}
-#printArea img.pimg{width:44px;height:44px;object-fit:contain;border-radius:4px;display:block;margin:0 auto}#printArea tr{page-break-inside:avoid}
+#printArea img.pimg{width:84px;height:84px;object-fit:contain;border:1px solid #ddd;background:#fff;border-radius:4px;display:block;margin:0 auto}#printArea tr{page-break-inside:avoid}
 
 .arr[data-nid]{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .arr.dragging{opacity:.3}
@@ -1080,6 +1080,7 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
  #printArea .alkopo .atb th i{display:block;margin:0 0 1px;font-size:7.5pt;color:#6b7280}
  #printArea .alkopo .atb td{text-align:center;padding:6px 4px!important;height:8.2mm;border:1px solid #d0d0d0!important;font-family:Arial,sans-serif;color:#1a1a1a;background:#fff}
  #printArea .alkopo .atb tbody tr:nth-child(even) td{background:#f5f5f5}
+ #printArea .alkopo .atb td img.aph{width:22mm;height:22mm;object-fit:contain;display:block;margin:1mm auto;border-radius:2mm}
  #printArea .alkopo .atb td.no{background:#ededed!important;color:#7f7f7f;font-weight:700;font-size:8.5pt}
  #printArea .alkopo .atb td.co{color:#e31e24;font-weight:700}
  #printArea .alkopo .atb small{color:#595959;font-size:7.8pt}
@@ -1105,6 +1106,7 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
 .crnf .tstep{margin-bottom:10px}
 .crnbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;border:1.5px solid var(--accent);background:var(--accent-soft);margin:0 0 12px}
 .crnbar.low{border-color:var(--bad)}.crnbar .cbi{font-size:1.5rem;width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--card)}
+.crnbar .cbi.ph{width:64px;height:64px;padding:0;overflow:hidden;background:#fff;border:1px solid var(--line)}.crnbar .cbi.ph img{width:100%;height:100%;object-fit:contain}
 .crnbar .cbn{flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px}.crnbar .cbn b{font-size:1.05rem}.crnbar .cbn .ctag{align-self:flex-start}
 .crnbar .cbs{display:flex;flex-direction:column;align-items:center;padding:0 10px;border-inline-start:1px solid var(--line);min-width:84px}.crnbar .cbs span{font-size:.7rem;color:var(--muted)}.crnbar .cbs b{font-size:1.1rem;font-family:var(--num,inherit)}.crnbar .cbs small{font-size:.7rem;color:var(--muted);font-weight:500}.crnbar .cbs em{font-size:.7rem;font-style:normal;color:var(--muted)}.crnbar .cbs em.bad{color:var(--bad)}
 .crnbar .cbc{padding:6px 12px;min-height:36px}
@@ -3518,9 +3520,9 @@ function viewMiscForm0(dir){const f=miF(dir);const x=f.item&&miItem(f.item);if(f
    ${dir==='out'&&isCrn()?'':`<div class="tstep"><div class="lb">${isCrn()?'📝 تێبینی / فاتۆرە':'٤. تێبینی (ئەگەر هەبیت)'}</div><input data-msf="${dir}" data-f="note" value="${esc(f.note)}" style="width:100%" placeholder="${dir==='in'?'بۆ نموونە: ژ کۆمپانیا ... / ژمارا فاتۆرێ':'بۆ نموونە: بۆ چاککرنا بۆیلەری'}"></div>`}
    ${isCrn()?'</div>':''}<button class="btn pri big" data-act="msSave" data-dir="${dir}" ${dir==='out'&&have<=0?'disabled':''}>${I('check','sm')} ${dir==='in'?'تۆمارکرنا داخلکرنێ':'تۆمارکرنا دەرئێخستنێ'}${q>0?` — ${fmt(q,2)} ${esc(x.unit)}`:''}</button>`:`<div class="muted" style="text-align:center;padding:14px;border:1px dashed var(--line2);border-radius:14px">☝️ ل سەرێ کەرەستەیەکێ هەلبژێرە</div>`}
   </div>${isCrn()?'':miRecent(dir)}`}
-function crnSelPanel(x,dir,have){if(x.grp==='chem'||!x.grp){const U=esc(x.unit);const low=miLow(x);
-  return `<div id="pfAnchor"></div><div class="crnbar${low?' low':''}"><span class="cbi">${(CRN_G[x.grp]||CRN_G.chem).ic}</span><div class="cbn"><b>${esc(x.name)}</b>${x.code?`<span class="ctag ltr">${esc(x.code)}</span>`:''}</div>
-   <div class="cbs"><span>ل مەخزەنێ</span><b>${fmt(have,1)} <small>${U}</small></b>${tkShow(x)?`<em>${tankSplit(x,have)}</em>`:''}</div>
+function crnSelPanel(x,dir,have){if(true){const U=esc(x.unit);const low=miLow(x);const mtr=x.plen?have*x.plen:x.roll?have/x.roll:0;
+  return `<div id="pfAnchor"></div><div class="crnbar${low?' low':''}"><span class="cbi${x.img&&!NOPH()?' ph':''}">${x.img&&!NOPH()?`<img src="${x.img}" alt="">`:(CRN_G[x.grp]||CRN_G.chem).ic}</span><div class="cbn"><b>${esc(x.name)}</b><span>${x.code?`<span class="ctag ltr">${esc(x.code)}</span>`:''}${x.plen?` <span class="ctag">هەر دانەیەک ${fmt(x.plen,1)}م</span>`:''}${x.roll?` <span class="ctag">ڕۆل ${fmt(x.roll,0)}م</span>`:''}</span></div>
+   <div class="cbs"><span>ل مەخزەنێ</span><b>${fmt(have,x.plen?0:1)} <small>${U}</small></b>${tkShow(x)?`<em>${tankSplit(x,have)}</em>`:x.plen?`<em>= ${fmt(mtr,0)} مەتر</em>`:x.roll?`<em>≈ ${fmt(mtr,1)} ڕۆل</em>`:''}</div>
    ${x.min?`<div class="cbs"><span>کەمترین</span><b>${fmt(x.min,0)}</b>${low?'<em class="bad">⚠️ کێمە</em>':''}</div>`:''}
    <div class="cbs"><span>${dir==='out'?'پشتی دەرئێخستنێ':'پشتی داخلکرنێ'}</span><b><span id="msAfter" data-have="${have}" data-dir="${dir}">${fmt(have,1)}</span> <small>${U}</small></b></div>
    <button type="button" class="btn cbc" data-act="msUnpick" data-dir="${dir}">⇄ گوهۆڕین</button></div>`}
@@ -3684,19 +3686,23 @@ function msView(){return S.msView||(isCrn()||innerWidth<700?'cards':'table')}
 function mlD(){const f=S.msLogF=S.msLogF||{dir:'',q:''};if(f.dir!=='in')f.dir='out';return f.dir}
 function mlRows(){const dir=mlD(),f=olF();const qs=normQ(f.q||'').trim().split(' ').filter(Boolean);return miRows(dir).filter(t=>{const d=t.at?ymdLocal(new Date(t.at)):'';if(f.from&&d<f.from||f.to&&d>f.to)return false;if(f.u&&t.u!==f.u)return false;if(!qs.length)return true;const x=miItem(t.key);const h=normQ((x?x.name+' '+x.code+' '+(x.cat||''):t.key)+' '+uName(t.u)+' '+(t.hall||'')+' '+(t.person||'')+' '+(t.note||''));return qs.every(z=>h.includes(z))})}
 const mlKg=t=>{const x=miItem(t.key);return t.kgq!=null?toNum(t.kgq):kgOf(x,toNum(t.qty))};
+const mlChem=()=>curSecTab()==='invChem';
+const mlU=t=>{const x=miItem(t.key);return x?x.unit:''};
+function mlSum(R){if(mlChem())return fmt(R.reduce((a,t)=>a+mlKg(t),0),2);const us=[...new Set(R.map(mlU))];return us.length===1?fmt(R.reduce((a,t)=>a+toNum(t.qty),0),2)+' '+esc(us[0]):''}
 const mlTk=t=>t.tanks?`${fmt(t.tanks,2)} تانک × ${fmt(t.tkg,0)}`:'';
 function mlCols(dir,print){const C=[{h:'ڕۆژ',v:t=>t.at?miDate(new Date(t.at)):'—',c:'ltr'},{h:'دەم',v:t=>t.at?hm(t.at):'',c:'ltr muted'},{h:'ناڤێ مادێ',v:t=>{const x=miItem(t.key);return `<b>${esc(x?x.name:t.key)}</b>`}},{h:'کۆدێ مادێ',v:t=>esc((miItem(t.key)||{}).code||''),c:'ltr muted'},
-  {h:'ژمارە (کیلۆ)',v:t=>`<b>${fmt(mlKg(t),2)}</b>${mlTk(t)?`<div class="muted" style="font-size:.75rem">${mlTk(t)}</div>`:''}`,c:'n'}];
+  {k:'q',h:mlChem()?'ژمارە (کیلۆ)':'ژمارە',v:t=>mlChem()?`<b>${fmt(mlKg(t),2)}</b>${mlTk(t)?`<div class="muted" style="font-size:.75rem">${mlTk(t)}</div>`:''}`:`<b>${fmt(toNum(t.qty),2)}</b> <small class="muted">${esc(mlU(t))}</small>`,c:'n'}];
+  if(!mlChem()&&!NOPH())C.unshift({h:'',v:t=>{const x=miItem(t.key);return x&&x.img?(print?pImg(x):`<img src="${x.img}" class="rimg">`):''}});
   if(dir==='out')C.push({h:'هۆڵ',v:t=>esc(t.hall||'')},{h:'ناڤێ کەسێ بری',v:t=>`<b>${esc(t.person||'')}</b>`});
   C.push({h:dir==='in'?'ناڤێ تۆمارکەری':'تۆمارکەر',v:t=>esc(uName(t.u)||'—')},{h:'تێبینی / فاتۆرە',v:t=>esc([t.fat?'فاتۆرە '+t.fat:'',t.note||''].filter(Boolean).join(' · ')),c:'muted'});
   if(!print)C.push({h:'',v:t=>`<span style="white-space:nowrap">${miMine(t)?`<button class="x" data-act="msTxEdit" data-dir="${t.dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="msTxDel" data-dir="${t.dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button>`:''}</span>`});return C}
-function mlTable(R,dir,print){const C=mlCols(dir,print);const tot=R.reduce((a,t)=>a+mlKg(t),0);const ki=C.findIndex(c=>c.h==='ژمارە (کیلۆ)');
-  return `<div class="tbl-scroll" data-nosrch><table class="txc"><thead><tr>${C.map(c=>`<th class="${c.c==='n'?'n':''}">${c.h}</th>`).join('')}</tr></thead><tbody>${R.slice(0,print?5000:500).map(t=>`<tr>${C.map(c=>`<td class="${c.c||''}">${c.v(t)}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${C.length}" class="muted">د ڤێ ماوەیێ دا چ تۆمار نینن.</td></tr>`}</tbody>${R.length?`<tfoot><tr>${C.map((c,i)=>i===0?`<td><b>کۆم</b></td>`:i===ki?`<td class="n"><b>${fmt(tot,2)}</b></td>`:'<td></td>').join('')}</tr></tfoot>`:''}</table></div>`}
+function mlTable(R,dir,print){const C=mlCols(dir,print);const ki=C.findIndex(c=>c.k==='q');
+  return `<div class="tbl-scroll" data-nosrch><table class="txc"><thead><tr>${C.map(c=>`<th class="${c.c==='n'?'n':''}">${c.h}</th>`).join('')}</tr></thead><tbody>${R.slice(0,print?5000:500).map(t=>`<tr>${C.map(c=>`<td class="${c.c||''}">${c.v(t)}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${C.length}" class="muted">د ڤێ ماوەیێ دا چ تۆمار نینن.</td></tr>`}</tbody>${R.length?`<tfoot><tr>${C.map((c,i)=>i===0?`<td><b>کۆم</b></td>`:i===ki?`<td class="n"><b>${mlSum(R)}</b></td>`:'<td></td>').join('')}</tr></tfoot>`:''}</table></div>`}
 function viewCrnLog(){const dir=mlD(),f=olF();const R=mlRows();const users=[...new Set(miRows(dir).map(t=>t.u).filter(Boolean))];const kg=R.reduce((a,t)=>a+mlKg(t),0),tk=R.reduce((a,t)=>a+toNum(t.tanks),0);
   return `<div class="useg segm">${[['out','📤 دەرئێخستن'],['in','📥 داخلکرن']].map(([v,l])=>`<button type="button" class="chip${dir===v?' on':''}" data-act="msLogDir" data-v="${v}">${l}</button>`).join('')}</div>
   <p class="muted" style="margin:8px 0">${dir==='in'?'هەمی داخلکرنێن':'هەمی دەرئێخستنێن'} ${esc(secTitle())}: ناڤێ کەسی، چ، چەند و کەنگی.</p>
   ${fbar(f,users,{who:dir==='in'?'ناڤێ تۆمارکەری':'ناڤێ تۆمارکەری',ph:dir==='in'?'ناڤ، کۆد، فاتۆرە، تێبینی':'ناڤ، کۆد، هۆڵ، کەس، تێبینی',pdf:'msLogPdf'})}
-  <div class="kpis" style="margin:12px 0;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div class="kpi"><div class="v">${R.length}</div><div class="l">تۆمار</div></div><div class="kpi"><div class="v">${fmt(kg,1)}</div><div class="l">کیلۆ ${dir==='in'?'هاتین':'چووین'}</div></div>${tk?`<div class="kpi"><div class="v">${fmt(tk,2)}</div><div class="l">تانک</div></div>`:''}<div class="kpi"><div class="v">${new Set(R.map(t=>t.key)).size}</div><div class="l">کەرەستە</div></div></div>
+  <div class="kpis" style="margin:12px 0;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div class="kpi"><div class="v">${R.length}</div><div class="l">تۆمار</div></div>${mlChem()?`<div class="kpi"><div class="v">${fmt(kg,1)}</div><div class="l">کیلۆ ${dir==='in'?'هاتین':'چووین'}</div></div>`:mlSum(R)?`<div class="kpi"><div class="v">${mlSum(R)}</div><div class="l">${dir==='in'?'هاتین':'چووین'}</div></div>`:''}${tk?`<div class="kpi"><div class="v">${fmt(tk,2)}</div><div class="l">تانک</div></div>`:''}<div class="kpi"><div class="v">${new Set(R.map(t=>t.key)).size}</div><div class="l">کەرەستە</div></div></div>
   ${mlTable(R,dir,false)}`}
 function miLogFilter(){const f=S.msLogF=S.msLogF||{dir:'',q:''};const q=normQ(f.q||'');return miRows(f.dir||'').filter(t=>{if(!q)return true;const x=miItem(t.key);return normQ((x?x.name+' '+x.code+' '+x.cat:t.key)+' '+uName(t.u)+' '+(t.hall||'')+' '+(t.person||'')+' '+(t.note||'')).includes(q)})}
 function viewMiscLog(){if(isCrn())return viewCrnLog();const f=S.msLogF=S.msLogF||{dir:'',q:''};const R=miLogFilter();const tin=R.filter(t=>t.dir==='in').length;
@@ -3855,7 +3861,7 @@ function mrqParseName(v){v=String(v||'').trim();const m=v.split(' | ');const nm=
 function mrqText(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);
   const coN=((S.settings.co||{}).name||'').trim();return `${coN?'🏭 '+coN+'\n':''}📋 داخوازیا کەرەستەیان #${r.no}\n📅 ${r.date}${r.to?'\n👤 بۆ: '+r.to:''}${r.by?'\n✍️ ژ لایێ: '+r.by:''}\n\n${R.map((x,i)=>`${i+1}. ${x.name}${x.code?' ('+x.code+')':''} — ${fmt(toNum(x.qty),2)} ${x.unit}${x.note?' · '+x.note:''}`).join('\n')}${r.note?'\n\n📝 '+r.note:''}`}
 function mrqPdf(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);
-  const coN=((S.settings.co||{}).name||'').trim();const sect=isCrn()?{chem:'کرۆمات و تێزاب',rub:'لاستیک',nyl:'نایلۆن'}[r.grp||S.crnGrp||'chem']:'مەخزەنا کەرەستێن دی';const hasImg=R.some(x=>{const it=x.item&&miItem(x.item);return it&&it.img});
+  const coN=((S.settings.co||{}).name||'').trim();const sect=isCrn()?{chem:'کرۆمات و تێزاب',rub:'لاستیک',nyl:'نایلۆن'}[r.grp||S.crnGrp||'chem']:'مەخزەنا کەرەستێن دی';const hasImg=!NOPH()&&R.some(x=>{const it=x.item&&miItem(x.item);return it&&it.img});
   printHtml(`<div class="mrqpdf"><div class="mrqtop"><div>${coN?`<div class="mrqco">${esc(coN)}</div>`:''}<h1 style="margin:0">فۆرما داخوازکرنا کەرەستەیان</h1><div style="font-size:13px;color:#555;margin-top:2px">${esc(sect)}</div></div><div class="mrqbox"><div>ژمارە: <b dir="ltr">#${r.no}</b></div><div>ڕۆژ: <b dir="ltr">${esc(r.date)}</b></div></div></div>
    <table class="mrqmeta"><tr><td>بۆ (ئەوێ دکڕیت):</td><td><b>${esc(r.to||'....................')}</b></td><td>داخوازکەر:</td><td><b>${esc(r.by||'....................')}</b></td></tr></table>
    <table><thead><tr><th style="width:34px">#</th>${hasImg?'<th style="width:74px">وێنە</th>':''}<th>ناڤێ مادێ</th><th>کۆدێ مادێ</th><th style="width:80px">ژمارە</th><th style="width:70px">یەکە</th><th>تێبینی</th><th style="width:70px">✓ هات</th></tr></thead>
@@ -3866,32 +3872,36 @@ function mrqPdf(r){const R=(r.rows||[]).filter(x=>x.name&&toNum(x.qty)>0);
 const MRQ_U={'کیلۆ':'KG','گرام':'GR','مەتر':'M','لیتر':'LT','دانە':'ADET','کارتۆن':'KOLİ','پاکەت':'PAKET','ڕۆل':'RULO','جووت':'ÇİFT','سێت':'SET','تۆن':'TON','بەرمیل':'VARİL','تانک':'TANK'};
 function mrqAlkoItems(r){return (r.rows||[]).filter(x=>(x.code||x.name)&&toNum(x.qty)>0).map(x=>{const it=x.item&&miItem(x.item);const q=toNum(x.qty);const u=MRQ_U[x.unit]||(/[a-z]/i.test(x.unit||'')?String(x.unit).toUpperCase():'');
   const tk=it&&toNum(it.tank)>0&&x.unit==='کیلۆ'?'≈ '+fmt(q/toNum(it.tank),q%toNum(it.tank)?1:0)+' TANK ('+fmt(toNum(it.tank),0)+' KG)':it&&tkU(it)&&toNum(it.tank)>0?'= '+fmt(q*toNum(it.tank),0)+' KG':'';
-  return {code:String(x.code||(it&&it.code)||'—').toUpperCase(),q,u,tk}})}
+  return {code:String(x.code||(it&&it.code)||'—').toUpperCase(),q,u,tk,img:it&&it.img&&it.grp!=='chem'?it.img:''}})}
+function imgDims(b){try{if(b[0]===0x89&&b[1]===0x50){const v=new DataView(b.buffer,b.byteOffset);return [v.getUint32(16),v.getUint32(20)]}let i=2;while(i<b.length){if(b[i]!==0xFF){i++;continue}const m=b[i+1];const L=(b[i+2]<<8)|b[i+3];if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC)return [(b[i+7]<<8)|b[i+8],(b[i+5]<<8)|b[i+6]];i+=2+L}}catch(e){}return [1,1]}
 function mrqAlkoTot(I){const us=[...new Set(I.map(i=>i.u))];return us.length===1&&us[0]?fmt(I.reduce((a,i)=>a+i.q,0),2)+' '+us[0]:''}
-function mrqAlkoHtml(r){const I=mrqAlkoItems(r);const N=I.length;const now=new Date(),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
- let tr='';for(let i=0;i<N;i++){const it=I[i];tr+=it?`<tr><td class="no">${i+1}.</td><td><b>${esc(it.code)}</b></td><td><b>${fmt(it.q,2)}</b> <small>${esc(it.u)}</small></td><td><small>${esc(it.tk)}</small></td></tr>`:`<tr class="e"><td class="no">${i+1}.</td><td></td><td></td><td></td></tr>`}
- const H=[['ت','NO'],['كود','KOD'],['الكمية','MİKTAR'],['ملاحظات','NOTE']];const tot=mrqAlkoTot(I);
+function mrqAlkoHtml(r){const I=mrqAlkoItems(r);const PH=I.some(i=>i.img);const N=I.length;const now=new Date(),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
+ let tr='';for(let i=0;i<N;i++){const it=I[i];tr+=it?`<tr><td class="no">${i+1}.</td>${PH?`<td>${it.img?`<img class="aph" src="${it.img}" alt="">`:''}</td>`:''}<td><b>${esc(it.code)}</b></td><td><b>${fmt(it.q,2)}</b> <small>${esc(it.u)}</small></td><td><small>${esc(it.tk)}</small></td></tr>`:`<tr class="e"><td class="no">${i+1}.</td><td></td><td></td><td></td></tr>`}
+ const H=[['ت','NO'],...(PH?[['صورة','RESİM']]:[]),['كود','KOD'],['الكمية','MİKTAR'],['ملاحظات','NOTE']];const tot=mrqAlkoTot(I);
  return `<div class="alkopo"><div class="ahd"><img src="data:image/jpeg;base64,${PO_DOCX.b['word/media/image1.jpeg']}" alt="ALKO Aluminum"><div class="acx">Industrial zone kwashi<br>Duhok-Iraq<br>Email: <u>alko.aluminum@gmail.com</u><br>Tel: <b>+964 750 227 44 44</b><br>Tel: <b>+964 773 227 44 44</b> <small>(WHATSAPP)</small></div></div>
  <div class="ainfo"><div><span>SİPARİŞ NO <i>رقم الطلب</i></span><b class="blank">&nbsp;</b></div><div><span>TARİH <i>التاريخ</i></span><b>${dt}</b></div></div>
- <table class="atb"><colgroup><col style="width:8%"><col style="width:40%"><col style="width:24%"><col style="width:28%"></colgroup><thead><tr>${H.map(([a,t])=>`<th><i>${a}</i>${t}</th>`).join('')}</tr></thead><tbody>${tr}</tbody>
- <tfoot><tr><td colspan="2">TOPLAM / <i>المجموع</i></td><td><b>${tot}</b></td><td><small>${I.length} kalem</small></td></tr></tfoot></table>
+ <table class="atb"><colgroup>${PH?'<col style="width:7%"><col style="width:22%"><col style="width:27%"><col style="width:20%"><col style="width:24%">':'<col style="width:8%"><col style="width:40%"><col style="width:24%"><col style="width:28%">'}</colgroup><thead><tr>${H.map(([a,t])=>`<th><i>${a}</i>${t}</th>`).join('')}</tr></thead><tbody>${tr}</tbody>
+ <tfoot><tr><td colspan="${PH?3:2}">TOPLAM / <i>المجموع</i></td><td><b>${tot}</b></td><td><small>${I.length} kalem</small></td></tr></tfoot></table>
  <div class="aft">www.alkoaluminum.com</div></div>`}
-function mrqDocxXml(r){const I=mrqAlkoItems(r);
+function mrqDocxXml(r,IMG){const I=mrqAlkoItems(r);const PH=I.some(i=>i.img);
  const F='<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial" w:eastAsia="Arial"/>';
  const run=(t,o={})=>t===''?'':`<w:r><w:rPr>${F}${o.b?'<w:b/><w:bCs/>':''}${o.c?`<w:color w:val="${o.c}"/>`:''}<w:sz w:val="${o.sz||20}"/><w:szCs w:val="${o.sz||20}"/>${o.rtl?'<w:rtl/>':''}</w:rPr><w:t xml:space="preserve">${xe(t)}</w:t></w:r>`;
  const para=(runs,o={})=>`<w:p><w:pPr>${o.rtl?'<w:bidi/>':'<w:bidi w:val="0"/>'}<w:spacing w:before="${o.bf||0}" w:after="${o.af||0}" w:line="240" w:lineRule="auto"/><w:jc w:val="${o.jc||'left'}"/>${o.bb?`<w:pBdr><w:bottom w:val="${o.bb}" w:sz="6" w:space="1" w:color="${o.bc||'7F7F7F'}"/></w:pBdr>`:''}</w:pPr>${runs}</w:p>`;
- const W=[840,4180,2520,2926];
+ const W=PH?[700,2500,2700,2200,2366]:[840,4180,2520,2926];
+ const pic=(src,n)=>{const b=Uint8Array.from(atob(src.split(',')[1]),c=>c.charCodeAt(0));const ext=/^data:image\/png/.test(src)?'png':'jpeg';const id='rIdP'+n;IMG.push({id,name:'word/media/p'+n+'.'+ext,file:'media/p'+n+'.'+ext,b});
+  const [w,h]=imgDims(b);const M=1188720;const k=Math.min(M/w,M/h);const cx=Math.round(w*k),cy=Math.round(h*k);
+  return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${100+n}" name="p${n}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${100+n}" name="p${n}.${ext}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`};
  const cell=(w,body,o={})=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.span?`<w:gridSpan w:val="${o.span}"/>`:''}${o.fill?`<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>`:''}<w:vAlign w:val="center"/></w:tcPr>${body}</w:tc>`;
  const B='<w:tblBorders><w:top w:val="single" w:sz="18" w:color="E31E24"/><w:left w:val="single" w:sz="4" w:color="BFBFBF"/><w:bottom w:val="single" w:sz="8" w:color="8C8C8C"/><w:right w:val="single" w:sz="4" w:color="BFBFBF"/><w:insideH w:val="single" w:sz="4" w:color="D0D0D0"/><w:insideV w:val="single" w:sz="4" w:color="D0D0D0"/></w:tblBorders>';
  const hd=(ar,tr)=>para(run(ar,{sz:15,c:'6B7280',rtl:true}),{jc:'center'})+para(run(tr,{b:1,sz:17,c:'1A1A1A'}),{jc:'center'});
- const H=['ت|NO','كود|KOD','الكمية|MİKTAR','ملاحظات|NOTE'];
+ const H=['ت|NO',...(PH?['صورة|RESİM']:[]),'كود|KOD','الكمية|MİKTAR','ملاحظات|NOTE'];
  let rows=`<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="620" w:hRule="atLeast"/></w:trPr>${H.map((h,i)=>{const [a,t]=h.split('|');return cell(W[i],hd(a,t),{fill:'ECEFF3'})}).join('')}</w:tr>`;
  const N=I.length;
  for(let i=0;i<N;i++){const it=I[i];const z=i%2?'F5F5F5':'FFFFFF';const c=(w,b,f)=>cell(w,b||para(''),{fill:f||z});const no=c(W[0],para(run(i+1+'.',{b:1,sz:17,c:'7F7F7F'}),{jc:'center'}),'EDEDED');
   if(!it){rows+=`<w:tr><w:trPr><w:trHeight w:val="440" w:hRule="atLeast"/></w:trPr>${no}${W.slice(1).map(w=>c(w)).join('')}</w:tr>`;continue}
-  rows+=`<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="520" w:hRule="atLeast"/></w:trPr>`+no+c(W[1],para(run(it.code,{b:1,sz:22}),{jc:'center'}))+
-   c(W[2],para(run(fmt(it.q,2),{b:1,sz:22})+(it.u?run(' '+it.u,{sz:16,c:'595959'}):''),{jc:'center'}))+c(W[3],para(run(it.tk,{sz:16,c:'595959'}),{jc:'center'}))+'</w:tr>'}
- rows+=`<w:tr><w:trPr><w:trHeight w:val="500" w:hRule="atLeast"/></w:trPr>${cell(W[0]+W[1],para(run('TOPLAM',{b:1,sz:19})+run('  /  ',{sz:17,c:'7F7F7F'})+run('المجموع',{b:1,sz:18,rtl:true}),{jc:'center'}),{span:2,fill:'EDEDED'})}${cell(W[2],para(run(mrqAlkoTot(I),{b:1,sz:22}),{jc:'center'}),{fill:'EDEDED'})}${cell(W[3],para(run(I.length+' kalem',{sz:16,c:'595959'}),{jc:'center'}),{fill:'EDEDED'})}</w:tr>`;
+  const o=PH?1:0;rows+=`<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="520" w:hRule="atLeast"/></w:trPr>`+no+(PH?c(W[1],it.img?para(pic(it.img,i+1),{jc:'center',bf:40,af:40}):para('')):'')+c(W[1+o],para(run(it.code,{b:1,sz:22}),{jc:'center'}))+
+   c(W[2+o],para(run(fmt(it.q,2),{b:1,sz:22})+(it.u?run(' '+it.u,{sz:16,c:'595959'}):''),{jc:'center'}))+c(W[3+o],para(run(it.tk,{sz:16,c:'595959'}),{jc:'center'}))+'</w:tr>'}
+ const o2=PH?1:0;rows+=`<w:tr><w:trPr><w:trHeight w:val="500" w:hRule="atLeast"/></w:trPr>${cell(W[0]+W[1]+(PH?W[2]:0),para(run('TOPLAM',{b:1,sz:19})+run('  /  ',{sz:17,c:'7F7F7F'})+run('المجموع',{b:1,sz:18,rtl:true}),{jc:'center'}),{span:2+o2,fill:'EDEDED'})}${cell(W[2+o2],para(run(mrqAlkoTot(I),{b:1,sz:22}),{jc:'center'}),{fill:'EDEDED'})}${cell(W[3+o2],para(run(I.length+' kalem',{sz:16,c:'595959'}),{jc:'center'}),{fill:'EDEDED'})}</w:tr>`;
  const tbl=`<w:tbl><w:tblPr><w:tblW w:w="10466" w:type="dxa"/><w:jc w:val="center"/>${B}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="70" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${W.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${rows}</w:tbl>`;
  const now=new Date(),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
  const nb='<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>';
@@ -3901,8 +3911,10 @@ function mrqDocxXml(r){const I=mrqAlkoItems(r);
  return PO_DOCX.t.__head+'<w:body>'+para('',{bf:420,af:0})+info+para('',{af:260})+tbl+sect+'</w:body></w:document>'}
 function mrqDocx(r){const enc=new TextEncoder();const files=[];
  const order=['[Content_Types].xml','_rels/.rels','docProps/core.xml','docProps/app.xml','word/document.xml','word/_rels/document.xml.rels','word/styles.xml','word/settings.xml','word/fontTable.xml','word/webSettings.xml','word/numbering.xml','word/footnotes.xml','word/endnotes.xml','word/header1.xml','word/_rels/header1.xml.rels','word/footer1.xml','word/_rels/footer1.xml.rels','word/theme/theme1.xml'];
- for(const f of order)files.push([f,enc.encode(f==='word/document.xml'?mrqDocxXml(r):PO_DOCX.t[f])]);
+ const IMG=[];const doc=mrqDocxXml(r,IMG);
+ for(const f of order){let t=f==='word/document.xml'?doc:PO_DOCX.t[f];if(f==='word/_rels/document.xml.rels'&&IMG.length)t=t.replace('</Relationships>',IMG.map(m=>`<Relationship Id="${m.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${m.file}"/>`).join('')+'</Relationships>');files.push([f,enc.encode(t)])}
  for(const [f,b] of Object.entries(PO_DOCX.b))files.push([f,Uint8Array.from(atob(b),c=>c.charCodeAt(0))]);
+ IMG.forEach(m=>files.push([m.name,m.b]));
  return {buf:zipStore(files),name:'PO-'+r.no+'.docx'}}
 function mrqExport(r){dialog(`<h3 style="margin-top:0">${I('file','sm')} داخوازیا #${r.no}</h3><p class="muted" style="margin:0 0 10px">فۆرما ALKO تەنێ کۆد و ژمارە تێدا هەنە (بێ ناڤێن کوردی) — بۆ هنارتنێ بۆ کۆمپانیێ.</p>
   <div class="col" style="display:grid;gap:8px"><button class="btn pri big" id="mxA">${I('file','sm')} PDF — فۆرما ALKO</button><button class="btn big" id="mxW">📝 Word — فۆرما ALKO</button><button class="btn" id="mxK">📄 PDF ناڤخۆیی (ب ناڤ و کوردی)</button></div>`,()=>{},'داخستن');
@@ -4071,9 +4083,9 @@ function viewResRub(p,only){only=only||'rub';try{crnMigrate()}catch(e){}let {row
    <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" data-act="rubPdf" data-g="${only}">${I('file','sm')} PDF</button>${can('inv_in')&&short.length?`<button class="btn pri" data-act="rubReq" data-g="${only}">📄 داخوازیا ${G.t} (${short.length} کێم)</button>`:''}</div>
    <div class="tbl-scroll" data-nosrch><table><thead><tr><th></th><th>ناڤ / کۆد</th><th class="n">پێتڤی</th><th class="n">مەخزەن</th><th class="n">ل ڕێ</th><th class="n">زێدە / کێم</th><th class="n">بۆ کڕینێ</th><th></th></tr></thead><tbody>
    ${rowsH||`<tr><td colspan="8" class="muted">چ پێتڤی نینە — ل دەستپێکێ جۆرێن ${G.t} زێدە بکە و ل پڕۆفایلان دانێ.</td></tr>`}</tbody></table></div></div>`}
-function rubPdf(p,g){g=g||'rub';const {rows}=crnRows(p);const R=rows.filter(r=>r.x.grp===g).map(r=>`<tr><td>${esc(r.x.name)}</td><td dir="ltr">${esc(r.x.code||'')}</td><td>${fmt(r.need,0)} ${r.u==='m'?'م':r.u}</td><td>${fmt(r.stock,0)}</td><td>${r.inc?fmt(r.inc,0):''}</td><td><b>${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td><b>${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):'✓'}</b></td></tr>`).join('');
-  const H='<tr><th>ناڤ</th><th>کۆد</th><th>پێتڤی</th><th>مەخزەن</th><th>ل ڕێ</th><th>زێدە / کێم</th><th>بۆ کڕینێ</th></tr>';
-  printHtml(`<h1>ئەنجاما ${CRN_G[g].t}</h1><div class="sub">${esc(p.name)} · ${esc(p.start)} → ${esc(p.end)}</div><table><thead>${H}</thead><tbody>${R||'<tr><td colspan="7">—</td></tr>'}</tbody></table>`,g==='nyl'?'Nylon':'Rubber')}
+function rubPdf(p,g){g=g||'rub';const {rows}=crnRows(p);const IM=rows.some(r=>r.x.grp===g&&r.x.img);const R=rows.filter(r=>r.x.grp===g).map(r=>`<tr>${IM?`<td>${pImg(r.x)}</td>`:''}<td>${esc(r.x.name)}</td><td dir="ltr">${esc(r.x.code||'')}</td><td>${fmt(r.need,0)} ${r.u==='m'?'م':r.u}</td><td>${fmt(r.stock,0)}</td><td>${r.inc?fmt(r.inc,0):''}</td><td><b>${r.diff<0?'−':'+'}${fmt(Math.abs(r.diff),0)}</b></td><td><b>${r.rolls?r.rolls+' '+(r.x.plen?'دانە':'ڕۆل'):'✓'}</b></td></tr>`).join('');
+  const H=(IM?'<tr><th>وێنە</th>':'<tr>')+'<th>ناڤ</th><th>کۆد</th><th>پێتڤی</th><th>مەخزەن</th><th>ل ڕێ</th><th>زێدە / کێم</th><th>بۆ کڕینێ</th></tr>';
+  printHtml(`<h1>ئەنجاما ${CRN_G[g].t}</h1><div class="sub">${esc(p.name)} · ${esc(p.start)} → ${esc(p.end)}</div><table class="${IM?'wimg':''}"><thead>${H}</thead><tbody>${R||'<tr><td colspan="8">—</td></tr>'}</tbody></table>`,g==='nyl'?'Nylon':'Rubber')}
 let profFilter='';
 function viewProfiles(){
   const f=norm(profFilter);
@@ -4806,7 +4818,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='202611281942';
+const APP_BUILD='202611281947';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
