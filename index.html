@@ -3353,7 +3353,7 @@ function poDocxXml(p,kind){const isP=isPaintKind(kind);const d=poDefaults(p,kind
  let rows=`<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="620" w:hRule="atLeast"/></w:trPr>${H.map((h,i)=>{const [a,t]=h.split('|');return cell(W[i],hd(a,t),{fill:'ECEFF3'})}).join('')}</w:tr>`;
  const co=isP?String(p&&kind.slice(6)||d.supplier||'').toUpperCase():String(d.supplier||'').toUpperCase();
  const qf=q=>isP?fmt(q,3):fmt(q,1);
- const N=Math.max(12,items.length);
+ const N=items.length;
  for(let i=0;i<N;i++){const it=items[i];const z=i%2?'F5F5F5':'FFFFFF';const c=(w,b,f)=>cell(w,b||para(''),{fill:f||z});
   if(!it){rows+=`<w:tr><w:trPr><w:trHeight w:val="440" w:hRule="atLeast"/></w:trPr>${c(W[0],para(run(i+1+'.',{b:1,sz:17,c:'7F7F7F'}),{jc:'center'}),'EDEDED')}${W.slice(1).map(w=>c(w)).join('')}</w:tr>`;continue}
   const df=isP?(paintDef(it.key)||{}):{};
@@ -3378,7 +3378,7 @@ function poDocxXml(p,kind){const isP=isPaintKind(kind);const d=poDefaults(p,kind
  return PO_DOCX.t.__head+'<w:body>'+para('',{bf:420,af:0})+info+para('',{af:260})+tbl+sect+'</w:body></w:document>'}
 
 function poAlkoHtml(p,kind){const isP=isPaintKind(kind);const d=poDefaults(p,kind);const items=poItems(p,kind).filter(x=>x.qty>0).sort(byNeed);
- const qf=q=>isP?fmt(q,3):fmt(q,1),u=isP?'TON':'M²';const co=String(d.supplier||'').toUpperCase();const N=Math.max(12,items.length);
+ const qf=q=>isP?fmt(q,3):fmt(q,1),u=isP?'TON':'M²';const co=String(d.supplier||'').toUpperCase();const N=items.length;
  const now=new Date(),p2=x=>String(x).padStart(2,'0'),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
  let tr='';for(let i=0;i<N;i++){const it=items[i];if(!it){tr+=`<tr class="e"><td class="no">${i+1}.</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;continue}
   const df=isP?(paintDef(it.key)||{}):{};
@@ -3861,7 +3861,7 @@ function mrqAlkoItems(r){return (r.rows||[]).filter(x=>(x.code||x.name)&&toNum(x
   const tk=it&&toNum(it.tank)>0&&x.unit==='کیلۆ'?'≈ '+fmt(q/toNum(it.tank),q%toNum(it.tank)?1:0)+' TANK ('+fmt(toNum(it.tank),0)+' KG)':it&&tkU(it)&&toNum(it.tank)>0?'= '+fmt(q*toNum(it.tank),0)+' KG':'';
   return {code:String(x.code||(it&&it.code)||'—').toUpperCase(),q,u,tk}})}
 function mrqAlkoTot(I){const us=[...new Set(I.map(i=>i.u))];return us.length===1&&us[0]?fmt(I.reduce((a,i)=>a+i.q,0),2)+' '+us[0]:''}
-function mrqAlkoHtml(r){const I=mrqAlkoItems(r);const N=Math.max(12,I.length);const now=new Date(),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
+function mrqAlkoHtml(r){const I=mrqAlkoItems(r);const N=I.length;const now=new Date(),dt=`${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())}`;
  let tr='';for(let i=0;i<N;i++){const it=I[i];tr+=it?`<tr><td class="no">${i+1}.</td><td><b>${esc(it.code)}</b></td><td><b>${fmt(it.q,2)}</b> <small>${esc(it.u)}</small></td><td><small>${esc(it.tk)}</small></td></tr>`:`<tr class="e"><td class="no">${i+1}.</td><td></td><td></td><td></td></tr>`}
  const H=[['ت','NO'],['كود','KOD'],['الكمية','MİKTAR'],['ملاحظات','NOTE']];const tot=mrqAlkoTot(I);
  return `<div class="alkopo"><div class="ahd"><img src="data:image/jpeg;base64,${PO_DOCX.b['word/media/image1.jpeg']}" alt="ALKO Aluminum"><div class="acx">Industrial zone kwashi<br>Duhok-Iraq<br>Email: <u>alko.aluminum@gmail.com</u><br>Tel: <b>+964 750 227 44 44</b><br>Tel: <b>+964 773 227 44 44</b> <small>(WHATSAPP)</small></div></div>
@@ -3879,7 +3879,7 @@ function mrqDocxXml(r){const I=mrqAlkoItems(r);
  const hd=(ar,tr)=>para(run(ar,{sz:15,c:'6B7280',rtl:true}),{jc:'center'})+para(run(tr,{b:1,sz:17,c:'1A1A1A'}),{jc:'center'});
  const H=['ت|NO','كود|KOD','الكمية|MİKTAR','ملاحظات|NOTE'];
  let rows=`<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="620" w:hRule="atLeast"/></w:trPr>${H.map((h,i)=>{const [a,t]=h.split('|');return cell(W[i],hd(a,t),{fill:'ECEFF3'})}).join('')}</w:tr>`;
- const N=Math.max(12,I.length);
+ const N=I.length;
  for(let i=0;i<N;i++){const it=I[i];const z=i%2?'F5F5F5':'FFFFFF';const c=(w,b,f)=>cell(w,b||para(''),{fill:f||z});const no=c(W[0],para(run(i+1+'.',{b:1,sz:17,c:'7F7F7F'}),{jc:'center'}),'EDEDED');
   if(!it){rows+=`<w:tr><w:trPr><w:trHeight w:val="440" w:hRule="atLeast"/></w:trPr>${no}${W.slice(1).map(w=>c(w)).join('')}</w:tr>`;continue}
   rows+=`<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="520" w:hRule="atLeast"/></w:trPr>`+no+c(W[1],para(run(it.code,{b:1,sz:22}),{jc:'center'}))+
@@ -4789,7 +4789,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='202611281928';
+const APP_BUILD='202611281934';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
