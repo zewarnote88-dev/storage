@@ -1106,6 +1106,11 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
 .tankrow .qin{display:flex;align-items:center;gap:6px}.tankrow .qin input{flex:1;font-size:1.3rem;font-weight:700;text-align:center;min-height:52px}.tankrow .tx{font-size:1.4rem;color:var(--muted);padding-bottom:12px}
 .mitk{flex-basis:100%;font-size:.85rem;color:var(--muted);margin-top:2px}.tanktot{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:.95rem}.tanktot b{font-family:var(--num,inherit);font-size:1.15rem}
 .updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:90;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);font-weight:600}@media (min-width:1001px){.updbar{bottom:24px}}@media print{.updbar{display:none}}
+.rcvlist{display:flex;flex-direction:column;gap:8px}.rcvday{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}.rcvday.on{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:var(--elev,none)}
+.rcvh{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;cursor:pointer}.rcvh:hover{background:var(--row-hover)}.rcvh:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.rcvd{font-weight:700;font-family:var(--num,inherit);min-width:92px}.rcvn{font-weight:600}.rcvn b{font-family:var(--num,inherit);font-size:1.1rem;color:var(--accent)}.rcvq{display:flex;gap:12px;color:var(--muted)}.rcvq b{color:var(--ink);font-family:var(--num,inherit)}.rcvf{flex:1;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rcvbody{padding:0 14px 14px;border-top:1px solid var(--line)}.rcvinv{margin-top:12px}.rcvih{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.rcvih .grow{flex:1}
+@media (max-width:760px){.rcvh{gap:6px 12px}.rcvf{justify-content:flex-start;flex-basis:100%}}
 /* ===== Professional print layout (all PDF/print reports) — palette: graphite / teal (paint) / amber (tape) / cobalt ===== */
 @media print{
  @page{size:A4;margin:11mm 11mm 15mm;@bottom-left{content:counter(page) " / " counter(pages);font:7.5pt 'Rubik',Vazirmatn,sans-serif;color:#707c87}@bottom-right{content:"حیسابێ سبغ و لسقێ";font:7.5pt Vazirmatn,'Noto Sans Arabic',sans-serif;color:#707c87}}
@@ -1727,14 +1732,14 @@ function firstTab(){return ['home','period','invPaint','invTape','invRub','invNy
 const subKey=()=>S.invKind==='crn'?'crn_'+(S.crnGrp||'chem'):S.invKind;
 Object.defineProperty(S,'invSub',{get(){return S.invSubK[subKey()]||'menu'},set(v){S.invSubK[subKey()]=v},enumerable:false});
 function isInvTab(){return S.tab==='invPaint'||S.tab==='invTape'||S.tab==='invMisc'||S.tab==='invCrn'||!!CRN_TABS[S.tab]||S.tab==='inventory'}
-const SUBMETA={out:{t:'دەرئێخستن',s:'بردنا ژ مەخزەنێ',ic:'up',c:'#c2410c'},in:{t:'داخلکرن',s:'هاتنا نوو و ل ڕێیە',ic:'down',c:'#15803d'},stock:{t:'مەخزەن',s:'چ هەیە و چەند',ic:'box',c:'#0e7478'},
+const SUBMETA={out:{t:'دەرئێخستن',s:'بردنا ژ مەخزەنێ',ic:'up',c:'#c2410c'},in:{t:'داخلکرن',s:'هاتنا نوو و ل ڕێیە',ic:'down',c:'#15803d'},rcv:{t:'گەهشتن',s:'چ گەهشتیە، ڕۆژ ب ڕۆژ و فاتۆرە ب فاتۆرە',ic:'file',c:'#7c5a12'},stock:{t:'مەخزەن',s:'چ هەیە و چەند',ic:'box',c:'#0e7478'},
   outlog:{t:'تۆمار',s:'داخلکرن، دەرئێخستن و گوهۆڕینێن مەخزەنێ',ic:'clock',c:'#6b6f2a'},report:{t:'ڕاپۆرت',s:'ڕاپۆرتا مەخزەنێ و ڕاپۆرتا مەهانە',ic:'file',c:'#1f5f9e'},mcount:{t:'ژمارتنا مەهانە',s:'ژمارتنا مەخزەنێ و جوداهی',ic:'clip',c:'#0f766e'},mrep:{t:'ڕاپۆرت',s:'ڕاپۆرتا مەهانە — هات، چوو، دوماهی',ic:'calendar',c:'#be185d'},tstk:{t:'لسقێن Stock',s:'ئەوێن نائێنە بکارئینان — نیشانکرن',ic:'layers',c:'#64748b'},log:{t:'تۆمارا ژمارتنێ',s:'گوهۆڕینێن ژمارتنێ',ic:'clip',c:'#55606a'},
   mlog:{t:'تۆمار',s:'هەمی داخلکرن و دەرئێخستن',ic:'clock',c:'#6b6f2a'},items:{t:'لیستا کەرەستەیان',s:'ناڤ، کۆد، یەکە، پشک',ic:'layers',c:'#9a5b13'},mday:{t:'ڕۆژانە',s:'چ هات و چ چوو ئەڤرۆ',ic:'calendar',c:'#1f5f9e'},mreq:{t:'داخوازکرنا کەرەستەیان',s:'فۆرم بۆ کڕینێ — PDF / WhatsApp',ic:'file',c:'#0e7490'}};
-const SUBORDER=['out','in','stock','outlog','report','tstk'];
+const SUBORDER=['out','in','rcv','stock','outlog','report','tstk'];
 const oldKey=k=>k.split('|').slice(0,3).join('|')+'|'+boxLen(k);
 const isOldTape=k=>(S.settings.stockTape||[]).includes(oldKey(k));
 function invSubList(){const ok=invSubs().filter(x=>x!=='|').map(x=>x[0]);return SUBORDER.filter(k=>ok.includes(k))}
-function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],'|',['outlog','تۆمار','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')]].filter(s=>s==='|'||s[3])}
+function invSubs(){return [['stock','مەخزەن','box',can('inv_view')||can('inv_count')],'|',['in','داخلکرن (IN)','down',can('inv_in')],['out','دەرئێخستن (OUT)','up',can('inv_out')],['rcv','گەهشتن','file',can('inv_in')||can('inv_view')],'|',['outlog','تۆمار','clock',can('inv_view')],['report','ڕاپۆرت','file',can('inv_view')]].filter(s=>s==='|'||s[3])}
 function recalcAdmin(){const u=curApp();isAdmin=!!(u&&u.status==='active'&&(u.perms||{}).admin)}
 function applyRole(){recalcAdmin();showMe();loadUserAccent();
   document.querySelectorAll('#tabs button').forEach(b=>{const f=TAB_PERM[b.dataset.tab];b.style.display=(f&&f())?'':'none'});
@@ -2141,10 +2146,10 @@ function homeDash(){try{if(!(isAdmin||(canInv()&&(canKind('paint')||canKind('tap
  ${sT&&r.tapes.length?`<div class="dch"><h3>لسق ل گۆر جۆری (م²)</h3><div class="donut" style="background:conic-gradient(#2f5fd0 0 ${pN}%,#c27c0e ${pN}% ${pN+pP}%,#94a3b8 ${pN+pP}% 100%)"><span><b class="ltr">${fmt(r.totM2,0)}</b><small>م²</small></span></div><div class="lg"><span><i style="background:#2f5fd0"></i>Normal <b class="ltr">${fmt(r.m2N,0)}</b></span><span><i style="background:#c27c0e"></i>Rough <b class="ltr">${fmt(r.m2P,0)}</b></span>${r.m2S?`<span><i style="background:#94a3b8"></i>کەڤن <b class="ltr">${fmt(r.m2S,0)}</b></span>`:''}</div></div>`:''}</div></section>`}catch(e){return ''}}
 const ILLK={in:'in',out:'out',report:'rep',mrep:'rep',mcount:'cnt',stock:'stk',outlog:'clk',log:'clk',mlog:'clk',mday:'clk',mreq:'req',items:'stk'};
 
-const PW_ACT=[['out','دەرئێخستن','out','#c2410c'],['in','داخلکرن','in','#15803d'],['stock','مەخزەن','stk','#0f766e'],['log','تۆمار','clk','#6b6f2a'],['report','ڕاپۆرت','rep','#1f5f9e'],['req','داخوازکرنا کڕینێ','req','#0e7490']];
+const PW_ACT=[['out','دەرئێخستن','out','#c2410c'],['in','داخلکرن','in','#15803d'],['rcv','گەهشتن','stk','#7c5a12'],['stock','مەخزەن','stk','#0f766e'],['log','تۆمار','clk','#6b6f2a'],['report','ڕاپۆرت','rep','#1f5f9e'],['req','داخوازکرنا کڕینێ','req','#0e7490']];
 const PW_KIND={invPaint:['سبغ','drop','#0e7478'],invTape:['لسق','tape','#a16207'],invChem:['کرۆمات و تێزاب','drop','#0369a1'],invRub:['لاستیک','layers','#334155'],invNyl:['نایلۆن','file','#0e7490']};
-function pwSubOf(tab,act){const crn=!!CRN_TABS[tab];return {out:'out',in:'in',stock:'stock',log:crn?'mlog':'outlog',report:crn?'mrep':'report',req:crn?'mreq':null,tstk:tab==='invTape'?'tstk':null}[act]}
-function pwActOf(sub){return {out:'out',in:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',report:'report',mrep:'report',mreq:'req',tstk:'tstk'}[sub]||null}
+function pwSubOf(tab,act){const crn=!!CRN_TABS[tab];return {out:'out',in:'in',rcv:crn?null:'rcv',stock:'stock',log:crn?'mlog':'outlog',report:crn?'mrep':'report',req:crn?'mreq':null,tstk:tab==='invTape'?'tstk':null}[act]}
+function pwActOf(sub){return {out:'out',in:'in',rcv:'rcv',stock:'stock',outlog:'log',mlog:'log',mday:'log',report:'report',mrep:'report',mreq:'req',tstk:'tstk'}[sub]||null}
 function pwAvail(tab,act){try{const sub=pwSubOf(tab,act);if(!sub||!TAB_PERM[tab]())return false;const g=CRN_TABS[tab];return g?inCtx('crn',g,()=>miscSubList()).includes(sub):inCtx(tab==='invPaint'?'paint':'tape',null,()=>invSubList()).includes(sub)}catch(e){return false}}
 function pwKinds(act){return Object.keys(PW_KIND).filter(t=>grpOf(t)==='pwh'&&pwAvail(t,act))}
 function pwGo(tab,act){if(CRN_TABS[tab])S.crnGrp=CRN_TABS[tab];S._pw=1;S.fromPwh=act;try{go(tab,pwSubOf(tab,act))}finally{S._pw=0}}
@@ -2162,7 +2167,7 @@ function pwKindBar(){const act=S.fromPwh;if(!act||grpOf(S.tab)!=='pwh'||pwActOf(
 const SEC_PAGES={out:'دەرئێخستن',in:'داخلکرن',stock:'مەخزەن',log:'تۆمار',report:'ڕاپۆرت',req:'داخوازکرنا کڕینێ'};
 function secCfg(tab){const c=(((S.settings||{}).secCfg)||{})[tab]||{};return {pages:{out:true,in:true,stock:true,log:true,report:true,req:true,...(c.pages||{})},view:c.view||'auto',ident:c.ident||'both',photo:c.photo!==false,loc:c.loc!==false,tank:c.tank!==undefined?!!c.tank:tab==='invChem'}}
 function curSecTab(){if(S.invKind==='crn'){const g=S.crnGrp||'chem';return Object.keys(CRN_TABS).find(t=>CRN_TABS[t]===g)||'invChem'}return S.invKind==='misc'?'invMisc':S.invKind==='tape'?'invTape':'invPaint'}
-const subPage=k=>({out:'out',in:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',log:'log',report:'report',mrep:'report',mreq:'req'})[k]||null;
+const subPage=k=>({out:'out',in:'in',rcv:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',log:'log',report:'report',mrep:'report',mreq:'req'})[k]||null;
 function pgFilter(L){const c=secCfg(curSecTab());return (L||[]).filter(k=>{const pg=subPage(k);return !pg||c.pages[pg]!==false})}
 {const a=invSubList,b=miscSubList;invSubList=function(){return pgFilter(a.apply(this,arguments))};miscSubList=function(){return pgFilter(b.apply(this,arguments))}}
 function pickTiles(L){const v=secCfg(curSecTab()).view;if(v==='photo')return true;if(v==='list')return false;return isCrn()&&(crnSpec(S.crnGrp)||L.some(z=>z.img))}
@@ -2941,6 +2946,27 @@ function rcvReportHtml(L,d,fat){const groups={};L.forEach(x=>{(groups[x.fat||'']
  const body=Object.entries(groups).map(([f,rows])=>`${Object.keys(groups).length>1||f?`<h2>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'} <small>${rows.length} ڕیز</small></h2>`:''}${tb(rows)}`).join('');
  return `<div dir="rtl">${arHead('ڕاپۆرتا وەرگرتنا کەرەستان',`ڕێکەفتا گەهشتنێ: <span class="ltr">${dmy(d)}</span>${fat?` · فاتۆرە <span class="ltr">${esc(fat)}</span>`:''}`)}${sum}${body}
   <p style="margin-top:14px;font-size:9pt">ب فاتۆرێ هاتە بەراوردکرن: &nbsp; ☐ هەمی دروستە &nbsp;&nbsp; ☐ جوداهی هەیە: ..............................................................</p></div>`}
+/* ---- arrivals: what came in, day by day and invoice by invoice ---- */
+function rcvDay(x){return x.rdate||ymdLocal(new Date(x.at))}
+function rcvGroups(){const ss=rcvSecs();const by={};(S.tx.in||[]).forEach(x=>{if(ss&&!ss.includes(x.sec))return;const d=rcvDay(x);(by[d]=by[d]||[]).push(x)});return Object.entries(by).sort((a,b)=>a[0]<b[0]?1:-1)}
+function rcvCanEdit(){return isAdmin||can('inv_in')}
+function viewRcv(){const G=rcvGroups();const isP=S.invKind==='paint';const lim=S.rcvLim||30;
+ if(!G.length)return `<div class="card"><p class="muted">هێشتا چ تشت نەهاتینە داخلکرن.</p></div>`;
+ const open=S.rcvOpen||G[0][0];
+ return `<div class="card"><h2 style="margin-top:0">${I('file')} گەهشتن <small class="muted" style="font-weight:400">— هەر ڕۆژەکێ چ گەهشتیە، و ب کیژ فاتۆرێ</small></h2>
+ <div class="rcvlist">${G.slice(0,lim).map(([d,L])=>{let kg=0,ct=0;L.forEach(x=>{const q=rcvQty(x);kg+=q[2];ct+=q[3]});const fs=[...new Set(L.map(x=>x.fat||''))];const on=d===open;
+  const head=`<button type="button" class="rcvh${on?' on':''}" data-act="rcvOpen" data-d="${d}"><span class="rcvd ltr">${dmy(d)}</span><span class="rcvn"><b>${L.length}</b> ${isP?'سبغ گەهشتن':'جۆرێن لسقێ گەهشتن'}</span><span class="rcvq">${kg?`<span><b class="ltr">${fmt(kg,0)}</b> کیلۆ</span>`:''}${ct?`<span><b class="ltr">${fmt(ct,1)}</b> کارتۆن</span>`:''}</span><span class="rcvf">${fs.map(f=>`<span class="pill">${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b>':'بێ فاتۆرە'}</span>`).join(' ')}</span>${I(on?'up':'down','sm')}</button>`;
+  if(!on)return `<div class="rcvday">${head}</div>`;
+  const inv=fs.map(f=>{const R=L.filter(x=>(x.fat||'')===f).sort((a,b)=>cmpS(a.at,b.at));
+   return `<div class="rcvinv"><div class="rcvih"><b>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'}</b> <span class="muted">${R.length} ڕیز</span><span class="grow"></span>
+    ${rcvCanEdit()?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button></div>
+    <div class="tblwrap"><table><thead><tr><th>#</th><th>کەرەستە</th><th class="n">بڕ</th><th class="n">یەکەیا دی</th><th>جهـ</th><th>تێبینی</th><th>تۆمارکەر</th><th>دەم</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>${R.map((x,i)=>{const q=rcvQty(x);return `<tr><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b>${x.edited?' <span class="pill" title="هاتیە گوهۆڕین">✎</span>':''}</td><td class="n"><b>${q[0]}</b></td><td class="n muted">${q[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td>${isAdmin?`<td style="white-space:nowrap"><button class="btn" style="padding:4px 8px" data-act="txEdit" data-dir="in" data-id="${esc(x.id)}" title="گوهۆڕین">✎</button> <button class="btn" style="padding:4px 8px" data-act="txDel" data-dir="in" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}).join('')}</tbody></table></div></div>`}).join('');
+  return `<div class="rcvday on">${head}<div class="rcvbody">${inv}${fs.length>1?`<div style="text-align:left;margin-top:8px"><button class="btn" data-act="rcvPrint" data-d="${d}" data-f="*">📄 ڕاپۆرتا هەمی ڕۆژێ</button></div>`:''}</div></div>`}).join('')}</div>
+ ${G.length>lim?`<div style="text-align:center;margin-top:10px"><button class="btn" data-act="rcvMore">پتر نیشان بدە (${G.length-lim} ڕۆژێن دی)</button></div>`:''}
+ ${isAdmin?'':'<p class="muted" style="font-size:.82rem;margin:10px 0 0">بۆ گوهۆڕینا بڕ یان ژێبرنا ڕیزەکێ، داخوازێ ژ بەرپرسی بکە.</p>'}</div>`}
+async function txPatchIn(t,patch){const d={...t,...patch};delete d.id;d.edited={by:myUid(),at:new Date().toISOString()};
+ if(!db){const i=S.tx.in.findIndex(x=>x.id===t.id);if(i>=0)S.tx.in[i]={...d,id:t.id};return true}
+ try{await db.doc('invin/'+t.id).set(d);return true}catch(e){return false}}
 function batchIn(){const f=binF();const isP=S.invKind==='paint';const brands=S.settings.brands||[];const ws=tapeWidths();
   const n=f.rows.filter(r=>toNum(r.qty)>0).length,tq=f.rows.reduce((s,r)=>s+toNum(r.qty),0);const UL=binUnitLbl(f);
   return `<div class="card" style="background:var(--bg)"><h3 style="margin-top:0">${I('down','sm')} ${isP?'داخلکرنا سبغێ':'داخلکرنا لسقێ'} — گەلەک پێکڤە</h3>
@@ -3795,6 +3821,7 @@ function viewInv(){
   if(XSEC[K])body=viewMiscBody();
   else if(S.invSub==='stock')body=K==='paint'?viewStockPaint(P):viewStockTape(P);
   else if(S.invSub==='in')body=viewIn();
+  else if(S.invSub==='rcv')body=viewRcv();
   else if(S.invSub==='out')body=txForm(S.invSub);
   else if(S.invSub==='outlog')body=(isAdmin?segMode('logMode',[['','📋 هات و چوو'],['cnt','✏️ ڕاستکرنێن مەخزەنێ']]):'')+(isAdmin&&S.logMode==='cnt'?invLogHtml(K):viewOutLog());
   else if(S.invSub==='report')body=segMode('repMode',[['','📄 ڕاپۆرتا مەخزەنێ'],['m','🗓 ڕاپۆرتا مەهانە']])+(S.repMode==='m'?viewMRep():viewReport());
@@ -4411,6 +4438,12 @@ $('#main').addEventListener('click',async e=>{
     if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);const sum=kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن';S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${sum})`);render();
       const fat=docs[0].fat||'',dt=docs[0].rdate;
       dialog(`<h3 style="margin-top:0">✓ ${docs.length} ڕیز هاتنە داخلکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p><p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی کا هەمی تشت ب دروستی گەهشتینە.</p>`,()=>{printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},'📄 ڕاپۆرتا وەرگرتنێ')}}
+  else if(act==='rcvOpen'){S.rcvOpen=S.rcvOpen===t0.dataset.d?'-':t0.dataset.d;render()}
+  else if(act==='rcvMore'){S.rcvLim=(S.rcvLim||30)+30;render()}
+  else if(act==='rcvPrint'){const d=t0.dataset.d,f=t0.dataset.f;let L=rcvTx(d);if(f!=='*')L=L.filter(x=>(x.fat||'')===f);if(L.length)printHtml(rcvReportHtml(L,d,f==='*'?'':f),'receipt-'+d+(f&&f!=='*'?'-'+f:''))}
+  else if(act==='rcvFat'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f;const L=rcvTx(d).filter(x=>(x.fat||'')===f);
+    dialog(`<h3 style="margin-top:0">✎ ژمارا فاتۆرێ</h3><p class="muted"><span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز${f?' · نوکە: <b class="ltr">'+esc(f)+'</b>':''}</p><label>ژمارا فاتۆرێ یا دروست<br><input id="rcvNF" class="ltr" value="${esc(f)}" style="width:100%" placeholder="123"></label>`,
+      ()=>{const nf=$('#rcvNF').value.trim();if(nf===f)return;(async()=>{let ok=0;for(const t of L){if(await txPatchIn(t,{fat:nf}))ok++}if(!db){recomputeInv();localSave()}toast(ok===L.length?`✓ ژمارا فاتۆرێ هاتە گوهۆڕین (${ok} ڕیز)`:`⚠️ ${L.length-ok} ڕیز نەهاتنە گوهۆڕین`);render()})()},'پاشەکەفت بکە');setTimeout(()=>{const i=$('#rcvNF');if(i){i.focus();i.select()}},50)}
   else if(act==='rcvRep'){const d0=today();const pick=()=>{const d=$('#rcvD').value;const L=rcvTx(d);const fs=[...new Set(L.map(x=>x.fat||''))];
       $('#rcvF').innerHTML=`<option value="*">هەمی (${L.length} ڕیز)</option>`+fs.map(f=>`<option value="${esc(f)}">${f?'فاتۆرە '+esc(f):'بێ ژمارا فاتۆرێ'} (${L.filter(x=>(x.fat||'')===f).length})</option>`).join('')};
     dialog(`<h3 style="margin-top:0">📄 ڕاپۆرتا داخلکرنێ</h3><p class="muted">کەرەستێن ل ڤێ ڕۆژێ هاتینە داخلکرن، دا ل گەل فاتۆرێ بەراورد بکەی.</p>
@@ -4585,7 +4618,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128102548';
+const APP_BUILD='20261128103119';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
