@@ -3441,7 +3441,7 @@ function crnSelPanel(x,dir,have){const U=esc(x.unit);const mtr=x.plen?have*x.ple
 function tkMode(x,f,dir){if(!isTankX(x))return '';const m=f.tu||(dir==='in'?'tank':'kg');return m==='tank'||toNum(x.tank)>0||tkU(x)?m:'kg'}
 function tkPer(x,f,dir){return dir==='in'&&f.tkg!==undefined&&f.tkg!==''?toNum(f.tkg):toNum(x.tank)}
 function tkKg(x,f,dir){const v=toNum(f.qty),m=tkMode(x,f,dir);return m==='tank'?v*tkPer(x,f,dir):v}
-function miInQ(x,f,dir){dir=dir||(f===miF('in')?'in':'out');if(isTankX(x)){const kg=tkKg(x,f,dir);if(tkU(x)){const per=tkPer(x,f,dir);if(tkMode(x,f,dir)==='tank'&&!(per>0))return toNum(f.qty);return per>0?kg/per:0}return kg}return x&&x.roll&&(f.ru||'roll')==='roll'?v*x.roll:v}
+function miInQ(x,f,dir){dir=dir||(f===miF('in')?'in':'out');if(isTankX(x)){const kg=tkKg(x,f,dir);if(tkU(x)){const per=tkPer(x,f,dir);if(tkMode(x,f,dir)==='tank'&&!(per>0))return toNum(f.qty);return per>0?kg/per:0}return kg}const v=toNum(f.qty);return x&&x.roll&&(f.ru||'roll')==='roll'?v*x.roll:v}
 function miPast(fld){const c={};miRows('out').forEach(t=>{const v=String(t[fld]||'').trim();if(v)c[v]=(c[v]||0)+1});return Object.keys(c).sort((a,b)=>c[b]-c[a])}
 function miWhoStep(f){const halls=miPast('hall'),people=[...new Set([...miPast('person'),...activeUsers().map(u=>u.name||u.username)])];
   return `<div class="tstep"><div class="lb">٣. کێ دبەت و بۆ کیرێ؟</div>
@@ -4584,7 +4584,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128072839';
+const APP_BUILD='20261128073058';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
