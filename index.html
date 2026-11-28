@@ -1111,6 +1111,7 @@ html[data-sys=plant] .info,html[data-sys=plant] .note{box-shadow:none}
 .rcvd{font-weight:700;font-family:var(--num,inherit);min-width:92px}.rcvn{font-weight:600}.rcvn b{font-family:var(--num,inherit);font-size:1.1rem;color:var(--accent)}.rcvq{display:flex;gap:12px;color:var(--muted)}.rcvq b{color:var(--ink);font-family:var(--num,inherit)}.rcvf{flex:1;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .rcvbody{padding:0 14px 14px;border-top:1px solid var(--line)}.rcvinv{margin-top:12px}.rcvih{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.rcvih .grow{flex:1}
 @media (max-width:760px){.rcvh{gap:6px 12px}.rcvf{justify-content:flex-start;flex-basis:100%}}
+.pendbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}.pill.pendp{background:color-mix(in srgb,#c27c0e 16%,var(--card));color:#8a5a0a;border-color:color-mix(in srgb,#c27c0e 40%,var(--line))}html[data-theme=dark] .pill.pendp{color:#f0c060}
 /* ===== Professional print layout (all PDF/print reports) — palette: graphite / teal (paint) / amber (tape) / cobalt ===== */
 @media print{
  @page{size:A4;margin:11mm 11mm 15mm;@bottom-left{content:counter(page) " / " counter(pages);font:7.5pt 'Rubik',Vazirmatn,sans-serif;color:#707c87}@bottom-right{content:"حیسابێ سبغ و لسقێ";font:7.5pt Vazirmatn,'Noto Sans Arabic',sans-serif;color:#707c87}}
@@ -1576,9 +1577,11 @@ function latestStockSeed(){const ps=Object.values(S.periods).filter(p=>hasStock(
 let resolveInv;const invReady=new Promise(r=>resolveInv=r);let resolvePer;const perReady=new Promise(r=>resolvePer=r);
 const pendingInv=new Set(),invTimers={},invPrev={};let invQ=Promise.resolve();
 const INV_SECS=['cart','kgc','inc','box','paint','misc','crn'];
+const txEff=t=>!(t&&t.pend&&!t.ok);
+const txEffAt=t=>t&&t.pend&&t.ok&&t.ok.at?t.ok.at:(t&&t.at||'');
 function recomputeInv(){
   const b=S.invBase||normStock({});const e=normStock(JSON.parse(JSON.stringify(b)));
-  [['in',1],['out',-1]].forEach(([dir,sg])=>(S.tx[dir]||[]).forEach(t=>{if(!t||!t.sec||!t.key)return;const mk=t.sec+':'+t.key;const bAt=(S.invMeta[mk]||{}).at||'';if((t.at||'')<=bAt)return;
+  [['in',1],['out',-1]].forEach(([dir,sg])=>(S.tx[dir]||[]).forEach(t=>{if(!t||!t.sec||!t.key||!txEff(t))return;const mk=t.sec+':'+t.key;const bAt=(S.invMeta[mk]||{}).at||'';if(txEffAt(t)<=bAt)return;
     e[t.sec]=e[t.sec]||{};e[t.sec][t.key]=toNum(e[t.sec][t.key])+sg*toNum(t.qty)}));
   S.inv=e;
 }
@@ -2165,7 +2168,7 @@ function pwKindBar(){const act=S.fromPwh;if(!act||grpOf(S.tab)!=='pwh'||pwActOf(
 
 /* ===== per-section setup (pages, picker, identity, photo, place) ===== */
 const SEC_PAGES={out:'دەرئێخستن',in:'داخلکرن',stock:'مەخزەن',log:'تۆمار',report:'ڕاپۆرت',req:'داخوازکرنا کڕینێ'};
-function secCfg(tab){const c=(((S.settings||{}).secCfg)||{})[tab]||{};return {pages:{out:true,in:true,stock:true,log:true,report:true,req:true,...(c.pages||{})},view:c.view||'auto',ident:c.ident||'both',photo:c.photo!==false,loc:c.loc!==false,tank:c.tank!==undefined?!!c.tank:tab==='invChem'}}
+function secCfg(tab){const c=(((S.settings||{}).secCfg)||{})[tab]||{};return {pages:{out:true,in:true,stock:true,log:true,report:true,req:true,...(c.pages||{})},view:c.view||'auto',ident:c.ident||'both',photo:c.photo!==false,loc:c.loc!==false,tank:c.tank!==undefined?!!c.tank:tab==='invChem',pend:c.pend!==undefined?!!c.pend:(tab==='invPaint'||tab==='invTape')}}
 function curSecTab(){if(S.invKind==='crn'){const g=S.crnGrp||'chem';return Object.keys(CRN_TABS).find(t=>CRN_TABS[t]===g)||'invChem'}return S.invKind==='misc'?'invMisc':S.invKind==='tape'?'invTape':'invPaint'}
 const subPage=k=>({out:'out',in:'in',rcv:'in',stock:'stock',outlog:'log',mlog:'log',mday:'log',log:'log',report:'report',mrep:'report',mreq:'req'})[k]||null;
 function pgFilter(L){const c=secCfg(curSecTab());return (L||[]).filter(k=>{const pg=subPage(k);return !pg||c.pages[pg]!==false})}
@@ -2178,10 +2181,11 @@ function secCfgDlg(tab){const nm=(SECTIONS.find(z=>z.tab===tab)||{}).t||tab;cons
    ${gen?`<div class="lb" style="margin:14px 0 6px">هەلبژارتنا کەرەستەی ل داخلکرن و دەرئێخستنێ</div>${seg('view',[['auto','خۆکار'],['photo','🖼 ب وێنە'],['list','☰ لیست']],c.view)}
    <div class="lb" style="margin:14px 0 6px">کەرەستە ب چ دهێتە ناسین؟</div>${seg('ident',[['both','ناڤ و کۆد'],['code','تەنێ کۆد'],['name','تەنێ ناڤ']],c.ident)}
    <div class="cfgpg" style="margin-top:14px"><label class="cfgck"><input type="checkbox" id="cfgPhoto"${c.photo?' checked':''}> 📷 وێنە بۆ کەرەستان</label><label class="cfgck"><input type="checkbox" id="cfgLoc"${c.loc?' checked':''}> 📍 جه ل مەخزەنێ ل داخلکرنێ</label><label class="cfgck"><input type="checkbox" id="cfgTank"${c.tank?' checked':''}> 🛢 تانک و کیلۆ (داخلکرن و دەرئێخستن ب تانک یان کیلۆ)</label></div>`:''}
+   ${gen?'':`<div class="cfgpg" style="margin-top:14px"><label class="cfgck"><input type="checkbox" id="cfgPend"${c.pend?' checked':''}> ⏳ داخلکرن ل «گەهشتن» دمینیت — ب تنێ پشتی OK دچیتە سەر مەخزەنێ</label></div>`}
    <div id="cfgErr" style="color:var(--bad);min-height:18px;margin-top:8px"></div>`,()=>{
     const pg={};document.querySelectorAll('[data-pg]').forEach(i=>{pg[i.dataset.pg]=i.checked});if(!Object.values(pg).some(Boolean)){$('#cfgErr').textContent='⚠️ ب کێمی ئێک پەڕ ڤەکری بهێلە';return false}
     const val=id=>{const e=document.querySelector(`[data-cfg="${id}"] .on`);return e?e.dataset.v:undefined};
-    const n={pages:pg};if(gen){n.view=val('view')||'auto';n.ident=val('ident')||'both';n.photo=$('#cfgPhoto').checked;n.loc=$('#cfgLoc').checked;n.tank=$('#cfgTank').checked}
+    const n={pages:pg};if(gen){n.view=val('view')||'auto';n.ident=val('ident')||'both';n.photo=$('#cfgPhoto').checked;n.loc=$('#cfgLoc').checked;n.tank=$('#cfgTank').checked}else{n.pend=$('#cfgPend').checked}
     S.settings.secCfg={...(S.settings.secCfg||{}),[tab]:n};save('cfg/settings',0);render();toast('✓ هاتە پاشەکەفتکرن')},'پاشەکەفت بکە');
   document.querySelectorAll('[data-cfg] .chip').forEach(b=>b.onclick=()=>b.parentElement.querySelectorAll('.chip').forEach(z=>z.classList.toggle('on',z===b)))}
 /* ===== warehouse sections: close / open built-ins, add custom ones ===== */
@@ -2960,7 +2964,7 @@ function viewRcv(){const arch=S.rcvArch==='ok';const G=rcvGroups(arch);const nP=
   const head=`<button type="button" class="rcvh${on?' on':''}" data-act="rcvOpen" data-d="${d}"><span class="rcvd ltr">${dmy(d)}</span><span class="rcvn"><b>${L.length}</b> ${isP?'سبغ گەهشتن':'جۆرێن لسقێ گەهشتن'}</span><span class="rcvq">${kg?`<span><b class="ltr">${fmt(kg,0)}</b> کیلۆ</span>`:''}${ct?`<span><b class="ltr">${fmt(ct,1)}</b> کارتۆن</span>`:''}</span><span class="rcvf">${fs.map(f=>`<span class="pill">${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b>':'بێ فاتۆرە'}</span>`).join(' ')}</span>${I(on?'up':'down','sm')}</button>`;
   if(!on)return `<div class="rcvday">${head}</div>`;
   const inv=fs.map(f=>{const R=L.filter(x=>(x.fat||'')===f).sort((a,b)=>cmpS(a.at,b.at));
-   return `<div class="rcvinv"><div class="rcvih"><b>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'}</b> <span class="muted">${R.length} ڕیز</span><span class="grow"></span>
+   return `<div class="rcvinv"><div class="rcvih"><b>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'}</b> <span class="muted">${R.length} ڕیز</span>${!arch&&R.some(x=>x.pend)?'<span class="pill pendp">⏳ هێشتا نەچوویە سەر مەخزەنێ</span>':''}<span class="grow"></span>
     ${rcvCanEdit()?`<button class="btn" data-act="rcvFat" data-d="${d}" data-f="${esc(f)}">✎ ${f?'گوهۆڕینا ژمارا فاتۆرێ':'ژمارا فاتۆرێ دانە'}</button>`:''}<button class="btn" data-act="rcvPrint" data-d="${d}" data-f="${esc(f)}">📄 ڕاپۆرت</button>${rcvCanEdit()?(arch?`<button class="btn" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="0">↩ بزڤڕینە بۆ پشکنینێ</button>`:`<button class="btn pri" data-act="rcvOk" data-d="${d}" data-f="${esc(f)}" data-v="1">✓ OK — دروستە</button>`):''}</div>${arch&&R[0]&&R[0].ok?`<div class="muted" style="font-size:.8rem;margin:-4px 0 6px">✓ OK: ${esc(uName(R[0].ok.by)||'')} · <span class="ltr">${new Date(R[0].ok.at).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>`:''}
     <div class="tblwrap"><table><thead><tr><th>#</th><th>کەرەستە</th><th class="n">بڕ</th><th class="n">یەکەیا دی</th><th>جهـ</th><th>تێبینی</th><th>تۆمارکەر</th><th>دەم</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>${R.map((x,i)=>{const q=rcvQty(x);return `<tr><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b>${x.edited?' <span class="pill" title="هاتیە گوهۆڕین">✎</span>':''}</td><td class="n"><b>${q[0]}</b></td><td class="n muted">${q[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr muted">${new Date(x.at).toTimeString().slice(0,5)}</td>${isAdmin?`<td style="white-space:nowrap"><button class="btn" style="padding:4px 8px" data-act="txEdit" data-dir="in" data-id="${esc(x.id)}" title="گوهۆڕین">✎</button> <button class="btn" style="padding:4px 8px" data-act="txDel" data-dir="in" data-id="${esc(x.id)}" title="ژێبرن">🗑</button></td>`:''}</tr>`}).join('')}</tbody></table></div></div>`}).join('');
   return `<div class="rcvday on">${head}<div class="rcvbody">${inv}${fs.length>1?`<div style="text-align:left;margin-top:8px"><button class="btn" data-act="rcvPrint" data-d="${d}" data-f="*">📄 ڕاپۆرتا هەمی ڕۆژێ</button></div>`:''}</div></div>`}).join('')}</div>
@@ -2994,8 +2998,8 @@ function poCoName(o){return isPaintKind(o.kind)?(o.kind.slice(6)||o.po.supplier|
 function leadOf(o){return toNum((S.settings.lead||{})[norm(poCoName(o))])}
 function etaOf(o){const t=Date.parse(o.po.sent||'');return isNaN(t)?0:t+leadOf(o)*86400000}
 function poDue(o){return o.po.early||!leadOf(o)||Date.now()>=etaOf(o)-12*3600000}
-function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(o=>!o.done),done=ops.filter(o=>o.done);const open=open0.filter(poDue),wait=open0.filter(o=>!poDue(o));
-  return `<div class="row" style="align-items:center"><h3 class="grow" style="margin-top:4px">📦 ل ڕێیە — داخوازیێن هاتینە هنارتن (${open.length+wait.length})</h3>${can('inv_in')?`<button class="btn" data-act="manInc">➕ تۆمارکرنا ل ڕێیە (ب دەستی)</button>`:''}</div>
+function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(o=>!o.done),done=ops.filter(o=>o.done);const open=open0.filter(poDue),wait=open0.filter(o=>!poDue(o));const ss=rcvSecs();const np=(S.tx.in||[]).filter(t=>t.pend&&!t.ok&&(!ss||ss.includes(t.sec))).length;
+  return `${np?`<div class="info pendbar"><span>⏳ <b>${np}</b> ڕیز ل «گەهشتن» ل هیڤیا OK نە — هێشتا نەچوونە سەر مەخزەنێ.</span><button class="btn pri" data-invsub="rcv">بچە «گەهشتن»</button></div>`:''}<div class="row" style="align-items:center"><h3 class="grow" style="margin-top:4px">📦 ل ڕێیە — داخوازیێن هاتینە هنارتن (${open.length+wait.length})</h3>${can('inv_in')?`<button class="btn" data-act="manInc">➕ تۆمارکرنا ل ڕێیە (ب دەستی)</button>`:''}</div>
   <p class="muted" style="margin-top:-4px">دەمێ تشت دگەهن، چەندا هاتی بنڤیسە (سبغ ب کیلۆ یان تۆن — ب کێشا ڕاستەقینە، لسق ب کارتۆن). پڕۆگرام دێ وان ل سەر مەخزەنێ زێدە کەت و نیشا دەت کا چەند مایە و هێشتا نەگەهشتینە.</p>
   ${open.length?open.map(poRcvCard).join(''):`<div class="muted" style="margin-bottom:12px">${wait.length?'هێشتا دەمێ گەهشتنا چ داخوازیان نەهاتیە.':'چ داخوازی ل ڕێ نینن. ل «ماوە ← داخوازی» پشتی PDF، دوگمەیا «📦 هاتە هنارتن» بکە دا ل ڤێرە دیار ببن.'}</div>`}
   ${wait.length?`<div class="card" style="background:var(--bg)"><b>⏳ هێشتا د ڕێ دانە (${wait.length})</b> <span class="muted">— دێ ل ڤێرە بۆ داخلکرنێ دیار ببن دەمێ ڕۆژا گەهشتنێ دهێت.</span>
@@ -3009,7 +3013,7 @@ function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(
   ${isAdmin?txList('in'):''}`}
 function txList(dir){const tp=S.invKind==='tape';const L=(S.tx[dir]||[]).filter(t=>t&&!XSEC[t.sec]&&(t.sec==='box')===tp).sort((a,b)=>cmpS(b.at,a.at)).slice(0,60);
   return `<div class="tbl-scroll"><table><thead><tr><th>دەم</th><th>کێ</th><th>چ</th><th class="n">کارتۆن</th><th>تێبینی</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
-  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}${t.fat?` <span class="pill">فاتۆرە <b class="ltr">${esc(t.fat)}</b></span>`:''}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
+  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}${t.pend&&!t.ok?' <span class="pill pendp">⏳ ل هیڤیا OK</span>':''}${t.fat?` <span class="pill">فاتۆرە <b class="ltr">${esc(t.fat)}</b></span>`:''}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
   </tbody></table></div>`}
 function reportData(){const inv=S.inv||normStock({});const P={stock:inv};
   const paints=Object.keys(inv.cart).filter(k=>toNum(inv.cart[k])>0).map(k=>{const d=paintDef(k);const kc=kgcOf(P,k);const c=toNum(inv.cart[k]);return {name:d?d.name:k,pul:d?d.pul||'':'',type:d?d.type:'?',co:d?d.co||'':'',cart:c,kgc:kc,kg:c*kc}}).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
@@ -3550,13 +3554,13 @@ function cntSave(){const K=cntK();const rows=cntRowsNow();if(!rows.length){toast
 function cntSesHtml(c){const dd=r=>r.cnt-r.sys;return `<table><thead><tr><th>#</th><th>تشت</th><th>یەکە</th><th class="n">سیستەم</th><th class="n">ژمارتن</th><th class="n">جوداهی</th></tr></thead><tbody>${(c.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.unit||'')}</td><td class="n">${fmt(r.sys,2)}</td><td class="n"><b>${fmt(r.cnt,2)}</b></td><td class="n" dir="ltr" style="color:${Math.abs(dd(r))<1e-9?'':dd(r)<0?'#b91c1c':'#15803d'}">${Math.abs(dd(r))<1e-9?'✓':(dd(r)>0?'+':'−')+fmt(Math.abs(dd(r)),2)}</td></tr>`).join('')}</tbody></table>`}
 /* --- stock at a point in time (walks back from now over IN/OUT and counts) --- */
 function invEvIndex(){const ev={};const add=(mk,e)=>{(ev[mk]=ev[mk]||[]).push(e)};
-  ['in','out'].forEach(d=>(S.tx[d]||[]).forEach(t=>{if(t&&t.sec&&t.key&&t.at)add(t.sec+':'+t.key,{at:t.at,k:d,q:toNum(t.qty)})}));
+  ['in','out'].forEach(d=>(S.tx[d]||[]).forEach(t=>{if(t&&t.sec&&t.key&&t.at&&txEff(t))add(t.sec+':'+t.key,{at:t.at,k:d,q:toNum(t.qty)})}));
   (S.invLogAll||S.invLog||[]).forEach(l=>{if(l&&l.at&&l.sec&&l.key!=null&&['cart','box','misc','crn','paint'].includes(l.sec))add(l.sec+':'+l.key,{at:l.at,k:'cnt',from:l.from})});
   Object.values(ev).forEach(L=>L.sort((a,b)=>cmpS(b.at,a.at)));return ev}
 function stockAt(EV,sec,key,T){let v=toNum(((S.inv||{})[sec]||{})[key]);for(const e of (EV[sec+':'+key]||[])){if(e.at<=T)break;if(e.k==='in')v-=e.q;else if(e.k==='out')v+=e.q;else v=e.from==null?0:toNum(e.from)}return v}
 function mrepData(ym){const [a,b]=ymRange(ym);const nowI=new Date().toISOString();const end=b>nowI?nowI:b;const EV=invEvIndex();
   const rows=cntItems().map(it=>{const o=stockAt(EV,it.sec,it.key,a),c=stockAt(EV,it.sec,it.key,end);let I_=0,O=0;const ins=x=>x.sec===it.sec&&x.key===it.key&&x.at>a&&x.at<=end;
-    (S.tx.in||[]).forEach(x=>{if(ins(x))I_+=toNum(x.qty)});(S.tx.out||[]).forEach(x=>{if(ins(x))O+=toNum(x.qty)});const adj=c-o-I_+O;return {...it,o,i:I_,out:O,adj:Math.abs(adj)<1e-6?0:adj,c}});
+    (S.tx.in||[]).forEach(x=>{if(txEff(x)&&ins(x))I_+=toNum(x.qty)});(S.tx.out||[]).forEach(x=>{if(ins(x))O+=toNum(x.qty)});const adj=c-o-I_+O;return {...it,o,i:I_,out:O,adj:Math.abs(adj)<1e-6?0:adj,c}});
   return {ym,a,end,rows,ses:cntDone(cntK(),ym)}}
 function mrepFmt(v,it){return fmt(v,cntDec(it))}
 function viewMRep(){const ym=S.mrepYm||ymNow();const R=mrepData(ym);const all=S.mrepAll;const act=R.rows.filter(r=>r.i||r.out||r.adj);const L=all?R.rows:act;
@@ -4435,15 +4439,16 @@ $('#main').addEventListener('click',async e=>{
       let qty=q,kg=null;
       if(isP){const k=norm(r.paint);if(!paintDef(k)){bad.push(i+1);return}sec='cart';key=k;if(f.unit!=='ctn'){kg=f.unit==='t'?q*1000:q;qty=+(kg/kgcOf({stock:S.inv||normStock({})},k)).toFixed(4)}}
       else{if(!r.brand){bad.push(i+1);return}sec='box';key=brandKey(r.brand)+'|'+toNum(r.w)+'|'+r.t+'|'+toNum(r.len)}
-      docs.push({at:new Date().toISOString(),u:myUid(),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim(),...(String(f.fat||'').trim()?{fat:String(f.fat).trim()}:{}),rdate:f.date||today()})});
+      docs.push({at:new Date().toISOString(),u:myUid(),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim(),...(String(f.fat||'').trim()?{fat:String(f.fat).trim()}:{}),...(secCfg(curSecTab()).pend?{pend:1}:{}),rdate:f.date||today()})});
     if(bad.length){toast(`⚠️ ڕیز ${bad.join('، ')}: ${isP?'ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە':'کۆمپانیەکێ هەلبژێرە'}`);return}
     if(!docs.length){toast('⚠️ ژمارا کارتۆنان بنڤیسە');return}
-    if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);const sum=kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن';S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${sum})`);render();
+    if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);const sum=kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن';const pend=!!docs[0].pend;const K0=S.invKind;S.bin[S.invKind]=null;toast(pend?`⏳ ${docs.length} ڕیز چوونە «گەهشتن» — پشتی OK دچنە سەر مەخزەنێ`:`✓ ${docs.length} ڕیز هاتنە داخلکرن (${sum})`);render();
       const fat=docs[0].fat||'',dt=docs[0].rdate;
-      dialog(`<h3 style="margin-top:0">✓ ${docs.length} ڕیز هاتنە داخلکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p><p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی کا هەمی تشت ب دروستی گەهشتینە.</p>`,()=>{printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},'📄 ڕاپۆرتا وەرگرتنێ')}}
+      dialog(`<h3 style="margin-top:0">${pend?'⏳':'✓'} ${docs.length} ڕیز هاتنە تۆمارکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p>${pend?`<p>هێشتا <b>نەچوونە سەر مەخزەنێ</b>. ل بەشا <b>گەهشتن</b> ل گەل فاتۆرێ بەراورد بکە، ئەگەر خەلەتی هەبیت ل وێرێ چاک بکە، پاشی <b>✓ OK</b> بکە دا بچنە سەر مەخزەنێ.</p>`:'<p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی.</p>'}<button type="button" class="btn" id="rcvDlgRep">📄 ڕاپۆرتا وەرگرتنێ</button>`,()=>{if(pend){S.rcvArch='';S.rcvOpen=dt;go(K0==='tape'?'invTape':'invPaint','rcv')}else printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},pend?'📋 بچە «گەهشتن»':'📄 ڕاپۆرتا وەرگرتنێ');
+      const rb=$('#rcvDlgRep');if(rb){if(!pend)rb.remove();else rb.onclick=()=>printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))}}}
   else if(act==='rcvOk'&&rcvCanEdit()){const d=t0.dataset.d,f=t0.dataset.f,v=t0.dataset.v==='1';const L=rcvTx(d).filter(x=>(x.fat||'')===f&&!!x.ok!==v);if(!L.length)return;
-    const go2=async()=>{let ok=0;for(const t of L){const p=v?{ok:{by:myUid(),at:new Date().toISOString()}}:{ok:null};if(await txPatchIn(t,p))ok++}if(!db){S.tx.in.forEach(x=>{if(x.ok===null)delete x.ok});recomputeInv();localSave()}toast(v?`✓ OK بوو — ${ok} ڕیز چوونە «یێن OK کرین»`:'↩ زڤڕین بۆ پشکنینێ');render()};
-    if(v)dialog(`<h3 style="margin-top:0">✓ OK — هەمی دروستە؟</h3><p>${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b> · ':''}<span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز</p><p class="muted">پشتی OK، ئەڤ فاتۆرە ژ لیستا «چاڤەڕێی پشکنینێ» دچیت. هەردەم دشێی ل «یێن OK کرین» ببینی یان بزڤڕینی.</p>`,()=>{go2()},'✓ OK');else go2()}
+    const go2=async()=>{let ok=0;for(const t of L){const p=v?{ok:{by:myUid(),at:new Date().toISOString()}}:{ok:null};if(await txPatchIn(t,p))ok++}if(!db){S.tx.in.forEach(x=>{if(x.ok===null)delete x.ok});recomputeInv();localSave()}const np=L.filter(x=>x.pend).length;toast(v?(np?`✓ OK بوو — ${ok} ڕیز چوونە سەر مەخزەنێ`:`✓ OK بوو — ${ok} ڕیز چوونە «یێن OK کرین»`):(np?'↩ زڤڕین بۆ پشکنینێ — ژ مەخزەنێ هاتنە دەرئێخستن هەتا OK':'↩ زڤڕین بۆ پشکنینێ'));render()};
+    if(v)dialog(`<h3 style="margin-top:0">✓ OK — هەمی دروستە؟</h3><p>${f?'فاتۆرە <b class="ltr">'+esc(f)+'</b> · ':''}<span class="ltr">${dmy(d)}</span> — ${L.length} ڕیز</p>${L.some(x=>x.pend)?'<p><b>پشتی OK، ئەڤ کەرەستە دچنە سەر مەخزەنێ.</b></p>':''}<p class="muted">ئەڤ فاتۆرە ژ لیستا «چاڤەڕێی پشکنینێ» دچیت. هەردەم دشێی ل «یێن OK کرین» ببینی یان بزڤڕینی.</p>`,()=>{go2()},'✓ OK');else go2()}
   else if(act==='rcvOkOld'&&isAdmin){const ss=rcvSecs();const L=(S.tx.in||[]).filter(x=>(!ss||ss.includes(x.sec))&&!x.ok&&rcvDay(x)<today());if(!L.length)return;
     dialog(`<h3 style="margin-top:0">✓ OK کرنا گەهشتنێن کەڤن</h3><p>${L.length} ڕیز ژ ${new Set(L.map(rcvDay)).size} ڕۆژان (بەری ئەڤرۆ) دێ بنە OK و ژ لیستا پشکنینێ دچن.</p><p class="muted">ئەوێن ئەڤرۆ وەکی خۆ دمینن. هەردەم دشێی ل «یێن OK کرین» بزڤڕینی.</p>`,()=>{(async()=>{let ok=0;const at=new Date().toISOString();for(const t of L){if(await txPatchIn(t,{ok:{by:myUid(),at}}))ok++}if(!db){recomputeInv();localSave()}toast(`✓ ${ok} ڕیز OK بوون`);render()})()},'✓ OK')}
   else if(act==='rcvOpen'){S.rcvOpen=S.rcvOpen===t0.dataset.d?'-':t0.dataset.d;render()}
@@ -4626,7 +4631,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128104442';
+const APP_BUILD='20261128123247';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
