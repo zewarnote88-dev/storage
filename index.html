@@ -2921,8 +2921,21 @@ function poRcvCard(o){const id=o.p.id+'~'+o.kind;const f=rcvF(id);const isP=isPa
   </details>`}
 function binNew(){return S.invKind==='paint'?{paint:'',qty:''}:{brand:(S.settings.brands[0]||{}).name||'',w:tapeWidths()[0]||40,t:'N',len:S.settings.rollLen||300,qty:''}}
 function binUnitLbl(f){return S.invKind!=='paint'||f.unit==='ctn'?'کارتۆن':f.unit==='t'?'تۆن':'کیلۆ'}
-function binF(){S.bin=S.bin||{};const K=S.invKind;if(!S.bin[K])S.bin[K]={date:today(),note:'',unit:K==='paint'?'kg':'ctn',rows:[binNew(),binNew(),binNew()]};return S.bin[K]}
+function binF(){S.bin=S.bin||{};const K=S.invKind;if(!S.bin[K])S.bin[K]={date:today(),note:'',fat:'',unit:K==='paint'?'kg':'ctn',rows:[binNew(),binNew(),binNew()]};return S.bin[K]}
 function binCur(r){if(S.invKind==='paint'){const k=norm(r.paint);return paintDef(k)?fmt(toNum(S.inv.cart[k]),1):'—'}return fmt(toNum(S.inv.box[brandKey(r.brand)+'|'+r.w+'|'+r.t+'|'+r.len]),1)}
+
+function rcvSecs(){return S.invKind==='paint'?['cart','kgc']:S.invKind==='tape'?['box','inc']:null}
+function rcvTx(d){const ss=rcvSecs();return (S.tx.in||[]).filter(x=>(!ss||ss.includes(x.sec))&&(x.rdate||ymdLocal(new Date(x.at)))===d).sort((a,b)=>String(a.fat||'').localeCompare(String(b.fat||''))||cmpS(a.at,b.at))}
+function rcvQty(x){const N=(v,d,u)=>`<span class="ltr">${fmt(v,d)}</span> ${u}`;if(x.sec==='cart'){const kg=x.kg!=null?toNum(x.kg):toNum(x.qty)*kgcOf({stock:S.inv},x.key);return [N(kg,1,'کیلۆ'),N(x.qty,2,'کارتۆن'),kg,0,0]}
+ if(x.sec==='box'){const s=String(x.key).split('|'),w=toNum(s[1]);const m2=toNum(x.qty)*(w/1000)*boxLen(x.key)*rpbOf(w);return [N(x.qty,1,'کارتۆن'),N(m2,0,'م²'),0,toNum(x.qty),m2]}
+ return [fmt(x.qty,2),'',0,0,0]}
+function rcvReportHtml(L,d,fat){const groups={};L.forEach(x=>{(groups[x.fat||'']=groups[x.fat||'']||[]).push(x)});
+ let kg=0,ct=0,m2=0;L.forEach(x=>{const q=rcvQty(x);kg+=q[2];ct+=q[3];m2+=q[4]});const nF=Object.keys(groups).filter(Boolean).length;
+ const sum=`<div class="arsum"><div><span>ڕیز</span><b>${L.length}</b></div>${kg?`<div><span>کۆما سبغێ</span><b>${fmt(kg,1)}</b><small>کیلۆ</small></div>`:''}${ct?`<div><span>کۆما لسقێ</span><b>${fmt(ct,1)}</b><small>کارتۆن · ${fmt(m2,0)} م²</small></div>`:''}<div><span>فاتۆرە</span><b>${fat?esc(fat):nF||'—'}</b></div></div>`;
+ const tb=rows=>`<table><thead><tr><th>#</th><th>کەرەستە</th><th class="n">بڕ</th><th class="n">یەکەیا دی</th><th>جهـ</th><th>تێبینی</th><th>تۆمارکەر</th><th>دەم</th><th style="width:16mm">پشکنین</th></tr></thead><tbody>${rows.map((x,i)=>{const q=rcvQty(x);return `<tr><td>${i+1}</td><td><b>${esc(txLabel(x.sec,x.key))}</b></td><td class="n"><b>${q[0]}</b></td><td class="n">${q[1]}</td><td>${esc(x.loc||'')}</td><td>${esc(x.note||'')}</td><td>${esc(uName(x.u)||'')}</td><td class="ltr">${esc(new Date(x.at).toTimeString().slice(0,5))}</td><td style="text-align:center;font-size:12pt">☐</td></tr>`}).join('')}</tbody></table>`;
+ const body=Object.entries(groups).map(([f,rows])=>`${Object.keys(groups).length>1||f?`<h2>${f?'فاتۆرە <span class="ltr">'+esc(f)+'</span>':'بێ ژمارا فاتۆرێ'} <small>${rows.length} ڕیز</small></h2>`:''}${tb(rows)}`).join('');
+ return `<div dir="rtl">${arHead('ڕاپۆرتا وەرگرتنا کەرەستان',`ڕێکەفتا گەهشتنێ: <span class="ltr">${dmy(d)}</span>${fat?` · فاتۆرە <span class="ltr">${esc(fat)}</span>`:''}`)}${sum}${body}
+  <p style="margin-top:14px;font-size:9pt">ب فاتۆرێ هاتە بەراوردکرن: &nbsp; ☐ هەمی دروستە &nbsp;&nbsp; ☐ جوداهی هەیە: ..............................................................</p></div>`}
 function batchIn(){const f=binF();const isP=S.invKind==='paint';const brands=S.settings.brands||[];const ws=tapeWidths();
   const n=f.rows.filter(r=>toNum(r.qty)>0).length,tq=f.rows.reduce((s,r)=>s+toNum(r.qty),0);const UL=binUnitLbl(f);
   return `<div class="card" style="background:var(--bg)"><h3 style="margin-top:0">${I('down','sm')} ${isP?'داخلکرنا سبغێ':'داخلکرنا لسقێ'} — گەلەک پێکڤە</h3>
@@ -2940,7 +2953,8 @@ function batchIn(){const f=binF();const isP=S.invKind==='paint';const brands=S.s
    <div class="row" style="margin-top:8px"><button class="btn" data-act="binAdd" data-n="1">+ ڕیزەک</button><button class="btn" data-act="binAdd" data-n="5">+ ٥ ڕیز</button>${isP?`<label class="muted">یەکە: <select data-binunit><option value="kg" ${f.unit==='kg'?'selected':''}>کیلۆ</option><option value="t" ${f.unit==='t'?'selected':''}>تۆن</option><option value="ctn" ${f.unit==='ctn'?'selected':''}>کارتۆن</option></select></label>`:''}<span class="grow muted" id="binSum">${n?`${n} ڕیز · ${fmt(tq,f.unit==='t'?3:1)} ${UL}`:''}</span></div>
    <div class="row" style="margin-top:8px;align-items:flex-end">
      <label>ڕۆژا گەهشتنێ<br><input type="date" data-binf="date" value="${esc(f.date)}"></label>
-     <label class="grow">تێبینی (بۆ هەمی ڕیزان)<br><input data-binf="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: ژ کۆمپانیا Pulver، فاتورە 123"></label>
+     <label>ژمارا فاتۆرێ<br><input data-binf="fat" value="${esc(f.fat||'')}" class="ltr" style="width:150px" placeholder="123"></label>
+     <label class="grow">تێبینی (بۆ هەمی ڕیزان)<br><input data-binf="note" value="${esc(f.note)}" style="width:100%" placeholder="بۆ نموونە: ژ کۆمپانیا Pulver"></label>
      <button class="btn pri" data-act="binSave">${I('check','sm')} تۆمارکرنا هەمیان</button></div></div>`}
 function poCoName(o){return isPaintKind(o.kind)?(o.kind.slice(6)||o.po.supplier||''):(o.po.supplier||tapeBrandName(o.p,o.kind.slice(5))||'')}
 function leadOf(o){return toNum((S.settings.lead||{})[norm(poCoName(o))])}
@@ -2955,12 +2969,13 @@ function viewIn(){const K=S.invKind;const ops=openPos(K);const open0=ops.filter(
       return `<div class="row" style="align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span class="grow"><b class="ltr">${esc(o.po.no||'PO')}</b> · <b class="ltr">${esc(poCoName(o))}</b> · ${fmt(tot,isPaintKind(o.kind)?3:0)} ${isPaintKind(o.kind)?'تۆن':'م²'}
         <div class="muted" style="font-size:.82rem">هنارتن: <span class="ltr">${dmy((o.po.sent||'').slice(0,10))}</span> · گەهشتن: <b class="ltr">${dmy(ymdLocal(eta))}</b> (پشتی ${days} ڕۆژان · ${leadOf(o)} ڕۆژ)</div></span>
         ${isAdmin?`<button class="btn" data-act="poEarly" data-id="${esc(o.p.id+'~'+o.kind)}">✅ زوو گەهشت</button>`:''}</div>`}).join('')}</div>`:''}
+  ${can('inv_in')||isAdmin?`<div class="row" style="justify-content:flex-end;margin:4px 0 -4px"><button class="btn" data-act="rcvRep">📄 ڕاپۆرتا داخلکرنێ (بۆ بەراوردکرنا فاتۆرێ)</button></div>`:''}
   ${batchIn()}
   ${done.length?`<details style="margin:8px 0"><summary>داخوازیێن تەمام بووین (${done.length})</summary>${done.map(poRcvCard).join('')}</details>`:''}
   ${isAdmin?txList('in'):''}`}
 function txList(dir){const tp=S.invKind==='tape';const L=(S.tx[dir]||[]).filter(t=>t&&!XSEC[t.sec]&&(t.sec==='box')===tp).sort((a,b)=>cmpS(b.at,a.at)).slice(0,60);
   return `<div class="tbl-scroll"><table><thead><tr><th>دەم</th><th>کێ</th><th>چ</th><th class="n">کارتۆن</th><th>تێبینی</th>${isAdmin?'<th></th>':''}</tr></thead><tbody>
-  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
+  ${L.map(t=>`<tr><td class="ltr muted" style="text-align:right;white-space:nowrap">${esc(whenTxt(t.at))}${t.rdate?`<div style="font-size:.75rem">${esc(t.rdate)}</div>`:''}</td><td>${t.u?`<span data-uid="${esc(t.u)}">…</span>`:'—'}</td><td>${t.sec==='cart'?sw(txLabel(t.sec,t.key)):''}<b class="ltr">${esc(txLabel(t.sec,t.key))}</b></td><td class="n ${dir==='out'?'short':'ok'}">${dir==='out'?'−':'+'}${t.kg?fmt(t.kg,1)+' kg':fmt(t.qty,1)}</td><td class="muted">${esc(t.note||'')}${t.fat?` <span class="pill">فاتۆرە <b class="ltr">${esc(t.fat)}</b></span>`:''}</td>${isAdmin?`<td style="white-space:nowrap"><button class="x" data-act="txEdit" data-dir="${dir}" data-id="${esc(t.id)}" title="گوهۆڕین">✎</button><button class="x" data-act="txDel" data-dir="${dir}" data-id="${esc(t.id)}" title="ژێبرن">✕</button></td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="muted">هێشتا چ ${dir==='in'?'داخلکرن':'دەرئێخستن'} نەهاتینە تۆمارکرن.</td></tr>`}
   </tbody></table></div>`}
 function reportData(){const inv=S.inv||normStock({});const P={stock:inv};
   const paints=Object.keys(inv.cart).filter(k=>toNum(inv.cart[k])>0).map(k=>{const d=paintDef(k);const kc=kgcOf(P,k);const c=toNum(inv.cart[k]);return {name:d?d.name:k,pul:d?d.pul||'':'',type:d?d.type:'?',co:d?d.co||'':'',cart:c,kgc:kc,kg:c*kc}}).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
@@ -4365,10 +4380,18 @@ $('#main').addEventListener('click',async e=>{
       let qty=q,kg=null;
       if(isP){const k=norm(r.paint);if(!paintDef(k)){bad.push(i+1);return}sec='cart';key=k;if(f.unit!=='ctn'){kg=f.unit==='t'?q*1000:q;qty=+(kg/kgcOf({stock:S.inv||normStock({})},k)).toFixed(4)}}
       else{if(!r.brand){bad.push(i+1);return}sec='box';key=brandKey(r.brand)+'|'+toNum(r.w)+'|'+r.t+'|'+toNum(r.len)}
-      docs.push({at:new Date().toISOString(),u:myUid(),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim(),rdate:f.date||today()})});
+      docs.push({at:new Date().toISOString(),u:myUid(),sec,key,qty,...(kg!==null?{kg:+kg.toFixed(2)}:{}),note:String(f.note||'').trim(),...(String(f.fat||'').trim()?{fat:String(f.fat).trim()}:{}),rdate:f.date||today()})});
     if(bad.length){toast(`⚠️ ڕیز ${bad.join('، ')}: ${isP?'ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە':'کۆمپانیەکێ هەلبژێرە'}`);return}
     if(!docs.length){toast('⚠️ ژمارا کارتۆنان بنڤیسە');return}
-    if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن'})`);render()}}
+    if(await addTx('in',docs)){const kgT=docs.reduce((s,d)=>s+(d.kg||0),0);const sum=kgT?fmt(kgT,1)+' کیلۆ':fmt(docs.reduce((s,d)=>s+d.qty,0),1)+' کارتۆن';S.bin[S.invKind]=null;toast(`✓ ${docs.length} ڕیز هاتنە داخلکرن (${sum})`);render();
+      const fat=docs[0].fat||'',dt=docs[0].rdate;
+      dialog(`<h3 style="margin-top:0">✓ ${docs.length} ڕیز هاتنە داخلکرن</h3><p>${sum}${fat?` · فاتۆرە <b class="ltr">${esc(fat)}</b>`:''}</p><p class="muted">ڕاپۆرتا وەرگرتنێ دەرئێخە دا ل گەل فاتۆرێ بەراورد بکەی کا هەمی تشت ب دروستی گەهشتینە.</p>`,()=>{printHtml(rcvReportHtml(docs,dt,fat),'receipt-'+dt+(fat?'-'+fat:''))},'📄 ڕاپۆرتا وەرگرتنێ')}}
+  else if(act==='rcvRep'){const d0=today();const pick=()=>{const d=$('#rcvD').value;const L=rcvTx(d);const fs=[...new Set(L.map(x=>x.fat||''))];
+      $('#rcvF').innerHTML=`<option value="*">هەمی (${L.length} ڕیز)</option>`+fs.map(f=>`<option value="${esc(f)}">${f?'فاتۆرە '+esc(f):'بێ ژمارا فاتۆرێ'} (${L.filter(x=>(x.fat||'')===f).length})</option>`).join('')};
+    dialog(`<h3 style="margin-top:0">📄 ڕاپۆرتا داخلکرنێ</h3><p class="muted">کەرەستێن ل ڤێ ڕۆژێ هاتینە داخلکرن، دا ل گەل فاتۆرێ بەراورد بکەی.</p>
+      <div class="row"><label>ڕۆژ<br><input type="date" id="rcvD" value="${d0}"></label><label class="grow">فاتۆرە<br><select id="rcvF" style="width:100%"></select></label></div>`,
+      ()=>{const d=$('#rcvD').value,f=$('#rcvF').value;let L=rcvTx(d);if(f!=='*')L=L.filter(x=>(x.fat||'')===f);if(!L.length){toast('⚠️ ل ڤێ ڕۆژێ چ تشت نەهاتینە داخلکرن');return false}printHtml(rcvReportHtml(L,d,f==='*'?'':f),'receipt-'+d+(f&&f!=='*'?'-'+f:''))},'📄 دەرئێخستن');
+    pick();$('#rcvD').onchange=pick}
   else if(act==='txAdd'){const dir=t.dataset.dir;if(!can(dir==='in'?'inv_in':'inv_out')||!canKind(S.invKind)){toast('⚠️ ئەڤ کار بۆ تە نەهاتیە ڤەکرن');return}const f=txF(dir);const q0=toNum(f.qty);let qty=q0,kg=null;
     if(!(q0>0)){toast('⚠️ '+(f.kind==='paint'?'چەندیێ':'ژمارا کارتۆنان')+' بنڤیسە');return}
     let sec,key;if(f.kind==='paint'){const k=norm(f.paint);if(!paintDef(k)){toast('⚠️ ئەڤ سبغە د لیستا جۆرێن سبغێ دا نینە');return}sec='cart';key=k;
