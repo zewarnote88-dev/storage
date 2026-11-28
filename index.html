@@ -3407,12 +3407,13 @@ function viewMiscForm0(dir){const f=miF(dir);const x=f.item&&miItem(f.item);if(f
    ${dir==='in'&&isTankX(x)?(()=>{f.tm=1;const tk=f.tkg!==undefined&&f.tkg!==''?f.tkg:(x.tank||'');const tot=toNum(f.qty)*toNum(tk);return `<div class="tstep"><div class="lb">٢. چەند تانک گەهشتن؟</div>
      <div class="tankrow"><label>ژمارا تانکان<span class="qin"><input class="num" inputmode="numeric" data-msf="in" data-f="qty" value="${esc(f.qty)}" placeholder="0"><span class="qu">تانک</span></span></label>
      <span class="tx">×</span><label>${esc(x.unit)} د هەر تانکەکێ دا<span class="qin"><input class="num" inputmode="decimal" data-msf="in" data-f="tkg" value="${esc(tk)}" placeholder="0"><span class="qu">${esc(x.unit)}</span></span></label></div>
-     <div class="tanktot" id="tankTot">${tot>0?`= <b>${fmt(tot,1)}</b> ${esc(x.unit)} دێ چنە سەر مەخزەنێ`:'ژمارا تانکان و کێشا هەر تانکەکێ بنڤیسە'}</div></div>`})():`<div class="tstep"><div class="lb">٢. چەند؟ <span class="muted" style="font-weight:400">(${x.roll?(f.ru==='m'?'مەتر':'ڕۆل — هەر ڕۆلەک '+fmt(x.roll,0)+' m'):esc(x.unit)})</span></div>
+     <div class="tanktot" id="tankTot">${tot>0?`= <b>${fmt(tot,1)}</b> ${esc(x.unit)} دێ چنە سەر مەخزەنێ`:'ژمارا تانکان و کێشا هەر تانکەکێ بنڤیسە'}</div></div>`})():`<div class="tstep"><div class="lb">٢. چەند؟ <span class="muted" style="font-weight:400">(${(dir==='out'&&f.tu==='tank'&&isTankX(x)&&x.tank>0)?'تانک — هەر تانکەک '+fmt(x.tank,0)+' '+esc(x.unit):x.roll?(f.ru==='m'?'مەتر':'ڕۆل — هەر ڕۆلەک '+fmt(x.roll,0)+' m'):esc(x.unit)})</span></div>
+     ${dir==='out'&&isTankX(x)&&x.tank>0?`<div class="useg" style="margin-bottom:8px">${[['kg',esc(x.unit)],['tank','تانک ('+fmt(x.tank,0)+' '+esc(x.unit)+')']].map(([v,l])=>`<button type="button" class="chip${(f.tu||'kg')===v?' on':''}" data-act="msTu" data-v="${v}">${l}</button>`).join('')}</div>`:''}
      ${x.roll?`<div class="useg" style="margin-bottom:8px">${[['roll','ڕۆل'],['m','مەتر']].map(([v,l])=>`<button type="button" class="chip${(f.ru||'roll')===v?' on':''}" data-act="msRu" data-dir="${dir}" data-v="${v}">${l}</button>`).join('')}</div>`:''}
      <div class="qbox"><div class="qstep"><button type="button" class="btn" data-act="msStep" data-dir="${dir}" data-d="1">+</button>
-       <span class="qin"><input class="num" inputmode="decimal" data-msf="${dir}" data-f="qty" value="${esc(f.qty)}" placeholder="0"><span class="qu">${x.roll?(f.ru==='m'?'مەتر':'ڕۆل'):esc(x.unit)}</span></span>
+       <span class="qin"><input class="num" inputmode="decimal" data-msf="${dir}" data-f="qty" value="${esc(f.qty)}" placeholder="0"><span class="qu">${(dir==='out'&&f.tu==='tank'&&isTankX(x)&&x.tank>0)?'تانک':x.roll?(f.ru==='m'?'مەتر':'ڕۆل'):esc(x.unit)}</span></span>
        <button type="button" class="btn" data-act="msStep" data-dir="${dir}" data-d="-1">−</button></div>
-     <div class="qgrid">${[1,5,10].map(n=>`<button type="button" class="chip" data-act="msQty" data-dir="${dir}" data-v="${n}">${n} ${x.roll?(f.ru==='m'?'مەتر':'ڕۆل'):esc(x.unit)}</button>`).join('')}</div></div>
+     <div class="qgrid">${[1,5,10].map(n=>`<button type="button" class="chip" data-act="msQty" data-dir="${dir}" data-v="${n}">${n} ${(dir==='out'&&f.tu==='tank'&&isTankX(x)&&x.tank>0)?'تانک':x.roll?(f.ru==='m'?'مەتر':'ڕۆل'):esc(x.unit)}</button>`).join('')}</div></div>
      ${over?`<div class="short" style="margin-top:6px">⚠️ ل مەخزەنێ تەنێ ${fmt(have,2)} ${esc(x.unit)} هەنە</div>`:''}</div>`}
    ${dir==='out'&&!isCrn()?miWhoStep(f):''}
    ${dir==='in'&&secCfg(curSecTab()).loc?`<div class="tstep"><div class="lb">٣. جه ل مەخزەنێ <span class="muted" style="font-weight:400">(ڕەف / دۆلاب — ل کیرێ دانا؟)</span></div><input data-msf="in" data-f="loc" data-for="${esc(x.id)}" list="dlMsLoc" value="${esc(f.locFor===x.id?f.loc:(x.loc||''))}" style="width:100%" placeholder="بۆ نموونە: ڕەفا A-3"><datalist id="dlMsLoc">${[...new Set(MI().map(z=>(z.loc||'').trim()).filter(Boolean))].sort().map(l=>`<option value="${esc(l)}">`).join('')}</datalist>${x.loc?`<div class="muted" style="font-size:.78rem;margin-top:4px">📍 نوکە ل: <b>${esc(x.loc)}</b></div>`:''}</div>`:''}
@@ -3428,7 +3429,7 @@ function crnSelPanel(x,dir,have){const U=esc(x.unit);const mtr=x.plen?have*x.ple
     ${x.min?`<div><span>کەمترین</span><b>${fmt(x.min,0)}</b><small>${U}</small>${low?'<em class="bad">⚠️ کێمە</em>':''}</div>`:''}
     <div><span>${dir==='out'?'پشتی دەرئێخستنێ':'پشتی داخلکرنێ'}</span><b id="msAfter" data-have="${have}" data-dir="${dir}">${fmt(have,x.plen?0:2)}</b><small>${U}</small></div></div>
    ${x.min?`<div class="cbar${low?' low':''}"><i style="width:${pct}%"></i></div>`:''}`}
-function miInQ(x,f){const v=toNum(f.qty);if(f.tm&&isTankX(x))return v*toNum(f.tkg||x.tank);return x&&x.roll&&(f.ru||'roll')==='roll'?v*x.roll:v}
+function miInQ(x,f){const v=toNum(f.qty);if(f.tm&&isTankX(x))return v*toNum(f.tkg||x.tank);if(f.tu==='tank'&&!f.tm&&isTankX(x)&&x.tank>0)return v*x.tank;return x&&x.roll&&(f.ru||'roll')==='roll'?v*x.roll:v}
 function miPast(fld){const c={};miRows('out').forEach(t=>{const v=String(t[fld]||'').trim();if(v)c[v]=(c[v]||0)+1});return Object.keys(c).sort((a,b)=>c[b]-c[a])}
 function miWhoStep(f){const halls=miPast('hall'),people=[...new Set([...miPast('person'),...activeUsers().map(u=>u.name||u.username)])];
   return `<div class="tstep"><div class="lb">٣. کێ دبەت و بۆ کیرێ؟</div>
@@ -3615,6 +3616,7 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
   <div id="msNHint" class="info" style="display:none;margin:0 0 10px"></div>
   <div class="mi-head"><label id="msNUnitBox">یەکە<span class="muted" style="font-weight:400;font-size:.78rem">ب چ دهێتە ژمارتن؟</span>${miSel('msNUnit',C?((CRN_G[x.grp]||CRN_G.chem).units||MISC_UNITS):MISC_UNITS,x.unit)}</label>
    ${C?`<label id="msNPprBox">درێژیا هەر دانەیەکێ (مەتر)<span class="muted" style="font-weight:400;font-size:.78rem">مەخزەن و حیساب ب دانە</span><input id="msNPlen" class="num" inputmode="decimal" value="${x.plen||(x.grp==='rub'&&!x.ppr?(x.roll||6):6)}" placeholder="6"></label>
+   ${C?`<label id="msNTankBox">کێشا تانکەکێ (کیلۆ)<span class="muted" style="font-weight:400;font-size:.78rem">بۆ نیشاندانا مەخزەنێ ب تانک — ئەگەر نە ب تانک بیت ڤالا بهێلە</span><input id="msNTank" class="num" inputmode="decimal" value="${x.tank||''}" placeholder="بۆ نموونە: 250"></label>`:''}
    <label id="msNRollBox">درێژیا ڕۆلەکێ (مەتر)<span class="muted" style="font-weight:400;font-size:.78rem">مەخزەن ب مەتر</span><input id="msNRoll" class="num" inputmode="decimal" value="${x.roll||''}" placeholder="بۆ نموونە 500"></label>
    <label id="msNNylS">ڕۆل دبیتە چەند بەش؟<span class="muted" style="font-weight:400;font-size:.78rem">پشتی گەهشتنێ دهێتە بڕین</span><input id="msNSplit" class="num" inputmode="decimal" value="${x.split||3}"></label>
    <label id="msNNylP">ئەڤ نایلۆنە بۆ کیژ سبغێ یە؟<span class="muted" style="font-weight:400;font-size:.78rem">ل ئۆردەرێ کۆدێ نایلۆنێ بنڤیسە</span><select id="msNPaint" class="misel"><option value="">— هەلبژێرە —</option>${S.paints.map(z=>`<option value="${esc(z.name)}"${norm(z.name)===norm(x.paint||'')?' selected':''}>${esc(z.name)}${z.pul?' — '+esc(z.pul):''}</option>`).join('')}</select></label>`:''}
@@ -3625,18 +3627,18 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
    <div class="qin"><input id="msNQty" class="num" inputmode="decimal" placeholder="0"><span class="qu msNU">${esc(x.unit)}</span></div>${C?`<select id="msNQtyU" class="misel" style="margin-top:6px;display:none"><option value="roll">ب ڕۆل</option><option value="m">ب مەتر</option></select>`:''}
    <input id="msNNote" placeholder="تێبینی: ژ کۆمپانیا ... / ژمارا فاتۆرێ" style="width:100%;margin-top:8px">`:''}
   ${ed?`<button type="button" class="btn" id="msNDel" style="margin-top:10px;color:var(--bad)">🗑 ژێبرنا ڤی کەرەستەی</button>`:''}<div id="msNErr" class="short"></div>`,()=>{
-    const grp=C?$('#msNGrp').value:'';const rl=grp==='rub'||grp==='nyl';const ppr=0;const plen=grp==='rub'?(toNum(($('#msNPlen')||{}).value)||6):0;const c=$('#msNCode').value.trim(),n=(SC.ident==='code'?c:$('#msNName').value.trim()),u=grp==='rub'?'دانە':rl?'مەتر':miSelVal('msNUnit'),cat=rl?CRN_G[grp].t:miSelVal('msNCat'),min=toNum($('#msNMin').value),loc=$('#msNLoc').value.trim();const roll=grp==='nyl'?toNum($('#msNRoll').value):0;const npaint=grp==='nyl'?$('#msNPaint').value:'';const split=grp==='nyl'?(toNum($('#msNSplit').value)||3):0;
+    const grp=C?$('#msNGrp').value:'';const rl=grp==='rub'||grp==='nyl';const ppr=0;const plen=grp==='rub'?(toNum(($('#msNPlen')||{}).value)||6):0;const c=$('#msNCode').value.trim(),n=(SC.ident==='code'?c:$('#msNName').value.trim()),u=grp==='rub'?'دانە':rl?'مەتر':miSelVal('msNUnit'),cat=rl?CRN_G[grp].t:miSelVal('msNCat'),min=toNum($('#msNMin').value),loc=$('#msNLoc').value.trim();const roll=grp==='nyl'?toNum($('#msNRoll').value):0;const tank=grp==='chem'&&$('#msNTank')?toNum($('#msNTank').value):0;const npaint=grp==='nyl'?$('#msNPaint').value:'';const split=grp==='nyl'?(toNum($('#msNSplit').value)||3):0;
     if(grp==='nyl'&&!(roll>0)){$('#msNErr').textContent='⚠️ درێژیا ڕۆلەکێ ب مەتر بنڤیسە';return false}
     if(grp==='nyl'&&npaint&&!c){$('#msNErr').textContent='⚠️ کۆدێ نایلۆنێ بنڤیسە — ل ئۆردەرێ ئەڤ کۆدە دهێتە نڤیسین';return false}
     if(grp==='nyl'&&c&&paintDef(norm(c))){$('#msNErr').textContent='⚠️ ئەڤ کۆدە ناڤێ سبغەکێ یە — کۆدەکێ دی بنڤیسە';return false}
     const conv=ed&&grp==='rub'&&ed.unit!=='دانە'&&u==='دانە'&&(ed.roll>0||ed.ppr>0);
     if(ed&&ed.unit!==u&&miQty(ed.id)&&!conv){$('#msNErr').textContent='⚠️ یەکا ڤی کەرەستەی ('+ed.unit+') ناهێتە گوهۆڕین چونکی مەخزەن تێدا هەیە';return false}
-    const ext=C?{grp,...(npaint?{paint:npaint}:{}),...(split?{split}:{}),...(roll?{roll}:{}),...(plen>0?{plen}:{}),...(img?{img}:{})}:{...(img?{img}:{})};
+    const ext=C?{grp,...(npaint?{paint:npaint}:{}),...(split?{split}:{}),...(roll?{roll}:{}),...(tank>0?{tank}:{}),...(plen>0?{plen}:{}),...(img?{img}:{})}:{...(img?{img}:{})};
     if(!n){$('#msNErr').textContent=SC.ident==='code'?'⚠️ کۆدی بنڤیسە':'⚠️ ناڤی بنڤیسە';return false}
     if(!u){$('#msNErr').textContent='⚠️ یەکێ هەلبژێرە یان بنڤیسە';return false}
     if(ed){const dup=c&&MIv().find(z=>z.id!==ed.id&&(z.code||'').toLowerCase()===c.toLowerCase());if(dup){$('#msNErr').textContent='⚠️ ئەڤ کۆدە بۆ «'+dup.name+'» هاتیە دانان';return false}
       if(conv){const f=ed.ppr>0?1/ed.ppr*0+(ed.unit==='ڕۆل'?ed.ppr:1/(ed.roll||plen)):1/(ed.roll||plen);miConvTx(ed.id,f)}
-      Object.assign(ed,{name:n,code:c,unit:u,cat,min,loc,...ext});if(C){if(!roll)delete ed.roll;if(!npaint)delete ed.paint;if(!split)delete ed.split;delete ed.ppr;if(!(plen>0))delete ed.plen}if(!img)delete ed.img;save(MX().doc,100);toast('✓ هاتە پاشەکەفتکرن');render();return}
+      Object.assign(ed,{name:n,code:c,unit:u,cat,min,loc,...ext});if(C){if(!roll)delete ed.roll;if(!(tank>0))delete ed.tank;if(!npaint)delete ed.paint;if(!split)delete ed.split;delete ed.ppr;if(!(plen>0))delete ed.plen}if(!img)delete ed.img;save(MX().doc,100);toast('✓ هاتە پاشەکەفتکرن');render();return}
     const q=ci?toNum($('#msNQty').value)*(grp==='nyl'&&roll&&$('#msNQtyU')&&$('#msNQtyU').value==='roll'?roll:1):0;if(ci&&$('#msNQty').value.trim()&&!(q>0)){$('#msNErr').textContent='⚠️ ژمارە دروست نینە';return false}
     const note=ci?$('#msNNote').value.trim():'';
     const ex=miFindExisting(c,n);
@@ -3647,7 +3649,7 @@ function miItemDialog(id,after){const ed=id?miItem(id):null;if(id&&!ed)return;co
     if(q>0){addTx('in',[{at:new Date().toISOString(),u:myUid(),sec:MX().sec,key:xx.id,qty:+q.toFixed(4),note}]).then(ok=>{if(ok){toast(`✓ «${n}» هاتە زێدەکرن و ${fmt(q,2)} ${u} هاتنە داخلکرن`);render()}})}
     else toast('✓ «'+n+'» هاتە زێدەکرن');render()},ed?'پاشەکەفتکرن':'پاشەکەفتکرن','wide');
   miSelBind('msNUnit',miUnitLbl);miSelBind('msNCat');{const dl=$('#msNDel');if(dl)dl.onclick=()=>{$('#dlg').innerHTML='';miDelItem(ed.id)}}
-  if(C){const upd=()=>{const g=$('#msNGrp').value;const rl=g==='rub'||g==='nyl';$('#msNUnitBox').style.display=rl?'none':'';$('#msNRollBox').style.display=g==='nyl'?'':'none';['msNNylS','msNNylP'].forEach(i=>{const e=$('#'+i);if(e)e.style.display=g==='nyl'?'':'none'});const pb=$('#msNPprBox');if(pb)pb.style.display=g==='rub'?'':'none';const pp=g==='rub';$('#msNCatBox').style.display=rl?'none':'';const qu=$('#msNQtyU');if(qu)qu.style.display=rl&&!pp?'':'none';
+  if(C){const upd=()=>{const g=$('#msNGrp').value;const rl=g==='rub'||g==='nyl';$('#msNUnitBox').style.display=rl?'none':'';$('#msNRollBox').style.display=g==='nyl'?'':'none';const tb=$('#msNTankBox');if(tb)tb.style.display=g==='chem'?'':'none';['msNNylS','msNNylP'].forEach(i=>{const e=$('#'+i);if(e)e.style.display=g==='nyl'?'':'none'});const pb=$('#msNPprBox');if(pb)pb.style.display=g==='rub'?'':'none';const pp=g==='rub';$('#msNCatBox').style.display=rl?'none':'';const qu=$('#msNQtyU');if(qu)qu.style.display=rl&&!pp?'':'none';
       document.querySelectorAll('.msNU').forEach(e=>e.textContent=pp?'دانە':rl?(qu&&qu.value==='m'?'مەتر':'ڕۆل'):miSelVal('msNUnit'));const mn=document.querySelectorAll('.msNU')[0];if(mn&&rl&&!pp)mn.textContent='مەتر'};
     document.querySelectorAll('#msNGrpB [data-g]').forEach(b=>b.onclick=()=>{document.querySelectorAll('#msNGrpB .chip').forEach(c=>c.classList.toggle('on',c===b));$('#msNGrp').value=b.dataset.g;upd()});
     const qu=$('#msNQtyU');if(qu)qu.onchange=upd;upd();
@@ -4450,12 +4452,13 @@ $('#main').addEventListener('click',async e=>{
   else if(act==='msLogDir'){S.msLogF=S.msLogF||{};S.msLogF.dir=t0.dataset.v;render()}
   else if(act==='msStockPdf')miPdf('stock');
   else if(act==='msLogPdf')miPdf('log');
+  else if(act==='msTu'){const f=miF('out');if(f.tu!==t0.dataset.v){f.tu=t0.dataset.v;f.qty=''}render()}
   else if(act==='msSave'){const dir=t0.dataset.dir;if(!can(dir==='in'?'inv_in':'inv_out')||!canKind(S.invKind)){toast('⚠️ ئەڤ کار بۆ تە نەهاتیە ڤەکرن');return}
     const f=miF(dir);const x=miItem(f.item);if(!x){toast('⚠️ کەرەستەیەکێ هەلبژێرە');return}const qty=miInQ(x,f);if(!(qty>0)){toast('⚠️ ژمارێ بنڤیسە');return}
     if(dir==='out'&&miQty(x.id)<qty-1e-9){toast(`⚠️ ل مەخزەنێ تەنێ ${fmt(miQty(x.id),2)} ${x.unit} هەنە`);return}
     const meU=myUid();const hall=dir==='out'?String(f.hall||'').trim():'',person=dir==='out'?String(f.person||'').trim():'';
     let loc='';if(dir==='in'){loc=String(f.locFor===x.id?(f.loc||''):(x.loc||'')).trim();if(f.locFor===x.id&&loc!==(x.loc||'').trim()){if(loc)x.loc=loc;else delete x.loc;save(MX().doc,0)}}
-    let tk={};if(dir==='in'&&f.tm&&isTankX(x)){const kg1=toNum(f.tkg!==undefined&&f.tkg!==''?f.tkg:x.tank);if(!(kg1>0)){toast('⚠️ کێشا هەر تانکەکێ بنڤیسە');return}tk={tanks:toNum(f.qty),tkg:kg1};if(x.tank!==kg1){x.tank=kg1;save(MX().doc,0)}}
+    let tk={};if(dir==='out'&&f.tu==='tank'&&isTankX(x)&&x.tank>0)tk={tanks:toNum(f.qty),tkg:x.tank};if(dir==='in'&&f.tm&&isTankX(x)){const kg1=toNum(f.tkg!==undefined&&f.tkg!==''?f.tkg:x.tank);if(!(kg1>0)){toast('⚠️ کێشا هەر تانکەکێ بنڤیسە');return}tk={tanks:toNum(f.qty),tkg:kg1};if(x.tank!==kg1){x.tank=kg1;save(MX().doc,0)}}
     const doc={at:new Date().toISOString(),u:meU,sec:MX().sec,key:x.id,qty:+qty.toFixed(4),...tk,...(hall?{hall}:{}),...(person?{person}:{}),...(loc?{loc}:{}),note:String(f.note||'').trim()};
     if(await addTx(dir,[doc])){f.qty='';f.tkg='';f.note='';f.person='';f.loc='';f.locFor='';toast(`✓ ${dir==='in'?'داخلکرن':'دەرئێخستن'}: ${tk.tanks?fmt(tk.tanks,0)+' تانک × '+fmt(tk.tkg,1)+' = ':''}${fmt(qty,2)} ${x.unit} ${x.name}${x.tank>0?' — ل مەخزەنێ: '+tankSplit(x,miQty(x.id)):''}${person?' — بۆ '+esc(person):''}${hall?' ('+esc(hall)+')':''}${loc?' 📍 '+esc(loc):''}`);render()}}
   else if(act==='txEdit'&&isAdmin){txEdit(t0.dataset.dir,t0.dataset.id)}
@@ -4568,7 +4571,7 @@ $('#main').addEventListener('click',async e=>{
 (()=>{const h=location.hash.slice(1);const t=Object.keys(HASH).find(k=>HASH[k]===h);if(t)S.tab=t})();
 if(SB_ON&&'serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 /* ---- update check: tell the user when a newer version is on the server ---- */
-const APP_BUILD='20261128071241';
+const APP_BUILD='20261128071523';
 async function checkUpdate(){if(location.protocol!=='https:'||APP_BUILD.startsWith('__'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_BUILD='([^']+)'/);
   if(m&&m[1]!==APP_BUILD&&!document.getElementById('updBar')){const d=document.createElement('div');d.id='updBar';d.className='updbar';d.innerHTML='<span>🔄 وەشانەکا نوو یا ئەپێ هەیە</span><button class="btn pri" type="button">نووکرن</button>';d.querySelector('button').onclick=()=>{location.replace(location.pathname+'?u='+Date.now())};document.body.appendChild(d)}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
